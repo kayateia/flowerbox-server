@@ -1,4 +1,4 @@
-import { AstNode } from "./AstNode";
+import { AstNode, ResultCallback } from "./AstNode";
 import { compile } from "./Parser";
 
 export class AstLiteral extends AstNode {
@@ -6,6 +6,12 @@ export class AstLiteral extends AstNode {
 		super(parseTree);
 		this.value = parseTree.value;
 	}
+
+	public execute(runtime: any, callback: ResultCallback): any {
+		if (callback)
+			callback(this.value);
+	}
+
 	public what: string = "Literal";
 	public value: any;
 }
