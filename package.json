@@ -1,0 +1,22 @@
+{
+  "name": "flowerbox",
+  "version": "1.0.0",
+  "description": "Flowerbox",
+  "main": "js/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "GPLv3",
+  "dependencies": {
+    "pegjs": "^0.9.0"
+  },
+  "devDependencies": {
+    "grunt": "^1.0.1",
+    "grunt-contrib-watch": "^1.0.0",
+    "grunt-exec": "^1.0.0",
+    "grunt-newer": "^1.2.0",
+    "grunt-typescript": "^0.8.0",
+    "typescript": "^1.8.10"
+  }
+}
