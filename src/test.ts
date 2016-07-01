@@ -1,4 +1,4 @@
-import Parser = require("./Parser");
+import * as Parser from "./Petal/Parser";
 
 //var output = Parser.compileToTree(
 var output = Parser.compileFromSource(

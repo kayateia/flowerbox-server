@@ -11,9 +11,9 @@ module.exports = function(grunt) {
 			// This should ideally be done only when it needs doing,
 			// but I can't find a Grunt plugin that will do that.
 			gen_grammar: {
-				command: "node_modules/pegjs/bin/pegjs lib/script.pegjs lib/script.js",
-				src: "lib/script.pegjs",
-				dest: "lib/script.js"
+				command: "node_modules/pegjs/bin/pegjs lib/PetalGrammar.pegjs lib/PetalGrammar.js",
+				src: "lib/PetalGrammar.pegjs",
+				dest: "lib/PetalGrammar.js"
 			}
 		},
 		watch: {
