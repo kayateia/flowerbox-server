@@ -162,7 +162,36 @@ export class AstFor extends AstNode {
 	public body: AstNode;
 }
 
-function compile(parseTree: any): AstNode {
+export class AstConditional extends AstNode {
+	constructor(parseTree: any) {
+		super(parseTree);
+		this.test = compile(parseTree.test);
+		this.result = compile(parseTree.consequent);
+		this.alternate = compile(parseTree.alternate);
+	}
+
+	public what: string = "Test";
+	public test: AstNode;
+	public result: AstNode;
+	public alternate: AstNode;
+}
+
+export class AstAssignment extends AstNode {
+	constructor(parseTree: any) {
+		super(parseTree);
+		this.operator = parseTree.operator;
+		this.left = compile(parseTree.left);
+		this.right = compile(parseTree.right);
+	}
+
+	public what: string = "Assignment";
+	public operator: string;
+	public left: AstNode;
+	public right: AstNode;
+}
+
+// This is exported primarily for testing.
+export function compile(parseTree: any): AstNode {
 	let result: AstNode;
 	switch(parseTree.type) {
 		case "Program":
@@ -205,14 +234,26 @@ function compile(parseTree: any): AstNode {
 		case "ForStatement":
 			result = new AstFor(parseTree);
 			break;
+		case "ConditionalExpression":
+			result = new AstConditional(parseTree);
+			break;
+		case "AssignmentExpression":
+			result = new AstAssignment(parseTree);
+			break;
 	}
 
 	// console.log("converted", JSON.stringify(parseTree, null, 4), " to ", JSON.stringify(result, null, 4));
 	return result;
 }
 
+let parser: any = require("../lib/script");
+
+// This is exported primarily for testing.
+export function compileToTree(src: string) {
+	return parser.parse(src);
+}
+
 export function compileFromSource(src: string) {
-	let parser: any = require("../lib/script");
-	let parseTree: any = parser.parse(src);
+	let parseTree: any = compileToTree(src);
 	return compile(parseTree);
 }
