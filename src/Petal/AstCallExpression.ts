@@ -4,6 +4,7 @@ import { compile } from "./Parser";
 import { runtimeError, Step, Runtime } from "./Runtime";
 import { IScope } from "./IScope";
 import { ParameterScope } from "./Scopes/ParameterScope";
+import { LValue } from "./LValue";
 
 export class AstCallExpression extends AstNode {
 	constructor(parseTree: any) {
@@ -14,10 +15,11 @@ export class AstCallExpression extends AstNode {
 
 	public execute(runtime: Runtime): void {
 		runtime.pushAction(Step.Callback("Function execution", (v) => {
-			let callee = runtime.popOperand();
+			let callee = LValue.PopAndDeref(runtime);
 			let values = [];
-			for (let i=0; i<this.param.length; ++i)
-				values.push(runtime.popOperand());
+			for (let i=0; i<this.param.length; ++i) {
+				values.push(LValue.PopAndDeref(runtime));
+			}
 
 			// Are we looking at a real native function or a Petal function?
 			if (typeof(callee) === "function") {

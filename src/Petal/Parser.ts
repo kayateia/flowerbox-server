@@ -67,6 +67,9 @@ export function compile(parseTree: any): AstNode {
 		case "AssignmentExpression":
 			result = new AstAssignment(parseTree);
 			break;
+		case "UpdateExpression":
+			result = new AstUpdate(parseTree);
+			break;
 	}
 
 	// console.log("converted", JSON.stringify(parseTree, null, 4), " to ", JSON.stringify(result, null, 4));

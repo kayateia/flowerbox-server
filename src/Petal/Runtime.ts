@@ -88,11 +88,22 @@ export class Runtime {
 					return false;
 				} else if (exc === runtimeError) {
 					throw exc;
+				} else {
+					throw exc;
 				}
 			}
 		}
 
 		return true;
+	}
+
+	public popAction(): Step {
+		return this._pipeline.pop();
+	}
+
+	public popActionUntil(unwinder: (Step) => boolean): void {
+		while (this._pipeline.length && unwinder(this._pipeline[this._pipeline.length - 1]))
+			this._pipeline.pop();
 	}
 
 	public pushOperand(val: any): void {
