@@ -1,6 +1,7 @@
 import { AstNode } from "./AstNode";
 import { compile } from "./Parser";
-import { runtimeError, Step, Runtime } from "./Runtime";
+import { Step, Runtime } from "./Runtime";
+import { RuntimeException } from "./Exceptions";
 import { LValue } from "./LValue";
 
 export class AstAssignment extends AstNode {
@@ -16,7 +17,7 @@ export class AstAssignment extends AstNode {
 			let lhs = runtime.popOperand();
 			let rhs = LValue.PopAndDeref(runtime);
 			if (!LValue.IsLValue(lhs))
-				throw runtimeError;
+				throw new RuntimeException("Attempt to assign to non-lvalue");
 
 			let newlhs;
 			switch (this.operator) {
@@ -34,7 +35,7 @@ export class AstAssignment extends AstNode {
 					break;
 				case "/=":
 					if (rhs === 0)
-						throw runtimeError;
+						throw new RuntimeException("Divide by zero");
 					newlhs = lhs.read(runtime) / rhs;
 					break;
 			}

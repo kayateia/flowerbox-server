@@ -2,6 +2,7 @@
 
 import * as Parser from "./Petal/Parser";
 import * as Runtime from "./Petal/Runtime";
+import { SuspendException } from "./Petal/Exceptions";
 import * as fs from "fs";
 
 //var output = Parser.compileToTree(
@@ -24,7 +25,7 @@ var output = Parser.compileFromSource(
 
 console.log(output);
 
-var runtime = new Runtime.Runtime(true);
+var runtime = new Runtime.Runtime(/*true*/);
 
 var log = function() {
 	let args = [];
@@ -43,7 +44,7 @@ runtime.currentScope().set("test", () => {
 		runtime.pushOperand(data);
 		runtime.execute(1000);
 	});
-	throw Runtime.suspend;
+	throw new SuspendException();
 });
 
 let petalConsole: any = Object.create(null);

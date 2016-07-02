@@ -1,6 +1,7 @@
 import { AstNode } from "./AstNode";
 import { AstIdentifier } from "./AstIdentifier";
-import { compile, parseException } from "./Parser";
+import { compile } from "./Parser";
+import { ParseException } from "./Exceptions";
 import { Step, Runtime } from "./Runtime";
 import { LValue } from "./LValue";
 import { Utils } from "./Utils";
@@ -12,7 +13,7 @@ export class AstObject extends AstNode {
 		parseTree.properties.forEach((p) => {
 			// "get" and "set" are also possible - we aren't handling them yet.
 			if (p.kind !== "init")
-				throw parseException;
+				throw new ParseException("Object property kind '" + p.kind + "' isn't suppoted yet.", parseTree);
 
 			let key = p.key;
 			if (key.type === "Identifier")
@@ -20,7 +21,7 @@ export class AstObject extends AstNode {
 			else if (key.type === "Literal")
 				key = key.value;
 			else
-				throw parseException;
+				throw new ParseException("Unknown key type '" + key.type + "' for object property name", parseTree);
 
 			let value = compile(p.value);
 

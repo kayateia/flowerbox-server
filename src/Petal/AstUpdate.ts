@@ -1,5 +1,6 @@
 import { AstNode } from "./AstNode";
-import { runtimeError, Step, Runtime } from "./Runtime";
+import { Step, Runtime } from "./Runtime";
+import { RuntimeException } from "./Exceptions";
 import { compile } from "./Parser";
 import { LValue } from "./LValue";
 
@@ -15,7 +16,7 @@ export class AstUpdate extends AstNode {
 		runtime.pushAction(Step.Callback("Update callback", () => {
 			let lval: LValue = runtime.popOperand();
 			if (!LValue.IsLValue(lval)) {
-				throw runtimeError;
+				throw new RuntimeException("Attempt to use update on non-lvalue", lval);
 			}
 
 			let oldValue = LValue.Deref(runtime, lval);

@@ -1,6 +1,6 @@
 import { AstNode } from "./AstNode";
 import { compile } from "./Parser";
-import { runtimeError, Step, Runtime } from "./Runtime";
+import { Step, Runtime } from "./Runtime";
 import { LValue } from "./LValue";
 
 export class AstConditional extends AstNode {

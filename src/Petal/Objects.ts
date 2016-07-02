@@ -10,9 +10,10 @@
 
 import { LValue } from "./LValue";
 import { AstObject } from "./AstObject";
-import { runtimeError, Runtime } from "./Runtime";
+import { Runtime } from "./Runtime";
+import { RuntimeException } from "./Exceptions";
 
-//
+// Simple interface for getting an LValue for a given index/name out of the wrapped object.
 export interface IObject {
 	getAccessor(index: any): LValue;
 }
@@ -39,7 +40,7 @@ export class ObjectWrapper {
 				// What's left are other generic objects. We allow read-only access to these as a convenience.
 				// These should always be created using new Object(null).
 				if (item.hasOwnProperty)
-					throw runtimeError;
+					throw new RuntimeException("A non-empty native object made it down into the works; this is a bug.", item);
 
 				return {
 					getAccessor: function(name: string): LValue {
@@ -47,10 +48,10 @@ export class ObjectWrapper {
 					}
 				};
 			case "function":
-				throw runtimeError;
+				throw new RuntimeException("Cannot access properties on a function", item);
 			default:
 				// Don't know how to wrap this object for member access.
-				throw runtimeError;
+				throw new RuntimeException("Can't wrap this object for member access", item);
 		}
 	}
 
@@ -78,10 +79,10 @@ export class ObjectWrapper {
 		return {
 			getAccessor: function(name: any): LValue {
 				if (typeof(name) !== "string")
-					throw runtimeError;
+					throw new RuntimeException("Can't use non-string index on Petal object", name);
 
 				if (name.substr(0, 3) === "___")
-					throw runtimeError;
+					throw new RuntimeException("Can't access reserved properties on a Petal object", name);
 
 				return new LValue("Petal object", (runtime: Runtime) => {
 					return item[name];

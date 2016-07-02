@@ -1,6 +1,6 @@
 import { AstNode } from "./AstNode";
 import { AstIdentifier } from "./AstIdentifier";
-import { compile, parseException } from "./Parser";
+import { compile } from "./Parser";
 import { Step, Runtime } from "./Runtime";
 import { LValue } from "./LValue";
 

@@ -1,7 +1,8 @@
 import { AstNode } from "./AstNode";
 import { AstFunction } from "./AstFunction";
 import { compile } from "./Parser";
-import { runtimeError, Step, Runtime } from "./Runtime";
+import { Step, Runtime } from "./Runtime";
+import { RuntimeException } from "./Exceptions";
 import { IScope } from "./IScope";
 import { StandardScope } from "./Scopes/StandardScope";
 import { ParameterScope } from "./Scopes/ParameterScope";
@@ -51,8 +52,7 @@ export class AstCallExpression extends AstNode {
 				runtime.pushAction(new Step(func.body));
 			} else {
 				// Throw something heavy
-				console.log("ERROR: Can't call uncallable object", callee);
-				throw runtimeError;
+				throw new RuntimeException("Can't call uncallable object", callee);
 			}
 		}));
 		runtime.pushAction(new Step(this.callee, "Callee Resolution"));

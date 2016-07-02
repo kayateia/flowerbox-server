@@ -18,10 +18,7 @@ import { AstStatements } from "./AstStatements";
 import { AstUpdate } from "./AstUpdate";
 import { AstVarStatement } from "./AstVarStatement";
 import { AstVarDecl } from "./AstVarDecl";
-
-export class ParseException {
-}
-export var parseException: ParseException = new ParseException();
+import { ParseException } from "./Exceptions";
 
 // This is exported primarily for testing.
 export function compile(parseTree: any): AstNode {
@@ -83,8 +80,7 @@ export function compile(parseTree: any): AstNode {
 			result = new AstArray(parseTree);
 			break;
 		default:
-			console.log("Unknown compile() token", parseTree.type, "in", parseTree);
-			throw parseException;
+			throw new ParseException("Unknown compile() token '"+ parseTree.type + "'", parseTree);
 	}
 
 	// console.log("converted", JSON.stringify(parseTree, null, 4), " to ", JSON.stringify(result, null, 4));

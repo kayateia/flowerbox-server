@@ -1,7 +1,8 @@
 import { AstNode } from "./AstNode";
 import { AstIdentifier } from "./AstIdentifier";
 import { compile } from "./Parser";
-import { Step, Runtime, runtimeError } from "./Runtime";
+import { Step, Runtime } from "./Runtime";
+import { RuntimeException } from "./Exceptions";
 import { LValue } from "./LValue";
 import { Utils } from "./Utils";
 import { ObjectWrapper, IObject } from "./Objects";
@@ -27,7 +28,7 @@ export class AstMemberExpression extends AstNode {
 				property = LValue.PopAndDeref(runtime);
 			let iobj: IObject = ObjectWrapper.Wrap(obj);
 			if (!iobj)
-				throw runtimeError;
+				throw new RuntimeException("Can't wrap object for lookup", obj);
 
 			let value;
 			if (this.property)

@@ -2,14 +2,7 @@ import { AstNode } from "./AstNode";
 import { IActionCallback } from "./IActionCallback";
 import { IScope } from "./IScope";
 import { StandardScope } from "./Scopes/StandardScope";
-
-export class SuspendException {
-}
-export var suspend: SuspendException = new SuspendException();
-
-export class RuntimeErrorException {
-}
-export var runtimeError: RuntimeErrorException = new RuntimeErrorException();
+import { SuspendException, RuntimeException } from "./Exceptions";
 
 export class Step {
 	constructor(node: AstNode, name?: string, callback?: IActionCallback, scope?: IScope) {
@@ -92,9 +85,9 @@ export class Runtime {
 			} catch (exc) {
 				if (this._verbose)
 					console.log("EXCEPTION:", exc);
-				if (exc === suspend) {
+				if (exc instanceof SuspendException) {
 					return false;
-				} else if (exc === runtimeError) {
+				} else if (exc instanceof RuntimeException) {
 					throw exc;
 				} else {
 					throw exc;
