@@ -28,13 +28,19 @@ export class AstObject extends AstNode {
 		});
 	}
 
+	public static IsPetalObject(object: any): boolean {
+		return object.___petalObject;
+	}
+
 	public execute(runtime: Runtime): any {
 		runtime.pushAction(Step.Callback("Object constructor", () => {
-			let result = {};
+			// This prevents superclass properties from mixing in.
+			let result = new Object(null);
 			Utils.GetPropertyNames(this.contents).forEach((p) => {
 				let value = LValue.PopAndDeref(runtime);
 				result[p] = value;
 			});
+			result["___petalObject"] = true;
 			runtime.pushOperand(result);
 		}));
 		Utils.GetPropertyNames(this.contents).forEach((i) =>

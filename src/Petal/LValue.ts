@@ -1,4 +1,4 @@
-import { Runtime } from "./Runtime";
+import { runtimeError, Runtime } from "./Runtime";
 
 export interface ILValueReader {
 	(runtime: Runtime): any
@@ -21,6 +21,10 @@ export class LValue {
 
 	public write(runtime: Runtime, value: any): void {
 		this._writer(runtime, value);
+	}
+
+	public static MakeReadOnly(value: any): LValue {
+		return new LValue("Read-only Value", (rt) => value, (rt) => { throw runtimeError });
 	}
 
 	public static IsLValue(value: any): boolean {

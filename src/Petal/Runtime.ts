@@ -33,6 +33,10 @@ export class Step {
 		return new Step(null, name, null, scope);
 	}
 
+	public static Node(name: string, node: AstNode): Step {
+		return new Step(node, name);
+	}
+
 	public execute(runtime: Runtime): void {
 		// console.log("EXECUTING", this._name, ":", this._node);
 		if (this._node)

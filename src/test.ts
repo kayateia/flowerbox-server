@@ -6,7 +6,8 @@ import * as fs from "fs";
 
 //var output = Parser.compileToTree(
 var output = Parser.compileFromSource(
-	"log({ a:5, 'b':'c', d:{ e:1 }, f:[1,2,3] });"
+	"var a = { b:5 }; console.log(a.b); a.b++; console.log(a.b);"
+	// "log({ a:5, 'b':'c', d:{ e:1 }, f:[1,2,3] });"
 	// "var a = 5; log(a < 5 ? 'nope' : 'works'); log(a === 5 ? 'works' : 'nope');"
 	// "var a = 5; a += 5; log(a);"
 	// "function a() { var b = 5; return (function() { log(b++); }); } var c = a(); c(); c();"
@@ -24,12 +25,13 @@ console.log(output);
 
 var runtime = new Runtime.Runtime(true);
 
-runtime.currentScope().set("log", function() {
+var log = function() {
 	let args = [];
 	for (let i=0; i<arguments.length; ++i)
 		args.push(arguments[i]);
 	console.log("LOG OUTPUT:", ...args);
-});
+};
+runtime.currentScope().set("log", log);
 
 runtime.currentScope().set("test", () => {
 	fs.readFile('Gruntfile.js', 'utf8', function (err,data) {
@@ -42,6 +44,10 @@ runtime.currentScope().set("test", () => {
 	});
 	throw Runtime.suspend;
 });
+
+let petalConsole: any = Object.create(null);
+petalConsole.log = log;
+runtime.currentScope().set("console", petalConsole);
 
 runtime.pushAction(new Runtime.Step(output, "Main program"));
 runtime.execute(1000);
