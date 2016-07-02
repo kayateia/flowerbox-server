@@ -6,7 +6,8 @@ import * as fs from "fs";
 
 //var output = Parser.compileToTree(
 var output = Parser.compileFromSource(
-	"var a=2, b=10, c='foo'; log(c); log(test()); log('after');"
+	"function foo(a,b,c) { log(c,b,a); } foo(1,2,3);"
+	// "var a=2, b=10, c='foo'; log(c); log(test()); log('after');"
 	// "for (var i=0; i<10; ++i) { console.log('test', i); }"
 	// "for (var i=0; i < (function () { console.log('inner i=', i); return i >= 10 ? 10 : i += 1 })(); i++) { console.log('i=', i); }"
 	// "function testblob(#a, b, c) { return #a.baz+@cool.bar()+c; } testblob(1,2,'fooz'); (function() { console.log('boo!'); })();"
@@ -16,6 +17,13 @@ var output = Parser.compileFromSource(
 console.log(output);
 
 var runtime = new Runtime.Runtime();
+
+runtime.currentScope().set("log", function() {
+	let args = [];
+	for (let i=0; i<arguments.length; ++i)
+		args.push(arguments[i]);
+	console.log("LOG OUTPUT:", ...args);
+});
 
 runtime.currentScope().set("test", () => {
 	fs.readFile('Gruntfile.js', 'utf8', function (err,data) {

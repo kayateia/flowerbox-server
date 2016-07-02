@@ -1,4 +1,5 @@
 import { IScope } from "../IScope";
+import { Utils } from "./Utils";
 
 export class StandardScope implements IScope {
 	constructor(parent?: IScope) {
@@ -45,14 +46,8 @@ export class StandardScope implements IScope {
 	public names(): string[] {
 		var ours: string[] = this._vars.getOwnPropertyNames();
 
-		if (this._parent) {
-			// This could be a lot more efficient.
-			var theirs = this._parent.names();
-			theirs.forEach((n) => {
-				if (ours.indexOf(n) < 0)
-					ours.push(n);
-			});
-		}
+		if (this._parent)
+			ours = Utils.CombineArraysUniquely(ours, this._parent.names());
 
 		return ours;
 	}

@@ -5,8 +5,11 @@ import { StandardScope } from "./Scopes/StandardScope";
 
 export class SuspendException {
 }
-
 export var suspend: SuspendException = new SuspendException();
+
+export class RuntimeErrorException {
+}
+export var runtimeError: RuntimeErrorException = new RuntimeErrorException();
 
 export class Step {
 	constructor(node: AstNode, name?: string, callback?: IActionCallback, scope?: IScope) {
@@ -24,6 +27,10 @@ export class Step {
 
 	public static Callback(name: string, callback: IActionCallback): Step {
 		return new Step(null, name, callback);
+	}
+
+	public static Scope(name: string, scope: IScope): Step {
+		return new Step(null, name, null, scope);
 	}
 
 	public execute(runtime: Runtime): void {
@@ -60,7 +67,7 @@ export class Step {
 export class Runtime {
 	constructor() {
 		this._pipeline = [];
-		this._scopeStack = [new StandardScope()];
+		this._rootScope = new StandardScope();
 		this._operandStack = [];
 	}
 
@@ -70,13 +77,6 @@ export class Runtime {
 	}
 
 	public execute(steps: number): boolean {
-		this._scopeStack[0].set("log", function() {
-			let args = [];
-			for (let i=0; i<arguments.length; ++i)
-				args.push(arguments[i]);
-			console.log("LOG OUTPUT:", ...args);
-		});
-
 		while (this._pipeline.length && steps--) {
 			let step = this._pipeline.pop();
 			console.log("STEPPOP:", step);
@@ -86,6 +86,8 @@ export class Runtime {
 				console.log("EXCEPTION:", exc);
 				if (exc === suspend) {
 					return false;
+				} else if (exc === runtimeError) {
+					throw exc;
 				}
 			}
 		}
@@ -110,18 +112,14 @@ export class Runtime {
 	}
 
 	public currentScope(): IScope {
-		return this._scopeStack[this._scopeStack.length - 1];
-	}
-
-	public addScope(): void {
-		this._scopeStack.push(new StandardScope(this.currentScope()));
-	}
-
-	public dropScope(): void {
-		this._scopeStack.pop();
+		for (let i=0; i<this._pipeline.length; ++i) {
+			if (this._pipeline[i].scope())
+				return this._pipeline[i].scope();
+		}
+		return this._rootScope;
 	}
 
 	private _pipeline: Step[];
-	private _scopeStack: IScope[];
+	private _rootScope: IScope;
 	private _operandStack: any[];
 }
