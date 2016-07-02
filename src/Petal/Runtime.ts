@@ -3,6 +3,11 @@ import { IActionCallback } from "./IActionCallback";
 import { IScope } from "./IScope";
 import { StandardScope } from "./Scopes/StandardScope";
 
+export class SuspendException {
+}
+
+export var suspend: SuspendException = new SuspendException();
+
 export class Step {
 	constructor(node: AstNode, name?: string, callback?: IActionCallback, scope?: IScope) {
 		this._node = node;
@@ -75,7 +80,14 @@ export class Runtime {
 		while (this._pipeline.length && steps--) {
 			let step = this._pipeline.pop();
 			console.log("STEPPOP:", step);
-			step.execute(this);
+			try {
+				step.execute(this);
+			} catch (exc) {
+				console.log("EXCEPTION:", exc);
+				if (exc === suspend) {
+					return false;
+				}
+			}
 		}
 
 		return true;

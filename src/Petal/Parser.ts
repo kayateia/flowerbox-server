@@ -1,4 +1,4 @@
-///<reference path="../../typings/globals/require/index.d.ts" />
+///<reference path="../../typings/globals/node/index.d.ts" />
 
 import { AstAssignment } from "./AstAssignment";
 import { AstBinaryExpression } from "./AstBinaryExpression";
