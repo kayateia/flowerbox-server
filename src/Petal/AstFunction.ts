@@ -2,6 +2,8 @@ import { AstNode } from "./AstNode";
 import { AstStatements } from "./AstStatements";
 import { compile } from "./Parser";
 import { Runtime } from "./Runtime";
+import { IScope } from "./IScope";
+import { StandardScope } from "./Scopes/StandardScope";
 
 export class AstFunction extends AstNode {
 	constructor(parseTree: any) {
@@ -18,8 +20,15 @@ export class AstFunction extends AstNode {
 
 	// We basically just "execute" like an R-Value, to be set in variables or called directly.
 	public execute(runtime: Runtime): void {
+		// Set a variable with our name if requested.
+		let curScope = runtime.currentScope();
 		if (this.name)
-			runtime.currentScope().set(this.name, this);
+			curScope.set(this.name, this);
+
+		// Make an inner scope linked to the current outer scope for later use.
+		this.scope = new StandardScope(curScope);
+
+		// And push our value on the operand stack.
 		runtime.pushOperand(this);
 	}
 
@@ -27,4 +36,5 @@ export class AstFunction extends AstNode {
 	public name: string;
 	public params: string[];
 	public body: AstStatements;
+	public scope: IScope;
 }

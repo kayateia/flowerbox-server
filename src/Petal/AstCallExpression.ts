@@ -3,6 +3,7 @@ import { AstFunction } from "./AstFunction";
 import { compile } from "./Parser";
 import { runtimeError, Step, Runtime } from "./Runtime";
 import { IScope } from "./IScope";
+import { StandardScope } from "./Scopes/StandardScope";
 import { ParameterScope } from "./Scopes/ParameterScope";
 import { LValue } from "./LValue";
 
@@ -11,6 +12,12 @@ export class AstCallExpression extends AstNode {
 		super(parseTree);
 		this.callee = compile(parseTree.callee);
 		this.param = parseTree.arguments.map(compile);
+	}
+
+	// Unwinds the stack past the current function call invocation, for early return.
+	public static UnwindCurrent(runtime: Runtime): void {
+		runtime.popActionUntil((s: Step) => s.name() !== "Function scope");
+		runtime.popAction();
 	}
 
 	public execute(runtime: Runtime): void {
@@ -26,14 +33,19 @@ export class AstCallExpression extends AstNode {
 				let result = callee(...values);
 				runtime.pushOperand(result);
 			} else if (typeof(callee) == "object" && AstFunction.IsFunction(callee)) {
+
 				// We need to do two things here. The first one is that we need to get the function's
 				// arguments in place, using a function argument scope. Then we need to push the contents
 				// of the function onto the action stack.
 				var func: AstFunction = callee;
-				var scope: IScope = new ParameterScope(runtime.currentScope(), func.params);
+				runtime.pushAction(Step.Scope("Function scope", func.scope));
+
+				var scope: IScope = new ParameterScope(func.scope, func.params);
 				scope.set("arguments", values);
-				for (let i=0; i<func.params.length && i<values.length; ++i)
+				for (let i=0; i<func.params.length && i<values.length; ++i) {
+					console.log("Setting", func.params[i], "to", values[i]);
 					scope.set(func.params[i], values[i]);
+				}
 
 				runtime.pushAction(Step.Scope("Parameter scope", scope));
 				runtime.pushAction(new Step(func.body));

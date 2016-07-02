@@ -102,12 +102,27 @@ export class Runtime {
 	}
 
 	public popAction(): Step {
+		if (this._verbose)
+			console.log("STEPPOPONE:", this._pipeline[this._pipeline.length - 1]);
 		return this._pipeline.pop();
 	}
 
+	// Pops actions until the function returns false.
 	public popActionUntil(unwinder: (Step) => boolean): void {
-		while (this._pipeline.length && unwinder(this._pipeline[this._pipeline.length - 1]))
-			this._pipeline.pop();
+		while (this._pipeline.length && unwinder(this._pipeline[this._pipeline.length - 1])) {
+			let popped = this._pipeline.pop();
+			if (this._verbose)
+				console.log("STEPPOPPING:", popped);
+		}
+	}
+
+	public printActionStack(): void {
+		console.log("");
+		console.log("BEGIN ACTION STACK DUMP");
+		for (let i=0; i<this._pipeline.length; ++i)
+			console.log(this._pipeline[i]);
+		console.log("END ACTION STACK DUMP");
+		console.log("");
 	}
 
 	public pushOperand(val: any): void {
@@ -130,7 +145,7 @@ export class Runtime {
 	}
 
 	public currentScope(): IScope {
-		for (let i=0; i<this._pipeline.length; ++i) {
+		for (let i=this._pipeline.length - 1; i>=0; --i) {
 			if (this._pipeline[i].scope())
 				return this._pipeline[i].scope();
 		}
