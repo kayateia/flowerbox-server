@@ -1,5 +1,4 @@
 import { AstNode } from "./AstNode";
-import { IActionCallback } from "./IActionCallback";
 import { compile } from "./Parser";
 import { Step, Runtime } from "./Runtime";
 
@@ -10,13 +9,9 @@ export class AstStatement extends AstNode {
 			this.statement = compile(parseTree.expression);
 	}
 
-	public execute(runtime: Runtime, callback: IActionCallback): void {
+	public execute(runtime: Runtime): void {
 		if (this.statement)
-			runtime.pushAction(new Step(this.statement, "Statement", callback));
-		else {
-			if (callback)
-				callback(runtime);
-		}
+			runtime.pushAction(new Step(this.statement, "Statement"));
 	}
 
 	public what: string = "Statement";

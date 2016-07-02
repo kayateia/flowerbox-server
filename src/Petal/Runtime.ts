@@ -23,16 +23,11 @@ export class Step {
 
 	public execute(runtime: Runtime): void {
 		console.log("EXECUTING", this._name, ":", this._node);
-		if (this._node) {
-			this._node.execute(runtime, (result: any) => {
-				console.log("RESULT", this._name, ":", result);
-				if (this._callback)
-					this._callback(result);
-			});
-		} else {
-			if (this._callback)
-				this._callback(this);
-		}
+		if (this._node)
+			this._node.execute(runtime);
+
+		if (this._callback)
+			this._callback(this);
 	}
 
 	public node(): AstNode {

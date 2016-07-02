@@ -1,5 +1,4 @@
 import { AstNode } from "./AstNode";
-import { IActionCallback } from "./IActionCallback";
 import { compile } from "./Parser";
 
 export class AstLiteral extends AstNode {
@@ -8,10 +7,8 @@ export class AstLiteral extends AstNode {
 		this.value = parseTree.value;
 	}
 
-	public execute(runtime: any, callback: IActionCallback): any {
+	public execute(runtime: any): any {
 		runtime.pushOperand(this.value);
-		if (callback)
-			callback(runtime);
 	}
 
 	public what: string = "Literal";

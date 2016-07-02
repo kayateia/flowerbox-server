@@ -13,8 +13,6 @@ var output = Parser.compileFromSource(
 console.log(output);
 
 var runtime = new Runtime();
-runtime.pushAction(new Step(output, "Main program", (val: any) => {
-	console.log("Output value:", val);
-	console.log("Output scope:", runtime.currentScope());
-}));
+runtime.pushAction(new Step(output, "Main program"));
 runtime.execute(1000);
+console.log("Output scope:", runtime.currentScope());

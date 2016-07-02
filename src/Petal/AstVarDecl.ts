@@ -1,5 +1,4 @@
 import { AstNode } from "./AstNode";
-import { IActionCallback } from "./IActionCallback";
 import { compile } from "./Parser";
 import { Step, Runtime } from "./Runtime";
 
@@ -11,7 +10,7 @@ export class AstVarDecl extends AstNode {
 			this.init = compile(parseTree.init);
 	}
 
-	public execute(runtime: Runtime, callback: IActionCallback): void {
+	public execute(runtime: Runtime): void {
 		runtime.pushAction(new Step(null, "Var assignment for " + this.name, (val) => {
 			let opval: any;
 			if (this.init) {
@@ -19,9 +18,6 @@ export class AstVarDecl extends AstNode {
 			}
 
 			runtime.currentScope().set(this.name, opval);
-
-			if (callback)
-				callback(runtime);
 		}));
 		if (this.init)
 			runtime.pushAction(new Step(this.init, "Var decl init value"));

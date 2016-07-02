@@ -1,5 +1,4 @@
 import { AstNode } from "./AstNode";
-import { IActionCallback } from "./IActionCallback";
 import { compile } from "./Parser";
 import { Step, Runtime } from "./Runtime";
 
@@ -10,7 +9,7 @@ export class AstCallExpression extends AstNode {
 		this.param = parseTree.arguments.map(compile);
 	}
 
-	public execute(runtime: Runtime, callback: IActionCallback): void {
+	public execute(runtime: Runtime): void {
 		runtime.pushAction(Step.Callback("Function execution", (v) => {
 			let callee = runtime.popOperand();
 			let values = [];
@@ -18,8 +17,6 @@ export class AstCallExpression extends AstNode {
 				values.push(runtime.popOperand());
 			let result = callee(...values);
 			runtime.pushOperand(result);
-			if (callback)
-				callback(runtime);
 		}));
 		runtime.pushAction(new Step(this.callee, "Callee Resolution"));
 		this.param.forEach((p: AstNode) => {
