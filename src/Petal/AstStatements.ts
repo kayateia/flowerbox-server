@@ -1,6 +1,7 @@
-import { AstNode, ResultCallback } from "./AstNode";
+import { AstNode } from "./AstNode";
+import { IActionCallback } from "./IActionCallback";
 import { compile } from "./Parser";
-import { Runtime } from "./Runtime";
+import { Step, Runtime } from "./Runtime";
 
 export class AstStatements extends AstNode {
 	constructor(parseTree: any) {
@@ -8,12 +9,19 @@ export class AstStatements extends AstNode {
 		this.body = parseTree.body.map(compile);
 	}
 
-	public execute(runtime: Runtime, callback: ResultCallback): void {
-		for (let i=0; i<this.body.length; ++i) {
-			if (i < this.body.length - 1)
-				runtime.addStep(this.body[i], null);
-			else
-				runtime.addStep(this.body[i], callback);
+	public execute(runtime: Runtime, callback: IActionCallback): void {
+		if (this.body.length) {
+			runtime.pushAction(Step.ClearOperands(runtime));
+			runtime.pushAction(new Step(this.body[this.body.length - 1], null, callback));
+			if (this.body.length > 1) {
+				for (let i=this.body.length - 2; i>=0; --i) {
+					runtime.pushAction(Step.ClearOperands(runtime));
+					runtime.pushAction(new Step(this.body[i]));
+				}
+			}
+		} else {
+			if (callback)
+				callback(runtime);
 		}
 	}
 

@@ -14,7 +14,7 @@ import { AstReturn } from "./AstReturn";
 import { AstStatement } from "./AstStatement";
 import { AstStatements } from "./AstStatements";
 import { AstUpdate } from "./AstUpdate";
-import { AstVar } from "./AstVar";
+import { AstVarStatement } from "./AstVarStatement";
 import { AstVarDecl } from "./AstVarDecl";
 
 // This is exported primarily for testing.
@@ -53,7 +53,7 @@ export function compile(parseTree: any): AstNode {
 			result = new AstLiteral(parseTree);
 			break;
 		case "VariableDeclaration":
-			result = new AstVar(parseTree);
+			result = new AstVarStatement(parseTree);
 			break;
 		case "VariableDeclarator":
 			result = new AstVarDecl(parseTree);
