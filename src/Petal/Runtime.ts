@@ -34,7 +34,7 @@ export class Step {
 	}
 
 	public execute(runtime: Runtime): void {
-		console.log("EXECUTING", this._name, ":", this._node);
+		// console.log("EXECUTING", this._name, ":", this._node);
 		if (this._node)
 			this._node.execute(runtime);
 
@@ -65,25 +65,29 @@ export class Step {
 }
 
 export class Runtime {
-	constructor() {
+	constructor(verbose?: boolean) {
 		this._pipeline = [];
 		this._rootScope = new StandardScope();
 		this._operandStack = [];
+		this._verbose = verbose;
 	}
 
 	public pushAction(step: Step): void {
-		console.log("STEPPUSH", step.name(), ":", step.node());
+		if (this._verbose)
+			console.log("STEPPUSH", step.name(), ":", step.node());
 		this._pipeline.push(step);
 	}
 
 	public execute(steps: number): boolean {
 		while (this._pipeline.length && steps--) {
 			let step = this._pipeline.pop();
-			console.log("STEPPOP:", step);
+			if (this._verbose)
+				console.log("STEPPOP:", step);
 			try {
 				step.execute(this);
 			} catch (exc) {
-				console.log("EXCEPTION:", exc);
+				if (this._verbose)
+					console.log("EXCEPTION:", exc);
 				if (exc === suspend) {
 					return false;
 				} else if (exc === runtimeError) {
@@ -107,18 +111,21 @@ export class Runtime {
 	}
 
 	public pushOperand(val: any): void {
-		console.log("OPPUSH:", val);
+		if (this._verbose)
+			console.log("OPPUSH:", val);
 		this._operandStack.push(val);
 	}
 
 	public popOperand(): any {
 		let val = this._operandStack.pop();
-		console.log("OPPOP:", val);
+		if (this._verbose)
+			console.log("OPPOP:", val);
 		return val;
 	}
 
 	public clearOperand(): void {
-		console.log("OPCLEAR");
+		if (this._verbose)
+			console.log("OPCLEAR");
 		this._operandStack = [];
 	}
 
@@ -133,4 +140,5 @@ export class Runtime {
 	private _pipeline: Step[];
 	private _rootScope: IScope;
 	private _operandStack: any[];
+	private _verbose: boolean;
 }

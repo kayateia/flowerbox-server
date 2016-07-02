@@ -18,7 +18,7 @@ var output = Parser.compileFromSource(
 
 console.log(output);
 
-var runtime = new Runtime.Runtime();
+var runtime = new Runtime.Runtime(true);
 
 runtime.currentScope().set("log", function() {
 	let args = [];
