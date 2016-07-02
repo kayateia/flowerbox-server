@@ -19,13 +19,12 @@ I'll be filling out more of this later.
 There isn't much here for end users or admins yet, but you can start 
 playing with the code if you want. You need to do the following:
 
-```npm install -g typescript
-npm install -g typings
-npm install
-typings install
-grunt
-tsc
-```
+     npm install -g typescript
+     npm install -g typings
+     npm install
+     typings install
+     grunt
+     tsc
 
 That should build the project. For future hacking on the code, you only 
 need to run grunt if you want to update the pegjs grammar. Use tsc or 
