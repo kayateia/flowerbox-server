@@ -33,5 +33,7 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks("grunt-newer");
 	grunt.loadNpmTasks("grunt-contrib-watch");
 
-	grunt.registerTask("default", ["newer:exec:gen_grammar", "typescript"]);
+	// TypeScript compilation isn't working in Grunt for some reason.
+	// Use 'tsc' or an auto-compiling editor.
+	grunt.registerTask("default", ["newer:exec:gen_grammar"/*, "typescript"*/]);
 };
