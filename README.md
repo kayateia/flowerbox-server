@@ -13,6 +13,10 @@ principles).
 
 I'll be filling out more of this later.
 
+The code is licensed under the GPLv3 currently. Some parts of it might
+eventually be pulled out (like Petal) so if you want to contribute, we
+should talk about that.
+
 
 ### How to get started?
 

@@ -1,3 +1,9 @@
+/*
+	Flowerbox
+	Copyright (C) 2016 Kayateia
+	For license info, please see notes/gpl-3.0.txt under the project root.
+*/
+
 // Used from within callbacks to cause the interpreter to suspend its execution and return.
 export class SuspendException {
 }

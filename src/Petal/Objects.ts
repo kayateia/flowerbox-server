@@ -1,3 +1,9 @@
+/*
+	Flowerbox
+	Copyright (C) 2016 Kayateia
+	For license info, please see notes/gpl-3.0.txt under the project root.
+*/
+
 // We have a couple of different cases here: numbers, strings, Petal objects,
 // Petal arrays, JavaScript objects, JavaScript arrays, "native" objects.
 // Each one needs special handling depending on what it is, because we can't
