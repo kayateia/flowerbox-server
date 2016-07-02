@@ -1,5 +1,6 @@
 ///<reference path="../../typings/globals/node/index.d.ts" />
 
+import { AstArray } from "./AstArray";
 import { AstAssignment } from "./AstAssignment";
 import { AstBinaryExpression } from "./AstBinaryExpression";
 import { AstCallExpression } from "./AstCallExpression";
@@ -10,6 +11,7 @@ import { AstIdentifier } from "./AstIdentifier";
 import { AstLiteral } from "./AstLiteral";
 import { AstMemberExpression } from "./AstMemberExpression";
 import { AstNode } from "./AstNode";
+import { AstObject } from "./AstObject";
 import { AstReturn } from "./AstReturn";
 import { AstStatement } from "./AstStatement";
 import { AstStatements } from "./AstStatements";
@@ -73,6 +75,12 @@ export function compile(parseTree: any): AstNode {
 			break;
 		case "UpdateExpression":
 			result = new AstUpdate(parseTree);
+			break;
+		case "ObjectExpression":
+			result = new AstObject(parseTree);
+			break;
+		case "ArrayExpression":
+			result = new AstArray(parseTree);
 			break;
 		default:
 			console.log("Unknown compile() token", parseTree.type, "in", parseTree);

@@ -1,6 +1,6 @@
 import { StandardScope } from "./StandardScope";
 import { IScope } from "../IScope";
-import { Utils } from "./Utils";
+import { Utils } from "../Utils";
 
 export class ParameterScope implements IScope {
 	constructor(parent: IScope, parameters: string[]) {

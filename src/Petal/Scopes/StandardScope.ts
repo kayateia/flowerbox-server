@@ -1,5 +1,5 @@
 import { IScope } from "../IScope";
-import { Utils } from "./Utils";
+import { Utils } from "../Utils";
 
 export class StandardScope implements IScope {
 	constructor(parent?: IScope) {
@@ -44,7 +44,7 @@ export class StandardScope implements IScope {
 	}
 
 	public names(): string[] {
-		var ours: string[] = this._vars.getOwnPropertyNames();
+		var ours: string[] = Utils.GetPropertyNames(this._vars);
 
 		if (this._parent)
 			ours = Utils.CombineArraysUniquely(ours, this._parent.names());
