@@ -14,7 +14,7 @@ import { runtimeError, Runtime } from "./Runtime";
 
 //
 export interface IObject {
-	getAccessor(name: string): LValue;
+	getAccessor(index: any): LValue;
 }
 
 export class ObjectWrapper {
@@ -34,7 +34,7 @@ export class ObjectWrapper {
 				if (item instanceof Array)
 					return ObjectWrapper.WrapGeneric(item, ["copyWithin", "fill", "pop", "push", "reverse", "shift",
 						"sort", "splice", "unshift",
-						"concat", "join", "slice", "toString", "indexOf", "lastIndexOf"]);
+						"concat", "join", "slice", "toString", "indexOf", "lastIndexOf"], true);
 
 				// What's left are other generic objects. We allow read-only access to these as a convenience.
 				// These should always be created using new Object(null).
@@ -55,13 +55,20 @@ export class ObjectWrapper {
 	}
 
 	// Generically wraps a native object, allowing only the whitelisted members to be accessed
-	// in a read-only manner.
-	public static WrapGeneric(item: any, names: string[]): IObject {
+	// in a read-only manner. If allowNumeric is true, then numeric "members" can also be accessed
+	// in a read-write manner. This is for array support.
+	public static WrapGeneric(item: any, names: string[], allowNumeric?: boolean): IObject {
 		return {
-			getAccessor: function(name: string): LValue {
-				if (name in names)
+			getAccessor: function(name: any): LValue {
+				if (typeof(name) === "string" && name in names)
 					return LValue.MakeReadOnly(item[name]);
-				else
+				else if (allowNumeric && typeof(name) === "number") {
+					return new LValue("Array access", (runtime: Runtime): any => {
+						return item[name];
+					}, (runtime: Runtime, value: any): void => {
+						item[name] = value;
+					});
+				} else
 					return null;
 			}
 		};
@@ -69,7 +76,10 @@ export class ObjectWrapper {
 
 	public static WrapPetalObject(item: any): IObject {
 		return {
-			getAccessor: function(name: string): LValue {
+			getAccessor: function(name: any): LValue {
+				if (typeof(name) !== "string")
+					throw runtimeError;
+
 				if (name.substr(0, 3) === "___")
 					throw runtimeError;
 

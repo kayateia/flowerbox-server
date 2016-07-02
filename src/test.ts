@@ -6,7 +6,8 @@ import * as fs from "fs";
 
 //var output = Parser.compileToTree(
 var output = Parser.compileFromSource(
-	"var a = { b:5 }; console.log(a.b); a.b++; console.log(a.b);"
+	"var a = [1,2,3]; console.log(a[1], a.indexOf, a['indexOf']);"
+	// "var a = { b:5 }; console.log(a.b); a.b++; console.log(a.b);"
 	// "log({ a:5, 'b':'c', d:{ e:1 }, f:[1,2,3] });"
 	// "var a = 5; log(a < 5 ? 'nope' : 'works'); log(a === 5 ? 'works' : 'nope');"
 	// "var a = 5; a += 5; log(a);"
