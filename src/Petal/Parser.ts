@@ -71,6 +71,7 @@ export function compile(parseTree: any): AstNode {
 			result = new AstFor(parseTree);
 			break;
 		case "ConditionalExpression":
+		case "IfStatement":
 			result = new AstConditional(parseTree);
 			break;
 		case "AssignmentExpression":

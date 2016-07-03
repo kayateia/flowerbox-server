@@ -14,16 +14,21 @@ export class AstConditional extends AstNode {
 		super(parseTree);
 		this.test = compile(parseTree.test);
 		this.result = compile(parseTree.consequent);
-		this.alternate = compile(parseTree.alternate);
+		if (parseTree.alternate)
+			this.alternate = compile(parseTree.alternate);
+		this.statement = parseTree.type === "IfStatement";
 	}
 
 	public execute(runtime: Runtime): void {
 		runtime.pushAction(Step.Callback("Conditional", () => {
 			let result = LValue.PopAndDeref(runtime);
 
+			if (this.statement)
+				runtime.pushAction(Step.ClearOperands(runtime));
+
 			if (result)
 				runtime.pushAction(new Step(this.result, "Conditional result"));
-			else
+			else if (this.alternate)
 				runtime.pushAction(new Step(this.alternate, "Conditional alternate"));
 		}));
 		runtime.pushAction(new Step(this.test, "Conditional test"));
@@ -33,4 +38,5 @@ export class AstConditional extends AstNode {
 	public test: AstNode;
 	public result: AstNode;
 	public alternate: AstNode;
+	public statement: boolean;
 }
