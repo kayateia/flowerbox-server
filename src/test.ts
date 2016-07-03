@@ -6,6 +6,7 @@
 
 ///<reference path="../typings/globals/node/index.d.ts" />
 
+/*
 import * as Parser from "./Petal/Parser";
 import * as Runtime from "./Petal/Runtime";
 import { SuspendException } from "./Petal/Exceptions";
@@ -61,3 +62,16 @@ runtime.currentScope().set("console", petalConsole);
 runtime.pushAction(new Runtime.Step(output, "Main program"));
 runtime.execute(1000);
 console.log("Output scope:", runtime.currentScope());
+*/
+
+import { Verb, Wob } from "./World/Wob";
+import { World } from "./World/World";
+
+let world = new World();
+let root = world.getWob(1);
+root.setProperty("arbitrary", [1, 2, 3]);
+
+let verb = new Verb("console.log('hello!');");
+root.setVerb("test", verb);
+
+console.log(JSON.stringify(world, null, 4));
