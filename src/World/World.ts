@@ -6,6 +6,7 @@
 
 import { WobReferenceException } from "./Exceptions";
 import { Wob, WobProperties } from "./Wob";
+import { Verb } from "./Verb";
 
 // Zaa Warudo
 export class World {
@@ -19,16 +20,50 @@ export class World {
 
 	public createDefault(): void {
 		// This will create #1. It is the root object.
-		let wob = this.createWob();
-		wob.setProperty(WobProperties.Name, "Zaa Warudo");
-		wob.setProperty(WobProperties.GlobalId, "world");
-		wob.setProperty(WobProperties.Description, "This is an endless void existing outside of all other reality.");
+		let wob1 = this.createWob();
+		wob1.setProperty(WobProperties.Name, "Zaa Warudo");
+		wob1.setProperty(WobProperties.GlobalId, "world");
+		wob1.setProperty(WobProperties.Description, "This is an endless void existing outside of all other reality.");
+
+		let wobPlayer = this.createWob();
+		wobPlayer.setProperty(WobProperties.Name, "Player");
+		wobPlayer.setProperty(WobProperties.Description, "A blank shape that says MY BURAZAA on it");
+		wob1.addContent(wobPlayer);
+
+		let wobRoom = this.createWob();
+		wobRoom.setProperty(WobProperties.Name, "Room");
+		wobRoom.setProperty(WobProperties.Description, "A featureless room");
+		wob1.addContent(wobRoom);
+
+		let wobHammer = this.createWob();
+		wobHammer.setProperty(WobProperties.Name, "Hammer");
+		wob1.addContent(wobHammer);
+		wobHammer.setVerb("throw", new Verb("//# throw self at any\nfunction foo() {}"));
+		wobHammer.setVerb("use", new Verb("//# use self on any\nfunction foo() {}"));
+
+		let wobTeacup = this.createWob();
+		wobTeacup.setProperty(WobProperties.Name, "Teacup");
+		wob1.addContent(wobTeacup);
+		wobTeacup.setVerb("drink", new Verb("//# drink none from self\nfunction foo() {}"));
+		wobTeacup.setVerb("drop", new Verb("//# drop self\nfunction foo() {}"));
+
+		let wobDog = this.createWob();
+		wobDog.setProperty(WobProperties.Name, "Dog who was put in a kennel");
+		wob1.addContent(wobDog);
+		wobDog.setVerb("release", new Verb("//# release self\nfunction foo() {}"));
+		wobDog.setVerb("put", new Verb("//# put self in any\nfunction foo() {}"));
+
+		let wobPerson = this.createWob();
+		wobPerson.setProperty(WobProperties.Name, "Human person");
+		wobPerson.setProperty(WobProperties.GlobalId, "human");
+		wobRoom.addContent(wobPerson);
+		wobPerson.setVerb("pet", new Verb("//# pet self\nfunction foo() {}"));
 	}
 
 	public createWob(container?: number): Wob {
 		// Make the object.
 		let wob = new Wob(this._nextId++);
-		this._wobCache[wob.id] = wob;
+		this._wobCache.set(wob.id, wob);
 
 		// If there's a container specified, place the object into the container.
 		if (container) {
@@ -42,11 +77,36 @@ export class World {
 		return wob;
 	}
 
-	public getWob(id: number): Wob {
-		// For now, we only support the in-memory cache.
-		return this._wobCache[id];
+	public async getWob(id: number): Promise<Wob> {
+		return new Promise<Wob>((success, fail) => {
+			// For now, we only support the in-memory cache.
+			success(this._wobCache.get(id));
+		});
+	}
+
+	// Eventually this will be the one to prefer using if you need more than one object,
+	// because it can optimize its SQL queries as needed.
+	public getWobs(ids: number[]): Promise<Wob[]> {
+		return new Promise<Wob[]>((success, fail) => {
+			success(ids.map((id) => this._wobCache.get(id)));
+		});
+	}
+
+	public getWobsByGlobalId(ids: string[]): Promise<Wob[]> {
+		return new Promise<Wob[]>((success, fail) => {
+			success([...this._wobCache.values()].filter((w) => stringIn(w.getProperty(WobProperties.GlobalId), ids)));
+			// success([]);
+		});
 	}
 
 	private _nextId: number;
 	private _wobCache: Map<number, Wob>;
+}
+
+// For some reason, "in" doesn't work on strings.
+function stringIn(str: string, arr: string[]): boolean {
+	for (var s of arr)
+		if (s === str)
+			return true;
+	return false;
 }

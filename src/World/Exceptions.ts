@@ -23,3 +23,13 @@ export class WobOperationException {
 	public cause: string;
 	public ids: number[];
 }
+
+export class LanguageParseException {
+	constructor(cause: string, value: string) {
+		this.cause = cause;
+		this.value = value;
+	}
+
+	public cause: string;
+	public value: string;
+}

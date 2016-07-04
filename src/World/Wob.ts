@@ -4,32 +4,13 @@
 	For license info, please see notes/gpl-3.0.txt under the project root.
 */
 
-import * as Petal from "../Petal/Petal";
 import { WobOperationException } from "./Exceptions";
+import { Verb } from "./Verb";
 
 // When a wob wants to reference another wob in its properties, one of these should be used.
 export class WobRef {
 	constructor(id: number) {
 	}
-}
-
-export class Verb {
-	constructor(text: string) {
-		this._text = text;
-		this._compiled = Petal.compileFromSource(text);
-	}
-
-	public get text(): string {
-		return this._text;
-	}
-
-	public set text(v: string) {
-		this._compiled = Petal.compileFromSource(v);
-		this._text = v;
-	}
-
-	private _text: string;
-	private _compiled: Petal.AstNode;
 }
 
 // Some well-defined properties.
@@ -114,15 +95,20 @@ export class Wob {
 	// IMPORTANT NOTE: Don't just getVerb() and modify the Verb object. This will
 	// not set the dirty and last use flags. Instead, modify the Verb and then call
 	// setVerb() with it.
-	public getVerb(name: string): any {
+	public getVerb(name: string): Verb {
 		this.updateLastUse();
-		return this._verbs[name];
+		return this._verbs.get(name);
+	}
+
+	public getVerbs(): Verb[] {
+		this.updateLastUse();
+		return [...this._verbs.values()];
 	}
 
 	public setVerb(name: string, value: Verb): void {
 		this.updateLastUse();
 		this._dirty = true;
-		this._verbs[name] = value;
+		this._verbs.set(name, value);
 	}
 
 
