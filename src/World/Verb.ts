@@ -9,8 +9,13 @@ import { World } from "./World";
 import { LanguageParseException } from "./Exceptions";
 
 export class Verb {
-	constructor(text: string) {
+	constructor(verb: string, text: string) {
+		this._verb = verb;
 		this.text = text;
+	}
+
+	public get verb(): string {
+		return this._verb;
 	}
 
 	public get text(): string {
@@ -49,6 +54,7 @@ export class Verb {
 		this._signatures = newSigs;
 	}
 
+	private _verb: string;
 	private _text: string;
 	private _compiled: Petal.AstNode;
 	private _signatures: VerbSig[];

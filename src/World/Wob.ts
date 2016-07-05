@@ -7,6 +7,7 @@
 import { WobOperationException } from "./Exceptions";
 import { Verb } from "./Verb";
 import { CaseMap } from "../Strings";
+import { World } from "./World";
 
 // When a wob wants to reference another wob in its properties, one of these should be used.
 export class WobRef {
@@ -77,9 +78,34 @@ export class Wob {
 		return [...this._properties.keys()];
 	}
 
+	// This version searches up the inheritance chain for answers.
+	public async getPropertyNamesI(world: World): Promise<string[]> {
+		let ourProps = this.getPropertyNames();
+		if (this.base) {
+			let baseWob = await world.getWob(this.base);
+			let baseProps = await baseWob.getPropertyNamesI(world);
+			ourProps.push(...baseProps);
+		}
+
+		return ourProps;
+	}
+
 	public getProperty(name: string): any {
 		this.updateLastUse();
 		return this._properties.get(name);
+	}
+
+	// This version searches up the inheritance chain for answers.
+	public async getPropertyI(name: string, world: World): Promise<any> {
+		let ours = this._properties.get(name);
+		if (ours)
+			return ours;
+
+		if (this.base) {
+			let baseWob = await world.getWob(this.base);
+			return baseWob.getPropertyI(name, world);
+		} else
+			return null;
 	}
 
 	public setProperty(name: string, value: any): void {
@@ -93,6 +119,12 @@ export class Wob {
 		return [...this._verbs.keys()];
 	}
 
+	// This version searches up the inheritance chain for answers.
+	public async getVerbNamesI(world: World): Promise<string[]> {
+		let allVerbs = await this.getVerbsI(world);
+		return allVerbs.map(v => v.verb);
+	}
+
 	// IMPORTANT NOTE: Don't just getVerb() and modify the Verb object. This will
 	// not set the dirty and last use flags. Instead, modify the Verb and then call
 	// setVerb() with it.
@@ -101,9 +133,34 @@ export class Wob {
 		return this._verbs.get(name);
 	}
 
+	// This version searches up the inheritance chain for answers.
+	public async getVerbI(name: string, world: World): Promise<Verb> {
+		let ours = this._verbs.get(name);
+		if (ours)
+			return ours;
+
+		if (this.base) {
+			let baseWob = await world.getWob(this.base);
+			return baseWob.getVerbI(name, world);
+		} else
+			return null;
+	}
+
 	public getVerbs(): Verb[] {
 		this.updateLastUse();
 		return [...this._verbs.values()];
+	}
+
+	// This version searches up the inheritance chain for answers.
+	public async getVerbsI(world: World): Promise<Verb[]> {
+		let ourVerbs = this.getVerbs();
+		if (this.base) {
+			let baseWob = await world.getWob(this.base);
+			let baseVerbs = await baseWob.getVerbsI(world);
+			ourVerbs.push(...baseVerbs);
+		}
+
+		return ourVerbs;
 	}
 
 	public setVerb(name: string, value: Verb): void {

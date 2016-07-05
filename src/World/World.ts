@@ -29,7 +29,14 @@ export class World {
 		let wobPlayer = this.createWob();
 		wobPlayer.setProperty(WobProperties.Name, "Player");
 		wobPlayer.setProperty(WobProperties.Description, "A blank shape that says MY BURAZAA on it");
+		wobPlayer.setVerb("poke", new Verb("poke", "//# poke self\nfunction verb_poke() { $.log('poked!'); }"));
 		wob1.addContent(wobPlayer);
+
+		let wobKaya = this.createWob();
+		wobKaya.base = wobPlayer.id;
+		wobKaya.setProperty(WobProperties.Name, "Kayateia");
+		wobKaya.setProperty(WobProperties.Description, "A hacker girl stares at you from a hooded gaze...");
+		wob1.addContent(wobKaya);
 
 		let wobRoom = this.createWob();
 		wobRoom.setProperty(WobProperties.Name, "Room");
@@ -39,26 +46,26 @@ export class World {
 		let wobHammer = this.createWob();
 		wobHammer.setProperty(WobProperties.Name, "Hammer");
 		wob1.addContent(wobHammer);
-		wobHammer.setVerb("throw", new Verb("//# throw self at any\nfunction verb_throw() {}"));
-		wobHammer.setVerb("use", new Verb("//# use self on any\nfunction verb_use() {}"));
+		wobHammer.setVerb("throw", new Verb("throw", "//# throw self at any\nfunction verb_throw() {}"));
+		wobHammer.setVerb("use", new Verb("use", "//# use self on any\nfunction verb_use() {}"));
 
 		let wobTeacup = this.createWob();
 		wobTeacup.setProperty(WobProperties.Name, "Teacup");
 		wob1.addContent(wobTeacup);
-		wobTeacup.setVerb("drink", new Verb("//# drink none from self\nfunction verb_drink() {}"));
-		wobTeacup.setVerb("drop", new Verb("//# drop self\nfunction verb_drop() {}"));
+		wobTeacup.setVerb("drink", new Verb("drink", "//# drink none from self\nfunction verb_drink() {}"));
+		wobTeacup.setVerb("drop", new Verb("drop", "//# drop self\nfunction verb_drop() {}"));
 
 		let wobDog = this.createWob();
 		wobDog.setProperty(WobProperties.Name, "Dog who was put in a kennel");
 		wob1.addContent(wobDog);
-		wobDog.setVerb("release", new Verb("//# release self\nfunction verb_release() { $.log('Thank you for releasing me,', $env.caller.name, '!'); }"));
-		wobDog.setVerb("put", new Verb("//# put self in any\nfunction verb_put() { $.log('Noooes,', $env.caller.name, ', why did you put me in the',$env.indirect.name,'?'); }"));
+		wobDog.setVerb("release", new Verb("release", "//# release self\nfunction verb_release() { $.log('Thank you for releasing me,', $env.caller.name, '!'); }"));
+		wobDog.setVerb("put", new Verb("put", "//# put self in any\nfunction verb_put() { $.log('Noooes,', $env.caller.name, ', why did you put me in the',$env.indirect.name,'?'); }"));
 
 		let wobPerson = this.createWob();
 		wobPerson.setProperty(WobProperties.Name, "Human person");
 		wobPerson.setProperty(WobProperties.GlobalId, "human");
 		wobRoom.addContent(wobPerson);
-		wobPerson.setVerb("pet", new Verb("//# pet self\nfunction verb_pet() { $.log('Ahhh!!'); }"));
+		wobPerson.setVerb("pet", new Verb("pet", "//# pet self\nfunction verb_pet() { $.log('Ahhh!!'); }"));
 	}
 
 	public createWob(container?: number): Wob {

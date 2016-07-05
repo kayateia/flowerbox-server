@@ -77,11 +77,12 @@ export class ReMatch {
 	public verb: Verb;
 }
 
-function parseVerbLines(obj: Wob, roomObjects: Wob[], extras: string[], selfRef?: string): ReMatch[] {
+async function parseVerbLines(world: World, obj: Wob, roomObjects: Wob[], extras: string[], selfRef?: string): Promise<ReMatch[]> {
 	let parsedLines: ReMatch[] = [];
 	if (!selfRef)
 		selfRef = obj.getProperty(WobProperties.Name);
-	obj.getVerbs().forEach((v) => {
+	let allVerbs = await obj.getVerbsI(world);
+	allVerbs.forEach((v) => {
 		v.signatures.forEach((parsed) => {
 			let re = "^(" + parsed.verb + ")";
 			if (parsed.dobj) {
@@ -192,15 +193,12 @@ export async function parseInput(text: string, self: Wob, world: World): Promise
 	let extras: string[] = [];
 	miscWobsAt.forEach(w => { extras.push("@" + w.getProperty(WobProperties.GlobalId)); });
 	miscWobsHash.forEach(w => { extras.push("#" + w.id); });
-	roomContents.forEach((w) => {
-		verbLines.push(...parseVerbLines(w, roomContents, extras));
-	});
-	miscWobsAt.forEach((w) => {
-		verbLines.push(...parseVerbLines(w, roomContents, extras, "@" + w.getProperty(WobProperties.GlobalId)));
-	});
-	miscWobsHash.forEach((w) => {
-		verbLines.push(...parseVerbLines(w, roomContents, extras, "#" + w.id));
-	});
+	for (let w of roomContents)
+		verbLines.push(...await parseVerbLines(world, w, roomContents, extras));
+	for (let w of miscWobsAt)
+		verbLines.push(...await parseVerbLines(world, w, roomContents, extras, "@" + w.getProperty(WobProperties.GlobalId)));
+	for (let w of miscWobsHash)
+		verbLines.push(...await parseVerbLines(world, w, roomContents, extras, "#" + w.id));
 
 	let matches: any[] = [];
 	for (let i=0; i<verbLines.length; ++i) {
