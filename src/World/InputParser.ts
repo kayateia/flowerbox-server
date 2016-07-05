@@ -1,6 +1,6 @@
 /*
 	Flowerbox
-	Copyright (C) 2016 Kayateia
+	Copyright (C) 2016 Kayateia, Dove
 	For license info, please see notes/gpl-3.0.txt under the project root.
 */
 
@@ -77,7 +77,7 @@ export class ReMatch {
 	public verb: Verb;
 }
 
-function parseVerbLines(obj: Wob, roomObjects: Wob[], selfRef?: string): ReMatch[] {
+function parseVerbLines(obj: Wob, roomObjects: Wob[], extras: string[], selfRef?: string): ReMatch[] {
 	let parsedLines: ReMatch[] = [];
 	if (!selfRef)
 		selfRef = obj.getProperty(WobProperties.Name);
@@ -86,7 +86,7 @@ function parseVerbLines(obj: Wob, roomObjects: Wob[], selfRef?: string): ReMatch
 			let re = "^(" + parsed.verb + ")";
 			if (parsed.dobj) {
 				if (Strings.caseEqual(parsed.dobj, "any"))
-					re += " " + createTargetsRegex(roomObjects, []);
+					re += " " + createTargetsRegex(roomObjects, extras);
 				else if (Strings.caseEqual(parsed.dobj, "self"))
 					re += " (" + createTargetRegex(selfRef) + ")";
 				else if (Strings.caseEqual(parsed.dobj, "none"))
@@ -98,7 +98,7 @@ function parseVerbLines(obj: Wob, roomObjects: Wob[], selfRef?: string): ReMatch
 			}
 			if (parsed.indobj) {
 				if (Strings.caseEqual(parsed.indobj, "any"))
-					re += " " + createTargetsRegex(roomObjects, []);
+					re += " " + createTargetsRegex(roomObjects, extras);
 				else if (Strings.caseEqual(parsed.indobj, "self"))
 					re += " (" + createTargetRegex(selfRef) + ")";
 				else if (Strings.caseEqual(parsed.dobj, "none"))
@@ -189,14 +189,17 @@ export async function parseInput(text: string, self: Wob, world: World): Promise
 	}
 
 	let verbLines: ReMatch[] = [];
+	let extras: string[] = [];
+	miscWobsAt.forEach(w => { extras.push("@" + w.getProperty(WobProperties.GlobalId)); });
+	miscWobsHash.forEach(w => { extras.push("#" + w.id); });
 	roomContents.forEach((w) => {
-		verbLines.push(...parseVerbLines(w, roomContents));
+		verbLines.push(...parseVerbLines(w, roomContents, extras));
 	});
 	miscWobsAt.forEach((w) => {
-		verbLines.push(...parseVerbLines(w, roomContents, "@" + w.getProperty(WobProperties.GlobalId)));
+		verbLines.push(...parseVerbLines(w, roomContents, extras, "@" + w.getProperty(WobProperties.GlobalId)));
 	});
 	miscWobsHash.forEach((w) => {
-		verbLines.push(...parseVerbLines(w, roomContents, "#" + w.id));
+		verbLines.push(...parseVerbLines(w, roomContents, extras, "#" + w.id));
 	});
 
 	let matches: any[] = [];

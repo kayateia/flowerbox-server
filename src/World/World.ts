@@ -52,7 +52,7 @@ export class World {
 		wobDog.setProperty(WobProperties.Name, "Dog who was put in a kennel");
 		wob1.addContent(wobDog);
 		wobDog.setVerb("release", new Verb("//# release self\nfunction verb_release() { $.log('Thank you for releasing me,', $env.caller.name, '!'); }"));
-		wobDog.setVerb("put", new Verb("//# put self in any\nfunction verb_put() {}"));
+		wobDog.setVerb("put", new Verb("//# put self in any\nfunction verb_put() { $.log('Noooes,', $env.caller.name, ', why did you put me in the',$env.indirect.name,'?'); }"));
 
 		let wobPerson = this.createWob();
 		wobPerson.setProperty(WobProperties.Name, "Human person");
