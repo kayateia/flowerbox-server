@@ -6,6 +6,7 @@
 
 import { WobOperationException } from "./Exceptions";
 import { Verb } from "./Verb";
+import { CaseMap } from "../Strings";
 
 // When a wob wants to reference another wob in its properties, one of these should be used.
 export class WobRef {
@@ -28,8 +29,8 @@ export class Wob {
 		this._container = 0;
 		this._base = 0;
 		this._contents = [];
-		this._properties = new Map<string, any>();
-		this._verbs = new Map<string, Verb>();
+		this._properties = new CaseMap<any>();
+		this._verbs = new CaseMap<Verb>();
 
 		this._dirty = true;
 		this.updateLastUse();
@@ -78,13 +79,13 @@ export class Wob {
 
 	public getProperty(name: string): any {
 		this.updateLastUse();
-		return this._properties[name];
+		return this._properties.get(name);
 	}
 
 	public setProperty(name: string, value: any): void {
 		this.updateLastUse();
 		this._dirty = true;
-		this._properties[name] = value;
+		this._properties.set(name, value);
 	}
 
 	public getVerbNames(): string[] {
@@ -133,8 +134,8 @@ export class Wob {
 	private _container: number;
 	private _base: number;
 	private _contents: number[];
-	private _properties: Map<string, any>;
-	private _verbs: Map<string, Verb>;
+	private _properties: CaseMap<any>;
+	private _verbs: CaseMap<Verb>;
 
 	private _dirty: boolean;
 	private _lastUse: number;

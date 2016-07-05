@@ -1,6 +1,6 @@
 /*
 	Flowerbox
-	Copyright (C) 2016 Kayateia
+	Copyright (C) 2016 Kayateia, Dove
 	For license info, please see notes/gpl-3.0.txt under the project root.
 */
 
@@ -18,6 +18,7 @@ import { LValue } from "./LValue";
 import { AstObject } from "./AstObject";
 import { Runtime } from "./Runtime";
 import { RuntimeException } from "./Exceptions";
+import * as Strings from "../Strings";
 
 // Simple interface for getting an LValue for a given index/name out of the wrapped object.
 export interface IObject {
@@ -67,7 +68,7 @@ export class ObjectWrapper {
 	public static WrapGeneric(item: any, names: string[], allowNumeric?: boolean): IObject {
 		return {
 			getAccessor: function(name: any): LValue {
-				if (typeof(name) === "string" && name in names)
+				if (typeof(name) === "string" && Strings.stringIn(name, names))
 					return LValue.MakeReadOnly(item[name]);
 				else if (allowNumeric && typeof(name) === "number") {
 					return new LValue("Array access", (runtime: Runtime): any => {
@@ -76,7 +77,7 @@ export class ObjectWrapper {
 						item[name] = value;
 					});
 				} else
-					return null;
+					return LValue.MakeReadOnly(null);
 			}
 		};
 	}

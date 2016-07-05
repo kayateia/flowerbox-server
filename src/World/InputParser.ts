@@ -7,6 +7,7 @@
 import { Verb, VerbSig } from "./Verb";
 import { Wob, WobProperties } from "./Wob";
 import { World } from "./World";
+import * as Strings from "../Strings";
 
 /*
 This is a simple natural language parser. It looks in the user's current room for objects
@@ -84,11 +85,11 @@ function parseVerbLines(obj: Wob, roomObjects: Wob[], selfRef?: string): ReMatch
 		v.signatures.forEach((parsed) => {
 			let re = "^(" + parsed.verb + ")";
 			if (parsed.dobj) {
-				if (parsed.dobj === "any")
+				if (Strings.caseEqual(parsed.dobj, "any"))
 					re += " " + createTargetsRegex(roomObjects, []);
-				else if (parsed.dobj === "self")
+				else if (Strings.caseEqual(parsed.dobj, "self"))
 					re += " (" + createTargetRegex(selfRef) + ")";
-				else if (parsed.dobj === "none")
+				else if (Strings.caseEqual(parsed.dobj, "none"))
 					re += "()";
 			}
 			if (parsed.prep) {
@@ -96,11 +97,11 @@ function parseVerbLines(obj: Wob, roomObjects: Wob[], selfRef?: string): ReMatch
 				re += " (" + alts.join("|") + ")";
 			}
 			if (parsed.indobj) {
-				if (parsed.indobj === "any")
+				if (Strings.caseEqual(parsed.indobj, "any"))
 					re += " " + createTargetsRegex(roomObjects, []);
-				else if (parsed.indobj === "self")
+				else if (Strings.caseEqual(parsed.indobj, "self"))
 					re += " (" + createTargetRegex(selfRef) + ")";
-				else if (parsed.dobj === "none")
+				else if (Strings.caseEqual(parsed.dobj, "none"))
 					re += "()";
 			}
 
@@ -111,7 +112,57 @@ function parseVerbLines(obj: Wob, roomObjects: Wob[], selfRef?: string): ReMatch
 	return parsedLines;
 }
 
-export async function parseInput(text: string, self: Wob, world: World): Promise<void> {
+// Looks through the various possibilities and, given a name that may be an @atName or a #nn hash
+// name, or a partial name, find the object in question or return null if it can't be found (or is ambiguous).
+function findObjectByPartialName(name: string, roomObjs: Wob[], atObjs: Wob[], hashObjs: Wob[]): Wob {
+	if (name[0] === "@") {
+		let subname = name.substr(1);
+		for (let obj of atObjs) {
+			if (Strings.caseEqual(obj.getProperty(WobProperties.GlobalId), subname))
+				return obj;
+		}
+		return null;
+	} else if (name[0] === "#") {
+		let subId = parseInt(name.substr(1), 10);
+		for (let obj of hashObjs) {
+			if (obj.id === subId)
+				return obj;
+		}
+		return null;
+	} else {
+		let possibles: Wob[] = [];
+		name = name.toLowerCase();
+		for (let obj of roomObjs) {
+			if (obj.getProperty(WobProperties.Name).toLowerCase().startsWith(name))
+				possibles.push(obj);
+		}
+
+		if (possibles.length !== 1)
+			return null;
+		else
+			return possibles[0];
+	}
+}
+
+export class ParseResult {
+	constructor(verbName: string, verbObject: Wob, verb: Verb) {
+		this.verbName = verbName;
+		this.verbObject = verbObject;
+		this.verb = verb;
+	}
+
+	public verbName: string;
+	public verbObject: Wob;
+	public verb: Verb;
+
+	public direct: Wob;
+	public prep: string;
+	public indirect: Wob;
+	public prep2: string;
+	public indirect2: Wob;
+}
+
+export async function parseInput(text: string, self: Wob, world: World): Promise<ParseResult> {
 	// Get the container for the player wob.
 	let roomWob = await world.getWob(self.container);
 
@@ -173,9 +224,17 @@ export async function parseInput(text: string, self: Wob, world: World): Promise
 	let pieces = matches[0].match.slice(1);
 	let matchedWob = matches[0].re.wob;
 	let matchedVerb = matches[0].re.verb;
-	console.log(pieces);
-	console.log(matchedWob);
-	console.log(matchedVerb);
+	let result = new ParseResult(pieces[0], matchedWob, matchedVerb);
+	if (pieces[1])
+		result.direct = findObjectByPartialName(pieces[1], roomContents, miscWobsAt, miscWobsHash);
+	if (pieces[2])
+		result.prep = pieces[2];
+	if (pieces[3])
+		result.indirect = findObjectByPartialName(pieces[3], roomContents, miscWobsAt, miscWobsHash);
+	if (pieces[4])
+		result.prep2 = pieces[4];
+	if (pieces[5])
+		result.indirect2 = findObjectByPartialName(pieces[5], roomContents, miscWobsAt, miscWobsHash);
 
-	// return matches;
+	return result;
 }

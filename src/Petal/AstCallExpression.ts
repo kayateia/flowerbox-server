@@ -1,6 +1,6 @@
 /*
 	Flowerbox
-	Copyright (C) 2016 Kayateia
+	Copyright (C) 2016 Kayateia, Dove
 	For license info, please see notes/gpl-3.0.txt under the project root.
 */
 
@@ -17,8 +17,19 @@ import { LValue } from "./LValue";
 export class AstCallExpression extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
-		this.callee = compile(parseTree.callee);
-		this.param = parseTree.arguments.map(compile);
+
+		// We might not have these if the object was created synthetically.
+		if (parseTree.callee && parseTree.arguments) {
+			this.callee = compile(parseTree.callee);
+			this.param = parseTree.arguments.map(compile);
+		}
+	}
+
+	public static Create(callee: AstNode, param: AstNode[]): AstCallExpression {
+		let ace = new AstCallExpression({});
+		ace.callee = callee;
+		ace.param = param;
+		return ace;
 	}
 
 	// Unwinds the stack past the current function call invocation, for early return.

@@ -7,6 +7,7 @@
 import { WobReferenceException } from "./Exceptions";
 import { Wob, WobProperties } from "./Wob";
 import { Verb } from "./Verb";
+import * as Strings from "../Strings";
 
 // Zaa Warudo
 export class World {
@@ -38,26 +39,26 @@ export class World {
 		let wobHammer = this.createWob();
 		wobHammer.setProperty(WobProperties.Name, "Hammer");
 		wob1.addContent(wobHammer);
-		wobHammer.setVerb("throw", new Verb("//# throw self at any\nfunction foo() {}"));
-		wobHammer.setVerb("use", new Verb("//# use self on any\nfunction foo() {}"));
+		wobHammer.setVerb("throw", new Verb("//# throw self at any\nfunction verb_throw() {}"));
+		wobHammer.setVerb("use", new Verb("//# use self on any\nfunction verb_use() {}"));
 
 		let wobTeacup = this.createWob();
 		wobTeacup.setProperty(WobProperties.Name, "Teacup");
 		wob1.addContent(wobTeacup);
-		wobTeacup.setVerb("drink", new Verb("//# drink none from self\nfunction foo() {}"));
-		wobTeacup.setVerb("drop", new Verb("//# drop self\nfunction foo() {}"));
+		wobTeacup.setVerb("drink", new Verb("//# drink none from self\nfunction verb_drink() {}"));
+		wobTeacup.setVerb("drop", new Verb("//# drop self\nfunction verb_drop() {}"));
 
 		let wobDog = this.createWob();
 		wobDog.setProperty(WobProperties.Name, "Dog who was put in a kennel");
 		wob1.addContent(wobDog);
-		wobDog.setVerb("release", new Verb("//# release self\nfunction foo() {}"));
-		wobDog.setVerb("put", new Verb("//# put self in any\nfunction foo() {}"));
+		wobDog.setVerb("release", new Verb("//# release self\nfunction verb_release() { $.log('Thank you for releasing me,', $env.caller.name, '!'); }"));
+		wobDog.setVerb("put", new Verb("//# put self in any\nfunction verb_put() {}"));
 
 		let wobPerson = this.createWob();
 		wobPerson.setProperty(WobProperties.Name, "Human person");
 		wobPerson.setProperty(WobProperties.GlobalId, "human");
 		wobRoom.addContent(wobPerson);
-		wobPerson.setVerb("pet", new Verb("//# pet self\nfunction foo() {}"));
+		wobPerson.setVerb("pet", new Verb("//# pet self\nfunction verb_pet() { $.log('Ahhh!!'); }"));
 	}
 
 	public createWob(container?: number): Wob {
@@ -94,19 +95,10 @@ export class World {
 
 	public getWobsByGlobalId(ids: string[]): Promise<Wob[]> {
 		return new Promise<Wob[]>((success, fail) => {
-			success([...this._wobCache.values()].filter((w) => stringIn(w.getProperty(WobProperties.GlobalId), ids)));
-			// success([]);
+			success([...this._wobCache.values()].filter((w) => Strings.caseIn(w.getProperty(WobProperties.GlobalId), ids)));
 		});
 	}
 
 	private _nextId: number;
 	private _wobCache: Map<number, Wob>;
-}
-
-// For some reason, "in" doesn't work on strings.
-function stringIn(str: string, arr: string[]): boolean {
-	for (var s of arr)
-		if (s === str)
-			return true;
-	return false;
 }

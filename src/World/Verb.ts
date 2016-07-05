@@ -29,6 +29,10 @@ export class Verb {
 		return this._signatures;
 	}
 
+	public get compiled(): Petal.AstNode {
+		return this._compiled;
+	}
+
 	private parseForSignatures(text: string): void {
 		let verbLines: string[] =
 			text
