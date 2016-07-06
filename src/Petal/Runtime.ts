@@ -5,6 +5,7 @@
 */
 
 import { AstNode } from "./AstNode";
+import { AstCallExpression } from "./AstCallExpression";
 import { IActionCallback } from "./IActionCallback";
 import { IScope } from "./IScope";
 import { StandardScope } from "./Scopes/StandardScope";
@@ -91,17 +92,27 @@ export class Runtime {
 			} catch (exc) {
 				if (this._verbose)
 					console.log("EXCEPTION:", exc);
-				if (exc instanceof SuspendException) {
-					return false;
-				} else if (exc instanceof RuntimeException) {
-					throw exc;
-				} else {
-					throw exc;
-				}
+				throw exc;
 			}
 		}
 
-		return true;
+		// If there was any final return value, return it.
+		return this.popOperand();
+	}
+
+	// This executes an arbitrary (pre-parsed) function. The program represented by the
+	// function is executed first, and then its parameters are pushed on the operand stack.
+	// Finally, the function is called.
+	public executeFunction(func: AstNode, funcName: string, param: any[], maxSteps: number): any {
+		this.pushAction(Step.Callback("Function runner", () => {
+			let funcObj = this.currentScope().get(funcName);
+			if (!funcObj)
+				throw new RuntimeException("Function name was invalid", funcName);
+			param.forEach(p => this.pushOperand(p));
+			this.pushAction(Step.Node("Call function", AstCallExpression.Create(funcObj, [])));
+		}));
+		this.pushAction(Step.Node("Parse function", func));
+		return this.execute(maxSteps);
 	}
 
 	public popAction(): Step {

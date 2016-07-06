@@ -62,6 +62,13 @@ export class ObjectWrapper {
 		}
 	}
 
+	private static Call(obj: any, funcName: string, param: IArguments): any {
+		let args = [];
+		for (let i=0; i<param.length; ++i)
+			args.push(param[i]);
+		return obj[funcName](...args);
+	}
+
 	// Generically wraps a native object, allowing only the whitelisted members to be accessed
 	// in a read-only manner. If allowNumeric is true, then numeric "members" can also be accessed
 	// in a read-write manner. This is for array support.
@@ -69,7 +76,14 @@ export class ObjectWrapper {
 		return {
 			getAccessor: function(name: any): LValue {
 				if (typeof(name) === "string" && Strings.stringIn(name, names))
-					return LValue.MakeReadOnly(item[name]);
+					return new LValue("Member access", () => {
+						if (typeof(item[name]) === "function")
+							return function() { return ObjectWrapper.Call(item, name, arguments); };
+						else
+							return item[name];
+					}, () => {
+						throw new RuntimeException("Can't write to read-only value");
+					});
 				else if (allowNumeric && typeof(name) === "number") {
 					return new LValue("Array access", (runtime: Runtime): any => {
 						return item[name];

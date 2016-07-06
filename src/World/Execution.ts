@@ -1,10 +1,10 @@
 /*
 	Flowerbox
-	Copyright (C) 2016 Dove
+	Copyright (C) 2016 Dove, Kayateia
 	For license info, please see notes/gpl-3.0.txt under the project root.
 */
 
-import { ParseResult } from "./InputParser";
+import { ParseResult, ParseError } from "./InputParser";
 import { Wob } from "./Wob";
 import { World } from "./World";
 import * as Petal from "../Petal/Petal";
@@ -52,7 +52,7 @@ class DollarObject {
 		let args = [];
 		for (let i=0; i<arguments.length; ++i)
 			args.push(arguments[i]);
-		console.log("LOG OUTPUT:", ...args);
+		console.log(">>>", ...args);
 	}
 }
 
@@ -71,10 +71,12 @@ class DollarEnv {
 			this.indirect2 = new WobWrapper(parse.indirect2);
 
 		this.caller = new WobWrapper(caller);
+
+		this.text = parse.text;
 	}
 
 	public static Members: string[] = [
-		"verbName", "verbObject", "direct", "prep", "indirect", "prep2", "indirect2", "caller"
+		"verbName", "verbObject", "direct", "prep", "indirect", "prep2", "indirect2", "caller", "text"
 	];
 
 	public verbName: string;
@@ -88,23 +90,53 @@ class DollarEnv {
 	public indirect2: WobWrapper;
 
 	public caller: WobWrapper;
+
+	public text: string;
 }
 
 export async function executeResult(parse: ParseResult, player: Wob, world: World): Promise<void> {
+	// Get the environment ready.
 	let dollar = Petal.ObjectWrapper.WrapGeneric(new DollarObject(), ["log"], false);
 	let dollarEnv = Petal.ObjectWrapper.WrapGeneric(new DollarEnv(parse, player), DollarEnv.Members, false);
 
-	// Set up a runtime. We'll install our runtime values from above, then call the verb code.
-	// The verb code should create a function named after the verb.
-	let rt = new Petal.Runtime();
+	// Check for a global command handler on #1. If it exists, we'll call that first.
+	// FIXME: The top level scope really need to be a const scope to avoid monkey-business with $, $env, etc.
+	// Same applies below.
+	let rt = new Petal.Runtime(false);
 	let scope = rt.currentScope();
 	scope.set("$", dollar);
 	scope.set("$env", dollarEnv);
-	rt.pushAction(Petal.Step.Node("Parse verb program", parse.verb.compiled));
-	rt.execute(10000);
 
-	// Now we need to create a request to call the function.
-	let call = Petal.AstCallExpression.Create(scope.get("verb_" + parse.verbName), []);
-	rt.pushAction(Petal.Step.Node("Call verb program", call));
-	rt.execute(10000);
+	let root = await world.getWob(1);
+	let parserVerb = root.getVerb("$command");
+	if (parserVerb) {
+		// FIXME: Continuations not handled.
+		let result = rt.executeFunction(parserVerb.compiled, "$command", [], 10000);
+		if (result)
+			return;
+
+		if (parse.verb) {
+			// Reset the runtime.
+			rt = new Petal.Runtime();
+			scope = rt.currentScope();
+			scope.set("$", dollar);
+			scope.set("$env", dollarEnv);
+		}
+	}
+
+	// We'll only continue here if we actually found a verb.
+	if (parse.verb) {
+		// Set up a runtime. We'll install our runtime values from above, then call the verb code.
+		// The verb code should create a function named after the verb.
+		rt.executeFunction(parse.verb.compiled, "verb_" + parse.verbName, [], 10000);
+	} else {
+		switch (parse.failure) {
+			case ParseError.NoVerb:
+				console.log("Don't understand.");
+				break;
+			case ParseError.Ambiguous:
+				console.log("Ambiguous.");
+				break;
+		}
+	}
 }

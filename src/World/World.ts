@@ -25,6 +25,16 @@ export class World {
 		wob1.setProperty(WobProperties.Name, "Zaa Warudo");
 		wob1.setProperty(WobProperties.GlobalId, "world");
 		wob1.setProperty(WobProperties.Description, "This is an endless void existing outside of all other reality.");
+		wob1.setVerb("$command", new Verb("$command",
+		"function $command() {\
+			var text = $env.text;\
+			$.log('parser checked', text);\
+			if (text.startsWith('say ')) {\
+				$.log('Saying', text.substr(4));\
+				return true;\
+			} else\
+				return false;\
+		}"));
 
 		let wobPlayer = this.createWob();
 		wobPlayer.setProperty(WobProperties.Name, "Player");

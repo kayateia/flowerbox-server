@@ -145,11 +145,31 @@ function findObjectByPartialName(name: string, roomObjs: Wob[], atObjs: Wob[], h
 	}
 }
 
+export enum ParseError {
+	// Hunky dory.
+	NoError,
+
+	// No verb was available to be executed for the text.
+	NoVerb,
+
+	// More than one verb was available to be executed for the text.
+	Ambiguous
+}
+
 export class ParseResult {
-	constructor(verbName: string, verbObject: Wob, verb: Verb) {
-		this.verbName = verbName;
-		this.verbObject = verbObject;
-		this.verb = verb;
+	public static Result(verbName: string, verbObject: Wob, verb: Verb) {
+		let r = new ParseResult();
+		r.verbName = verbName;
+		r.verbObject = verbObject;
+		r.verb = verb;
+		return r;
+	}
+
+	public static Failure(why: ParseError, text: string) {
+		let r = new ParseResult();
+		r.failure = why;
+		r.text = text;
+		return r;
 	}
 
 	public verbName: string;
@@ -161,6 +181,11 @@ export class ParseResult {
 	public indirect: Wob;
 	public prep2: string;
 	public indirect2: Wob;
+
+	public failure: ParseError;
+
+	// The whole line entered by the user.
+	public text: string;
 }
 
 export async function parseInput(text: string, self: Wob, world: World): Promise<ParseResult> {
@@ -193,6 +218,9 @@ export async function parseInput(text: string, self: Wob, world: World): Promise
 	let extras: string[] = [];
 	miscWobsAt.forEach(w => { extras.push("@" + w.getProperty(WobProperties.GlobalId)); });
 	miscWobsHash.forEach(w => { extras.push("#" + w.id); });
+
+	verbLines.push(...await parseVerbLines(world, self, roomContents, extras, "me"));
+	verbLines.push(...await parseVerbLines(world, roomWob, roomContents, extras, "here"));
 	for (let w of roomContents)
 		verbLines.push(...await parseVerbLines(world, w, roomContents, extras));
 	for (let w of miscWobsAt)
@@ -210,32 +238,36 @@ export async function parseInput(text: string, self: Wob, world: World): Promise
 
 	// At this point we should have an array of regex matches. If we got none, then we don't
 	// understand the command. If we got more than one, it was ambiguous.
-	if (matches.length === 0) {
-		console.log("Don't understand.");
-		return;
-	}
-	if (matches.length > 1) {
-		console.log("Ambiguous.");
-		return;
-	}
+	let failure: ParseError = ParseError.NoError;
+	if (matches.length === 0)
+		failure = ParseError.NoVerb;
 
-	// Let's focus on the one we did get. The first array element will be the full input, but
-	// the ones after that will be the individual pieces, starting with the verb and moving on to
-	// any other components that were present.
-	let pieces = matches[0].match.slice(1);
-	let matchedWob = matches[0].re.wob;
-	let matchedVerb = matches[0].re.verb;
-	let result = new ParseResult(pieces[0], matchedWob, matchedVerb);
-	if (pieces[1])
-		result.direct = findObjectByPartialName(pieces[1], roomContents, miscWobsAt, miscWobsHash);
-	if (pieces[2])
-		result.prep = pieces[2];
-	if (pieces[3])
-		result.indirect = findObjectByPartialName(pieces[3], roomContents, miscWobsAt, miscWobsHash);
-	if (pieces[4])
-		result.prep2 = pieces[4];
-	if (pieces[5])
-		result.indirect2 = findObjectByPartialName(pieces[5], roomContents, miscWobsAt, miscWobsHash);
+	if (matches.length > 1)
+		failure = ParseError.Ambiguous;
+
+	let result;
+	if (failure != ParseError.NoError) {
+		result = ParseResult.Failure(failure, text);
+	} else {
+		// Let's focus on the one we did get. The first array element will be the full input, but
+		// the ones after that will be the individual pieces, starting with the verb and moving on to
+		// any other components that were present.
+		let pieces = matches[0].match.slice(1);
+		let matchedWob = matches[0].re.wob;
+		let matchedVerb = matches[0].re.verb;
+		result = ParseResult.Result(pieces[0], matchedWob, matchedVerb);
+		if (pieces[1])
+			result.direct = findObjectByPartialName(pieces[1], roomContents, miscWobsAt, miscWobsHash);
+		if (pieces[2])
+			result.prep = pieces[2];
+		if (pieces[3])
+			result.indirect = findObjectByPartialName(pieces[3], roomContents, miscWobsAt, miscWobsHash);
+		if (pieces[4])
+			result.prep2 = pieces[4];
+		if (pieces[5])
+			result.indirect2 = findObjectByPartialName(pieces[5], roomContents, miscWobsAt, miscWobsHash);
+		result.text = text;
+	}
 
 	return result;
 }
