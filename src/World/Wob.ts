@@ -17,11 +17,16 @@ export class WobRef {
 
 // Some well-defined properties.
 export class WobProperties {
-	public static PathId = "pathid";
-	public static GlobalId = "globalid";
-	public static Name = "name";
-	public static Description = "desc";
-	public static Password = "password";
+	// On all objects.
+	public static PathId = "pathid";			// string
+	public static GlobalId = "globalid";		// string
+	public static Name = "name";				// string
+	public static Description = "desc";			// string
+
+	// On player objects.
+	public static OutputLog = "outputlog";		// string[]
+	public static PasswordHash = "pwhash";		// string
+	public static LastActive = "lastactive";	// int (unix timestamp)
 }
 
 export class Wob {
