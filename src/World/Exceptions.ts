@@ -4,8 +4,11 @@
 	For license info, please see notes/gpl-3.0.txt under the project root.
 */
 
-export class WobReferenceException {
+import { Exception } from "../Exception";
+
+export class WobReferenceException extends Exception {
 	constructor(cause: string, id: number) {
+		super();
 		this.cause = cause;
 		this.id = id;
 	}
@@ -14,8 +17,9 @@ export class WobReferenceException {
 	public id: number;
 }
 
-export class WobOperationException {
+export class WobOperationException extends Exception {
 	constructor(cause: string, ids: number[]) {
+		super();
 		this.cause = cause;
 		this.ids = ids;
 	}
@@ -24,8 +28,9 @@ export class WobOperationException {
 	public ids: number[];
 }
 
-export class LanguageParseException {
+export class LanguageParseException extends Exception {
 	constructor(cause: string, value: string) {
+		super();
 		this.cause = cause;
 		this.value = value;
 	}

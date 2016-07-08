@@ -4,13 +4,19 @@
 	For license info, please see notes/gpl-3.0.txt under the project root.
 */
 
+import { Exception } from "../Exception";
+
 // Used from within callbacks to cause the interpreter to suspend its execution and return.
-export class SuspendException {
+export class SuspendException extends Exception {
+	constructor() {
+		super();
+	}
 }
 
 // Reports some sort of problem with running the code.
-export class RuntimeException {
+export class RuntimeException extends Exception {
 	constructor(cause: string, value?: any) {
+		super();
 		this.cause = cause;
 		this.value = value;
 	}
@@ -20,8 +26,9 @@ export class RuntimeException {
 }
 
 // Reports a problem with parsing the input script.
-export class ParseException {
+export class ParseException extends Exception {
 	constructor(cause: string, parseTree: any) {
+		super();
 		this.cause = cause;
 		this.parseTree = parseTree;
 	}
