@@ -102,7 +102,7 @@ async function parseVerbLines(world: World, obj: Wob, roomObjects: Wob[], extras
 					re += " " + createTargetsRegex(roomObjects, extras);
 				else if (Strings.caseEqual(parsed.indobj, "self"))
 					re += " (" + createTargetRegex(selfRef) + ")";
-				else if (Strings.caseEqual(parsed.dobj, "none"))
+				else if (Strings.caseEqual(parsed.indobj, "none"))
 					re += "()";
 			}
 
@@ -252,20 +252,29 @@ export async function parseInput(text: string, self: Wob, world: World): Promise
 		// Let's focus on the one we did get. The first array element will be the full input, but
 		// the ones after that will be the individual pieces, starting with the verb and moving on to
 		// any other components that were present.
+		function findWobByName(name: string) {
+			if (name === "here")
+				return roomWob;
+			else if (name === "me")
+				return self;
+			else
+				return findObjectByPartialName(name, roomContents, miscWobsAt, miscWobsHash);
+		}
+
 		let pieces = matches[0].match.slice(1);
 		let matchedWob = matches[0].re.wob;
 		let matchedVerb = matches[0].re.verb;
 		result = ParseResult.Result(pieces[0], matchedWob, matchedVerb);
 		if (pieces[1])
-			result.direct = findObjectByPartialName(pieces[1], roomContents, miscWobsAt, miscWobsHash);
+			result.direct = findWobByName(pieces[1]);
 		if (pieces[2])
 			result.prep = pieces[2];
 		if (pieces[3])
-			result.indirect = findObjectByPartialName(pieces[3], roomContents, miscWobsAt, miscWobsHash);
+			result.indirect = findWobByName(pieces[3]);
 		if (pieces[4])
 			result.prep2 = pieces[4];
 		if (pieces[5])
-			result.indirect2 = findObjectByPartialName(pieces[5], roomContents, miscWobsAt, miscWobsHash);
+			result.indirect2 = findWobByName(pieces[5]);
 		result.text = text;
 	}
 

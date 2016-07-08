@@ -78,7 +78,7 @@ export class VerbSig {
 		if (pieces[4])
 			this.prep2 = pieces[4];
 		if (pieces[5])
-			this.indobj = pieces[5];
+			this.indobj2 = pieces[5];
 	}
 
 	public verb: string;
