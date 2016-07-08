@@ -13,7 +13,8 @@ import { LValue } from "./LValue";
 export class AstReturn extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
-		this.arg = compile(parseTree.argument);
+		if (parseTree.argument)
+			this.arg = compile(parseTree.argument);
 	}
 
 	public execute(runtime: Runtime): void {
