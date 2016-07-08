@@ -71,16 +71,17 @@ import { executeResult } from "./World/Execution";
 import * as InputParser from "./World/InputParser";
 import * as readline from "readline";
 
+let world = new World();
+
 const rl = readline.createInterface({
 	input: process.stdin,
 	output: process.stdout
 });
 
 async function tester() {
-	let world = new World();
 	// console.log(JSON.stringify(world, null, 4));
 
-	let wobs = await world.getWobs([2]);
+	let wobs = await world.getWobs([3]);
 	(function nextLine() {
 		rl.question('> ', (answer) => {
 			InputParser.parseInput(answer, wobs[0], world)
