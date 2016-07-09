@@ -38,7 +38,7 @@ export class AstCallExpression extends AstNode {
 		runtime.popAction();
 	}
 
-	public execute(runtime: Runtime): void {
+	public execute(runtime: Runtime): any {
 		runtime.pushAction(Step.Callback("Function execution", (v) => {
 			let callee = LValue.PopAndDeref(runtime);
 			let values = [];
@@ -46,12 +46,18 @@ export class AstCallExpression extends AstNode {
 				values.push(LValue.PopAndDeref(runtime));
 			}
 
+			if (callee === null || callee === undefined)
+				throw new RuntimeException("Can't call null/undefined");
+
 			// Are we looking at a real native function or a Petal function?
 			if (typeof(callee) === "function") {
+				// If the callback returns a Promise, we will return that and bail early.
 				let result = callee(...values);
-				runtime.pushOperand(result);
-			} else if (typeof(callee) == "object" && AstFunction.IsFunction(callee)) {
-
+				if (result instanceof Promise)
+					return result;
+				else
+					runtime.pushOperand(result);
+			} else if (typeof(callee) === "object" && AstFunction.IsFunction(callee)) {
 				// We need to do two things here. The first one is that we need to get the function's
 				// arguments in place, using a function argument scope. Then we need to push the contents
 				// of the function onto the action stack.
@@ -71,6 +77,7 @@ export class AstCallExpression extends AstNode {
 				// Throw something heavy
 				throw new RuntimeException("Can't call uncallable object", callee);
 			}
+			return null;
 		}));
 		runtime.pushAction(new Step(this.callee, "Callee Resolution"));
 		this.param.forEach((p: AstNode) => {

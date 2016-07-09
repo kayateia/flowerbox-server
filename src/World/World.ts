@@ -49,6 +49,12 @@ export class World {
 			$.log('looking at', target.name);\
 			$.log(target.desc);\
 		}"));
+		wob1.setVerb("test", new Verb("test",
+		"//# test self\n\
+		function verb_test() {\
+			var root = $.get(1);\
+			$.log('found root', root.name);\
+		}"));
 
 		let wobPlayer = this.createWob();
 		wobPlayer.base = wob1.id;

@@ -37,13 +37,18 @@ export class Step {
 		return new Step(node, name);
 	}
 
-	public execute(runtime: Runtime): void {
+	public execute(runtime: Runtime): any {
 		// console.log("EXECUTING", this._name, ":", this._node);
+		if (this._node && this._callback)
+			throw new RuntimeException("Can't have both a node and a callback on one step");
+		let result;
 		if (this._node)
-			this._node.execute(runtime);
+			result = this._node.execute(runtime);
 
 		if (this._callback)
-			this._callback(this);
+			result = this._callback(this);
+
+		return result;
 	}
 
 	public node(): AstNode {
@@ -68,6 +73,18 @@ export class Step {
 	private _scope: IScope;
 }
 
+export class ExecuteResult {
+	constructor(outOfSteps: boolean, stepsUsed: number, returnValue: any) {
+		this.outOfSteps = outOfSteps;
+		this.stepsUsed = stepsUsed;
+		this.returnValue = returnValue;
+	}
+
+	public outOfSteps: boolean;
+	public stepsUsed: number;
+	public returnValue: any;
+}
+
 export class Runtime {
 	constructor(verbose?: boolean) {
 		this._pipeline = [];
@@ -82,13 +99,18 @@ export class Runtime {
 		this._pipeline.push(step);
 	}
 
-	public execute(steps: number): boolean {
+	public execute(steps: number): ExecuteResult {
+		let stepsUsed = 0, stepsTotal = steps;
+		let stopEarlyValue = null;
 		while (this._pipeline.length && steps--) {
 			let step = this._pipeline.pop();
+			++stepsUsed;
 			if (this._verbose)
 				console.log("STEPPOP:", step);
 			try {
-				step.execute(this);
+				stopEarlyValue = step.execute(this);
+				if (stopEarlyValue)
+					return new ExecuteResult(false, stepsUsed, stopEarlyValue);
 			} catch (exc) {
 				if (this._verbose)
 					console.log("EXCEPTION:", exc);
@@ -96,14 +118,58 @@ export class Runtime {
 			}
 		}
 
-		// If there was any final return value, return it.
-		return this.popOperand();
+		// Did we stop early due to running out of steps?
+		if (steps < 0) {
+			return new ExecuteResult(true, stepsUsed, null);
+		} else {
+			// If there was any final return value, return it.
+			return new ExecuteResult(false, stepsUsed, this.popOperand());
+		}
+	}
+
+	public async executeAsync(steps: number): Promise<ExecuteResult> {
+		let stepsUsed = 0;
+		while (true) {
+			// Start out executing code.
+			let er = this.execute(steps);
+			stepsUsed += er.stepsUsed;
+
+			// Did we run out of total steps? If so, bail.
+			if (er.outOfSteps)
+				return new ExecuteResult(true, stepsUsed, null);
+
+			// Is the return value a Promise object?
+			if (er.returnValue instanceof Promise) {
+				// Wait on it.
+				let promiseRv = await er.returnValue;
+
+				// Push it value on the operand stack and continue.
+				this.pushOperand(promiseRv);
+
+				continue;
+			}
+
+			// If we get here, execution halted and we neither ran out of steps nor
+			// got a Promise back, which means... we're done!
+			return new ExecuteResult(false, stepsUsed, er.returnValue);
+		}
 	}
 
 	// This executes an arbitrary (pre-parsed) function. The program represented by the
 	// function is executed first, and then its parameters are pushed on the operand stack.
 	// Finally, the function is called.
-	public executeFunction(func: AstNode, funcName: string, param: any[], maxSteps: number): any {
+	public executeFunction(func: AstNode, funcName: string, param: any[], maxSteps: number): ExecuteResult {
+		this.prepFunction(func, funcName, param);
+		return this.execute(maxSteps);
+	}
+
+	// Same as executeFunction(), but allows for async callbacks to happen down in code execution.
+	public async executeFunctionAsync(func: AstNode, funcName: string, param: any[], maxSteps: number): Promise<ExecuteResult> {
+		this.prepFunction(func, funcName, param);
+		return await this.executeAsync(maxSteps);
+	}
+
+	private prepFunction(func: AstNode, funcName: string, param: any[]): void {
 		this.pushAction(Step.Callback("Function runner", () => {
 			let funcObj = this.currentScope().get(funcName);
 			if (!funcObj)
@@ -112,7 +178,6 @@ export class Runtime {
 			this.pushAction(Step.Node("Call function", AstCallExpression.Create(funcObj, [])));
 		}));
 		this.pushAction(Step.Node("Parse function", func));
-		return this.execute(maxSteps);
 	}
 
 	public popAction(): Step {

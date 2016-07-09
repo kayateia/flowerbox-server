@@ -21,6 +21,8 @@ export class AstFunction extends AstNode {
 	}
 
 	public static IsFunction(value: any): boolean {
+		if (value === null || value === undefined)
+			return false;
 		return value.what === "Function";
 	}
 

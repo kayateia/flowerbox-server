@@ -9,7 +9,7 @@ export class AstNode {
 		// this.originalTree = parseTree;
 	}
 
-	public execute(runtime: any): void {
+	public execute(runtime: any): any {
 	}
 
 	// public originalTree: any;

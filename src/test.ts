@@ -91,12 +91,12 @@ async function tester() {
 							nextLine();
 						})
 						.catch((e) => {
-							console.log(e);
+							console.log(e, e.stack);
 							nextLine();
 						});
 				})
 				.catch((e) => {
-					console.log(e);
+					console.log(e, e.stack);
 					nextLine();
 				});
 		});
@@ -105,5 +105,5 @@ async function tester() {
 
 tester()
 	.catch(err => {
-		console.log(err);
+		console.log(err, err.stack);
 	});

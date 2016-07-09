@@ -48,12 +48,48 @@ class WobWrapper implements Petal.IObject {
 
 // Represents the $ object within the game, which represents the interface to the game itself.
 class DollarObject {
+	constructor(world: World) {
+		this._world = world;
+	}
+
 	public log(): void {
 		let args = [];
 		for (let i=0; i<arguments.length; ++i)
 			args.push(arguments[i]);
 		console.log(">>>", ...args);
 	}
+
+	public async get(objId: any): Promise<WobWrapper> {
+		console.log("Got inside get()");
+		if (typeof(objId) === "number") {
+			let objNum: number = objId;
+			let obj = await this._world.getWob(objNum);
+			if (obj)
+				return new WobWrapper(obj);
+			else
+				return null;
+		} else if (typeof(objId) === "string") {
+			let objStr: string = objId;
+			if (objStr.startsWith("@")) {
+				let wobs = await this._world.getWobsByGlobalId([objStr.substr(1)]);
+				if (wobs && wobs.length)
+					return new WobWrapper(wobs[0]);
+				else
+					return null;
+			} else if (objStr.startsWith("/")) {
+				return null;
+			} else {
+				return null;
+			}
+		} else
+			return null;
+	}
+
+	public static Members: string[] = [
+		"log", "get"
+	];
+
+	private _world: World;
 }
 
 // Wraps the ParseResult object for $env inside Petal.
@@ -96,7 +132,7 @@ class DollarEnv {
 
 export async function executeResult(parse: ParseResult, player: Wob, world: World): Promise<void> {
 	// Get the environment ready.
-	let dollar = Petal.ObjectWrapper.WrapGeneric(new DollarObject(), ["log"], false);
+	let dollar = Petal.ObjectWrapper.WrapGeneric(new DollarObject(world), DollarObject.Members, false);
 	let dollarEnv = Petal.ObjectWrapper.WrapGeneric(new DollarEnv(parse, player), DollarEnv.Members, false);
 
 	// Check for a global command handler on #1. If it exists, we'll call that first.
@@ -110,9 +146,13 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 	let root = await world.getWob(1);
 	let parserVerb = root.getVerb("$command");
 	if (parserVerb) {
-		// FIXME: Continuations not handled.
-		let result = rt.executeFunction(parserVerb.compiled, "$command", [], 10000);
-		if (result)
+		let result: Petal.ExecuteResult = await rt.executeFunctionAsync(parserVerb.compiled, "$command", [], 10000);
+		console.log("$command took", result.stepsUsed, "steps");
+		if (result.outOfSteps) {
+			console.log("ERROR: Ran out of steps while running $command");
+			return;
+		}
+		if (result.returnValue)
 			return;
 
 		if (parse.verb) {
@@ -128,7 +168,12 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 	if (parse.verb) {
 		// Set up a runtime. We'll install our runtime values from above, then call the verb code.
 		// The verb code should create a function named after the verb.
-		rt.executeFunction(parse.verb.compiled, "verb_" + parse.verbName, [], 10000);
+		let result: Petal.ExecuteResult = await rt.executeFunctionAsync(parse.verb.compiled, "verb_" + parse.verbName, [], 10000);
+		console.log(parse.verbName, "took", result.stepsUsed, "steps");
+		if (result.outOfSteps) {
+			console.log("ERROR: Ran out of steps while running", parse.verbName);
+			return;
+		}
 	} else {
 		switch (parse.failure) {
 			case ParseError.NoVerb:
