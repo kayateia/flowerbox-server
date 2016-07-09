@@ -64,12 +64,10 @@ export class AstCallExpression extends AstNode {
 				var func: AstFunctionInstance = callee;
 				runtime.pushAction(Step.Scope("Function scope", func.scope));
 
-				var scope: IScope = new ParameterScope(func.scope, func.params);
+				var scope: IScope = new ParameterScope(func.scope, ["arguments", ...func.params]);
 				scope.set("arguments", values);
-				for (let i=0; i<func.params.length && i<values.length; ++i) {
-					console.log("Setting", func.params[i], "to", values[i]);
+				for (let i=0; i<func.params.length && i<values.length; ++i)
 					scope.set(func.params[i], values[i]);
-				}
 
 				runtime.pushAction(Step.Scope("Parameter scope", scope));
 				runtime.pushAction(new Step(func.body));
