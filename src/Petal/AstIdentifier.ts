@@ -12,7 +12,10 @@ import { LValue } from "./LValue";
 export class AstIdentifier extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
-		this.name = parseTree.name;
+		if (parseTree.type === "ThisExpression")
+			this.name = "this";
+		else
+			this.name = parseTree.name;
 	}
 
 	public execute(runtime: Runtime): void {

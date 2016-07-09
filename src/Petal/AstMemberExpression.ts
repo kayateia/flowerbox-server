@@ -6,12 +6,14 @@
 
 import { AstNode } from "./AstNode";
 import { AstIdentifier } from "./AstIdentifier";
+import { AstFunction } from "./AstFunction";
 import { compile } from "./Parser";
 import { Step, Runtime } from "./Runtime";
 import { RuntimeException } from "./Exceptions";
 import { LValue } from "./LValue";
 import { Utils } from "./Utils";
 import { ObjectWrapper, IObject } from "./Objects";
+import { ThisValue } from "./ThisValue";
 
 // This unfortunately covers both a.b and a["b"] (non-computed and computed).
 export class AstMemberExpression extends AstNode {
@@ -42,7 +44,11 @@ export class AstMemberExpression extends AstNode {
 			else
 				value = iobj.getAccessor(this.member);
 
-			runtime.pushOperand(value);
+			let valderefed = LValue.Deref(runtime, value);
+			if (AstFunction.IsFunction(valderefed) || typeof(valderefed) === "function")
+				runtime.pushOperand(new ThisValue(obj, value));
+			else
+				runtime.pushOperand(value);
 		}));
 		runtime.pushAction(Step.Node("Member object", this.obj));
 		if (this.property)

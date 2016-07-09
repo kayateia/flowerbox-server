@@ -5,6 +5,7 @@
 */
 import { Runtime } from "./Runtime";
 import { RuntimeException } from "./Exceptions";
+import { ThisValue } from "./ThisValue";
 
 export interface ILValueReader {
 	(runtime: Runtime): any
@@ -38,6 +39,10 @@ export class LValue {
 	}
 
 	public static Deref(runtime: Runtime, value: any): any {
+		// Just save ourselves some trouble and do this here.
+		if (value instanceof ThisValue)
+			value = (<ThisValue>value).value;
+
 		if (LValue.IsLValue(value))
 			return value.read();
 		else

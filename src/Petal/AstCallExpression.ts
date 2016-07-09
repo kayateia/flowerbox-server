@@ -13,6 +13,8 @@ import { IScope } from "./IScope";
 import { StandardScope } from "./Scopes/StandardScope";
 import { ParameterScope } from "./Scopes/ParameterScope";
 import { LValue } from "./LValue";
+import { ThisValue } from "./ThisValue";
+import { Utils } from "./Utils";
 
 export class AstCallExpression extends AstNode {
 	constructor(parseTree: any) {
@@ -40,7 +42,16 @@ export class AstCallExpression extends AstNode {
 
 	public execute(runtime: Runtime): any {
 		runtime.pushAction(Step.Callback("Function execution", (v) => {
-			let callee = LValue.PopAndDeref(runtime);
+			let callee = runtime.popOperand();
+			let thisValue = null;
+			let otherInjects = {};
+			if (callee instanceof ThisValue) {
+				let tv = <ThisValue>callee;
+				thisValue = tv.thisValue;
+				otherInjects = tv.others;
+			}
+			callee = LValue.Deref(runtime, callee);
+
 			let values = [];
 			for (let i=0; i<this.param.length; ++i) {
 				values.push(LValue.PopAndDeref(runtime));
@@ -64,8 +75,13 @@ export class AstCallExpression extends AstNode {
 				var func: AstFunctionInstance = callee;
 				runtime.pushAction(Step.Scope("Function scope", func.scope));
 
-				var scope: IScope = new ParameterScope(func.scope, ["arguments", ...func.params]);
+				let otherInjectNames: string[] = Utils.GetPropertyNames(otherInjects);
+
+				var scope: IScope = new ParameterScope(func.scope, ["arguments", "this", ...otherInjectNames, ...func.params]);
 				scope.set("arguments", values);
+				scope.set("this", thisValue);
+				for (let i of otherInjectNames)
+					scope.set(i, otherInjects[i]);
 				for (let i=0; i<func.params.length && i<values.length; ++i)
 					scope.set(func.params[i], values[i]);
 

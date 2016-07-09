@@ -43,6 +43,7 @@ export function compile(parseTree: any): AstNode {
 			result = new AstStatements(parseTree, true);
 			break;
 		case "Identifier":
+		case "ThisExpression":
 			result = new AstIdentifier(parseTree);
 			break;
 		case "MemberExpression":

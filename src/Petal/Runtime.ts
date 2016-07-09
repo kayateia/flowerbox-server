@@ -99,7 +99,7 @@ export class Runtime {
 
 	public pushAction(step: Step): void {
 		if (this._verbose)
-			console.log("STEPPUSH", step.name(), ":", step.node());
+			console.log("STEPPUSH", step.name(), ":", step.node(), ":", step.scope());
 		this._pipeline.push(step);
 	}
 
