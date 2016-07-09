@@ -40,6 +40,12 @@ node js/test.js
 
 You can edit src/test.ts to play with various possibilities.
 
+### Running tests
+
+You'll also need to install Jasmine if you want to run the tests:
+
+     npm install -g jasmine
+
 
 ### Game notes
 

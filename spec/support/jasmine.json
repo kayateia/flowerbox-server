@@ -1,0 +1,11 @@
+{
+	"spec_dir": "js",
+	"spec_files": [
+		"Petal/Tests/*.js"
+	],
+	"helpers": [
+		"helpers/**/*.js"
+	],
+	"stopSpecOnExpectationFailure": false,
+	"random": false
+}

@@ -17,6 +17,7 @@
     "grunt-exec": "^1.0.0",
     "grunt-newer": "^1.2.0",
     "grunt-typescript": "^0.8.0",
+    "jasmine": "^2.4.1",
     "typescript": "^1.8.10"
   }
 }
