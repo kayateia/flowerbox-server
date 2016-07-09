@@ -33,7 +33,7 @@ export class AstFunction extends AstNode {
 		if (parseTree.id)
 			this.name = parseTree.id.name;
 		this.params = parseTree.params.map((i) => i.name);
-		this.body = new AstStatements(parseTree.body, true);
+		this.body = new AstStatements(parseTree.body, false);
 	}
 
 	public static IsFunction(value: any): boolean {
