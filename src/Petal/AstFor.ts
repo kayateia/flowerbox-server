@@ -20,9 +20,8 @@ export class AstFor extends AstNode {
 	}
 
 	public execute(runtime: Runtime): void {
-		// For loop's lexical scope, which will go on below any of our code.
-		let scope = new StandardScope(runtime.currentScope());
-		runtime.pushAction(Step.Scope("For scope", scope));
+		// Stack marker in case we want to break or continue.
+		runtime.pushAction(Step.Nonce("For marker"));
 
 		let that = this;
 		(function pushForIteration() {
@@ -36,7 +35,7 @@ export class AstFor extends AstNode {
 				let result = LValue.PopAndDeref(runtime);
 				if (!result) {
 					// Bail.
-					runtime.popActionUntil((s: Step) => s.name() !== "For scope");
+					runtime.popActionUntil((s: Step) => s.name() !== "For marker");
 					runtime.popAction();
 				}
 			}));

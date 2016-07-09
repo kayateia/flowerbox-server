@@ -37,6 +37,10 @@ export class Step {
 		return new Step(node, name);
 	}
 
+	public static Nonce(name: string): Step {
+		return new Step(null, name);
+	}
+
 	public execute(runtime: Runtime): any {
 		// console.log("EXECUTING", this._name, ":", this._node);
 		if (this._node && this._callback)

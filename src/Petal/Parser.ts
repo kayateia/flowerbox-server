@@ -31,14 +31,16 @@ export function compile(parseTree: any): AstNode {
 	let result: AstNode;
 	switch(parseTree.type) {
 		case "Program":
-			result = new AstStatements(parseTree);
+			// There's no reason to mark this as a block scope since we'll have pushed on
+			// a global scope anyway.
+			result = new AstStatements(parseTree, false);
 			break;
 		case "FunctionExpression":
 		case "FunctionDeclaration":
 			result = new AstFunction(parseTree);
 			break;
 		case "BlockStatement":
-			result = new AstStatements(parseTree);
+			result = new AstStatements(parseTree, true);
 			break;
 		case "Identifier":
 			result = new AstIdentifier(parseTree);

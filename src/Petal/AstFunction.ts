@@ -11,38 +11,53 @@ import { Runtime } from "./Runtime";
 import { IScope } from "./IScope";
 import { StandardScope } from "./Scopes/StandardScope";
 
+// This is what's actually pushed on the stack when we execute, to guarantee a unique scope.
+export class AstFunctionInstance extends AstNode {
+	constructor(orig: AstFunction, parentScope: IScope) {
+		super({});
+		this.name = orig.name;
+		this.params = orig.params;
+		this.body = orig.body;
+		this.scope = new StandardScope(parentScope);
+	}
+	public what: string = "FunctionInstance";
+	public name: string;
+	public params: string[];
+	public body: AstStatements;
+	public scope: IScope;
+}
+
 export class AstFunction extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
 		if (parseTree.id)
 			this.name = parseTree.id.name;
 		this.params = parseTree.params.map((i) => i.name);
-		this.body = new AstStatements(parseTree.body);
+		this.body = new AstStatements(parseTree.body, true);
 	}
 
 	public static IsFunction(value: any): boolean {
 		if (value === null || value === undefined)
 			return false;
-		return value.what === "Function";
+		return value.what === "Function" || value.what === "FunctionInstance";
 	}
 
 	// We basically just "execute" like an R-Value, to be set in variables or called directly.
 	public execute(runtime: Runtime): void {
+		// Make an instance with an inner scope linked to the current outer scope.
+		let instance: AstFunctionInstance = new AstFunctionInstance(this, runtime.currentScope());
+
 		// Set a variable with our name if requested.
 		let curScope = runtime.currentScope();
 		if (this.name)
-			curScope.set(this.name, this);
-
-		// Make an inner scope linked to the current outer scope for later use.
-		this.scope = new StandardScope(curScope);
+			curScope.set(this.name, instance);
 
 		// And push our value on the operand stack.
-		runtime.pushOperand(this);
+		runtime.pushOperand(instance);
 	}
 
 	public what: string = "Function";
 	public name: string;
 	public params: string[];
 	public body: AstStatements;
-	public scope: IScope;
 }

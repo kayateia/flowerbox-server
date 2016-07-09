@@ -5,7 +5,7 @@
 */
 
 import { AstNode } from "./AstNode";
-import { AstFunction } from "./AstFunction";
+import { AstFunction, AstFunctionInstance } from "./AstFunction";
 import { compile } from "./Parser";
 import { Step, Runtime } from "./Runtime";
 import { RuntimeException } from "./Exceptions";
@@ -61,7 +61,7 @@ export class AstCallExpression extends AstNode {
 				// We need to do two things here. The first one is that we need to get the function's
 				// arguments in place, using a function argument scope. Then we need to push the contents
 				// of the function onto the action stack.
-				var func: AstFunction = callee;
+				var func: AstFunctionInstance = callee;
 				runtime.pushAction(Step.Scope("Function scope", func.scope));
 
 				var scope: IScope = new ParameterScope(func.scope, func.params);
