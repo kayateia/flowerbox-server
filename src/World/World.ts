@@ -14,14 +14,11 @@ export class World {
 	constructor() {
 		this._nextId = 1;
 		this._wobCache = new Map<number, Wob>();
-
-		// Create a small in-world "game world" to test with.
-		this.createDefault();
 	}
 
-	public createDefault(): void {
+	public async createDefault(): Promise<void> {
 		// This will create #1. It is the root object.
-		let wob1 = this.createWob();
+		let wob1 = await this.createWob();
 		wob1.setProperty(WobProperties.Name, "Zaa Warudo");
 		wob1.setProperty(WobProperties.GlobalId, "world");
 		wob1.setProperty(WobProperties.Description, "This is an endless void existing outside of all other reality.");
@@ -56,47 +53,47 @@ export class World {
 			$.log('found root', root.name);\
 		}"));
 
-		let wobPlayer = this.createWob();
+		let wobPlayer = await this.createWob();
 		wobPlayer.base = wob1.id;
 		wobPlayer.setProperty(WobProperties.Name, "Player");
 		wobPlayer.setProperty(WobProperties.Description, "A blank shape that says MY BURAZAA on it");
 		wobPlayer.setVerb("poke", new Verb("poke", "//# poke self\nfunction verb_poke() { $.log('poked!'); }"));
 		wob1.addContent(wobPlayer);
 
-		let wobKaya = this.createWob();
+		let wobKaya = await this.createWob();
 		wobKaya.base = wobPlayer.id;
 		wobKaya.setProperty(WobProperties.Name, "Kayateia");
 		wobKaya.setProperty(WobProperties.Description, "A hacker girl stares at you from a hooded gaze...");
 		wob1.addContent(wobKaya);
 
-		let wobRoom = this.createWob();
+		let wobRoom = await this.createWob();
 		wobRoom.base = wob1.id;
 		wobRoom.setProperty(WobProperties.Name, "Room");
 		wobRoom.setProperty(WobProperties.Description, "A featureless room");
 		wob1.addContent(wobRoom);
 
-		let wobHammer = this.createWob();
+		let wobHammer = await this.createWob();
 		wobHammer.base = wob1.id;
 		wobHammer.setProperty(WobProperties.Name, "Hammer");
 		wob1.addContent(wobHammer);
 		wobHammer.setVerb("throw", new Verb("throw", "//# throw self at any\nfunction verb_throw() {}"));
 		wobHammer.setVerb("use", new Verb("use", "//# use self on any\nfunction verb_use() {}"));
 
-		let wobTeacup = this.createWob();
+		let wobTeacup = await this.createWob();
 		wobTeacup.base = wob1.id;
 		wobTeacup.setProperty(WobProperties.Name, "Teacup");
 		wob1.addContent(wobTeacup);
 		wobTeacup.setVerb("drink", new Verb("drink", "//# drink none from self\nfunction verb_drink() {}"));
 		wobTeacup.setVerb("drop", new Verb("drop", "//# drop self\nfunction verb_drop() {}"));
 
-		let wobDog = this.createWob();
+		let wobDog = await this.createWob();
 		wobDog.base = wob1.id;
 		wobDog.setProperty(WobProperties.Name, "Dog who was put in a kennel");
 		wob1.addContent(wobDog);
 		wobDog.setVerb("release", new Verb("release", "//# release self\nfunction verb_release() { $.log('Thank you for releasing me,', $env.caller.name, '!'); }"));
 		wobDog.setVerb("put", new Verb("put", "//# put self in any\nfunction verb_put() { $.log('Noooes,', $env.caller.name, ', why did you put me in the',$env.indirect.name,'?'); }"));
 
-		let wobPerson = this.createWob();
+		let wobPerson = await this.createWob();
 		wobPerson.base = wob1.id;
 		wobPerson.setProperty(WobProperties.Name, "Human person");
 		wobPerson.setProperty(WobProperties.GlobalId, "human");
@@ -104,7 +101,7 @@ export class World {
 		wobPerson.setVerb("pet", new Verb("pet", "//# pet self\nfunction verb_pet() { $.log('Ahhh!!'); }"));
 	}
 
-	public createWob(container?: number): Wob {
+	public async createWob(container?: number): Promise<Wob> {
 		// Make the object.
 		let wob = new Wob(this._nextId++);
 		this._wobCache.set(wob.id, wob);

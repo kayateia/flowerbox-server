@@ -79,6 +79,9 @@ const rl = readline.createInterface({
 });
 
 async function tester() {
+	// Create a small in-world "game world" to test with.
+	await world.createDefault();
+
 	// console.log(JSON.stringify(world, null, 4));
 
 	let wobs = await world.getWobs([3]);
