@@ -60,7 +60,6 @@ class DollarObject {
 	}
 
 	public async get(objId: any): Promise<WobWrapper> {
-		console.log("Got inside get()");
 		if (typeof(objId) === "number") {
 			let objNum: number = objId;
 			let obj = await this._world.getWob(objNum);
