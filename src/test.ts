@@ -70,6 +70,7 @@ import { World } from "./World/World";
 import { executeResult } from "./World/Execution";
 import * as InputParser from "./World/InputParser";
 import * as readline from "readline";
+import { InitWorld } from "./InitWorld";
 
 let world = new World();
 
@@ -80,7 +81,7 @@ const rl = readline.createInterface({
 
 async function tester() {
 	// Create a small in-world "game world" to test with.
-	await world.createDefault();
+	await world.createDefault(InitWorld);
 
 	// console.log(JSON.stringify(world, null, 4));
 
