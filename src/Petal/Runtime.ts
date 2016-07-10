@@ -12,11 +12,12 @@ import { StandardScope } from "./Scopes/StandardScope";
 import { SuspendException, RuntimeException } from "./Exceptions";
 
 export class Step {
-	constructor(node: AstNode, name?: string, callback?: IActionCallback, scope?: IScope) {
+	constructor(node: AstNode, name?: string, callback?: IActionCallback, scope?: IScope, extra?: any) {
 		this._node = node;
 		this._name = name;
 		this._callback = callback;
 		this._scope = scope;
+		this._extra = extra;
 	}
 
 	public static ClearOperands(runtime: Runtime): Step {
@@ -39,6 +40,10 @@ export class Step {
 
 	public static Nonce(name: string): Step {
 		return new Step(null, name);
+	}
+
+	public static Extra(name: string, extra: any): Step {
+		return new Step(null, name, null, null, extra);
 	}
 
 	public execute(runtime: Runtime): any {
@@ -71,10 +76,15 @@ export class Step {
 		return this._scope;
 	}
 
+	public extra(): any {
+		return this._extra;
+	}
+
 	private _node: AstNode;
 	private _name: string;
 	private _callback: IActionCallback;
 	private _scope: IScope;
+	private _extra: any;
 }
 
 export class ExecuteResult {
@@ -197,6 +207,14 @@ export class Runtime {
 			if (this._verbose)
 				console.log("STEPPOPPING:", popped);
 		}
+	}
+
+	public findAction(tester: (Step) => boolean): Step {
+		for (let i=this._pipeline.length - 1; i>=0; --i)
+			if (tester(this._pipeline[i]))
+				return this._pipeline[i];
+
+		return null;
 	}
 
 	public printActionStack(): void {

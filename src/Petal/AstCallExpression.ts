@@ -40,6 +40,14 @@ export class AstCallExpression extends AstNode {
 		runtime.popAction();
 	}
 
+	public static GetCurrentThis(runtime: Runtime): any {
+		let step = runtime.findAction((s: Step) => s.name() === "Call this marker");
+		if (!step)
+			return null;
+		else
+			return step.extra().thisValue;
+	}
+
 	public execute(runtime: Runtime): any {
 		runtime.pushAction(Step.Callback("Function execution", (v) => {
 			let callee = runtime.popOperand();
@@ -51,6 +59,9 @@ export class AstCallExpression extends AstNode {
 				otherInjects = tv.others;
 			}
 			callee = Value.Deref(runtime, callee);
+
+			let caller = AstCallExpression.GetCurrentThis(runtime);
+			runtime.pushAction(Step.Extra("Call this marker", { thisValue: thisValue }));
 
 			let values = [];
 			for (let i=0; i<this.param.length; ++i) {
@@ -77,9 +88,11 @@ export class AstCallExpression extends AstNode {
 
 				let otherInjectNames: string[] = Utils.GetPropertyNames(otherInjects);
 
-				var scope: IScope = new ParameterScope(func.scope, ["arguments", "this", ...otherInjectNames, ...func.params]);
+				var scope: IScope = new ParameterScope(func.scope,
+					["arguments", "this", "caller", ...otherInjectNames, ...func.params]);
 				scope.set("arguments", values);
 				scope.set("this", thisValue);
+				scope.set("caller", caller);
 				for (let i of otherInjectNames)
 					scope.set(i, otherInjects[i]);
 				for (let i=0; i<func.params.length && i<values.length; ++i)

@@ -144,4 +144,12 @@ describe("Functional test", function() {
 
 		expect(test.output).toEqual("5\n10\n");
 	});
+
+	it("should have a working 'caller' value", function() {
+		let program = "var a = { bob: function() { log(this.bar); b.bob(); }, bar: 5 }; var b = { bob: function() { log(this.bar); log(caller.bar); }, bar: 10 }; a.bob();";
+		let test = new TestSetup(program);
+		test.runProgram();
+
+		expect(test.output).toEqual("5\n10\n5\n");
+	});
 });
