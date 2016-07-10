@@ -9,7 +9,7 @@
 import * as Petal from "../Petal";
 import { TestSetup } from "./TestSetup";
 
-// These are the most ideal set of tests, but they're designed to be a torture test gamut of
+// These aren't the most ideal set of tests, but they're designed to be a torture test gamut of
 // random stuff I tried while developing Petal. More formal ones coming...
 
 describe("Functional test", function() {
@@ -18,7 +18,7 @@ describe("Functional test", function() {
 		let program = "function testblob(#a, b, c) { return #a.baz+@cool.bar()+c; } testblob(1,2,'fooz'); (function() { console.log('boo!'); })();";
 		let test = new TestSetup(program);
 
-		// No expection is good enough.
+		// Not having an exception is good enough.
 		expect(1).toEqual(1);
 	});
 
