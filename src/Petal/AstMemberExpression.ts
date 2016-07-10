@@ -10,7 +10,7 @@ import { AstFunction } from "./AstFunction";
 import { compile } from "./Parser";
 import { Step, Runtime } from "./Runtime";
 import { RuntimeException } from "./Exceptions";
-import { LValue } from "./LValue";
+import { Value } from "./Value";
 import { Utils } from "./Utils";
 import { ObjectWrapper, IObject } from "./Objects";
 import { ThisValue } from "./ThisValue";
@@ -30,10 +30,10 @@ export class AstMemberExpression extends AstNode {
 	public execute(runtime: Runtime): void {
 		// See IObject.ts for more info about what's going on in here.
 		runtime.pushAction(Step.Callback("Member lookup", () => {
-			let obj = LValue.PopAndDeref(runtime);
+			let obj = Value.PopAndDeref(runtime);
 			let property;
 			if (this.property)
-				property = LValue.PopAndDeref(runtime);
+				property = Value.PopAndDeref(runtime);
 			let iobj: IObject = ObjectWrapper.Wrap(obj);
 			if (!iobj)
 				throw new RuntimeException("Can't wrap object for lookup", obj);
@@ -44,11 +44,9 @@ export class AstMemberExpression extends AstNode {
 			else
 				value = iobj.getAccessor(this.member);
 
-			let valderefed = LValue.Deref(runtime, value);
-			if (AstFunction.IsFunction(valderefed) || typeof(valderefed) === "function")
-				runtime.pushOperand(new ThisValue(obj, value));
-			else
-				runtime.pushOperand(value);
+			// In case this is a function to be called, we'll store the object with the value so
+			// it can become the "this" value in the function call.
+			runtime.pushOperand(new ThisValue(obj, value));
 		}));
 		runtime.pushAction(Step.Node("Member object", this.obj));
 		if (this.property)

@@ -7,7 +7,7 @@
 import { AstNode } from "./AstNode";
 import { Step, Runtime } from "./Runtime";
 import { compile } from "./Parser";
-import { LValue } from "./LValue";
+import { Value } from "./Value";
 
 export class AstBinaryExpression extends AstNode {
 	constructor(parseTree: any) {
@@ -19,8 +19,8 @@ export class AstBinaryExpression extends AstNode {
 
 	public execute(runtime: Runtime): void {
 		runtime.pushAction(Step.Callback("Binary comparison", () => {
-			let v1 = LValue.PopAndDeref(runtime);
-			let v2 = LValue.PopAndDeref(runtime);
+			let v1 = Value.PopAndDeref(runtime);
+			let v2 = Value.PopAndDeref(runtime);
 			let result: any;
 			switch (this.operator) {
 				case "-":

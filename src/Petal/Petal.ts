@@ -32,7 +32,9 @@ export * from "./LValue";
 export * from "./Objects";
 export * from "./Parser";
 export * from "./Runtime";
+export * from "./ThisValue";
 export * from "./Utils";
+export * from "./Value";
 
 export * from "./Scopes/ParameterScope";
 export * from "./Scopes/StandardScope";

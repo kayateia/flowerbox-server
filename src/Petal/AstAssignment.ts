@@ -9,6 +9,7 @@ import { compile } from "./Parser";
 import { Step, Runtime } from "./Runtime";
 import { RuntimeException } from "./Exceptions";
 import { LValue } from "./LValue";
+import { Value } from "./Value";
 
 export class AstAssignment extends AstNode {
 	constructor(parseTree: any) {
@@ -20,10 +21,8 @@ export class AstAssignment extends AstNode {
 
 	public execute(runtime: Runtime): void {
 		runtime.pushAction(Step.Callback("Assignment", () => {
-			let lhs = runtime.popOperand();
+			let lhs = Value.GetLValue(runtime.popOperand());
 			let rhs = LValue.PopAndDeref(runtime);
-			if (!LValue.IsLValue(lhs))
-				throw new RuntimeException("Attempt to assign to non-lvalue");
 
 			let newlhs;
 			switch (this.operator) {

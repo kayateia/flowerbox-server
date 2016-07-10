@@ -9,6 +9,7 @@ import { Step, Runtime } from "./Runtime";
 import { RuntimeException } from "./Exceptions";
 import { compile } from "./Parser";
 import { LValue } from "./LValue";
+import { Value } from "./Value";
 
 export class AstUpdate extends AstNode {
 	constructor(parseTree: any) {
@@ -20,11 +21,7 @@ export class AstUpdate extends AstNode {
 
 	public execute(runtime: Runtime): void {
 		runtime.pushAction(Step.Callback("Update callback", () => {
-			let lval: LValue = runtime.popOperand();
-			if (!LValue.IsLValue(lval)) {
-				throw new RuntimeException("Attempt to use update on non-lvalue", lval);
-			}
-
+			let lval: LValue = Value.GetLValue(runtime.popOperand());
 			let oldValue = LValue.Deref(runtime, lval);
 			let newValue;
 			switch (this.operator) {

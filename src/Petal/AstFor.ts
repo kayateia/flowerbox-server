@@ -8,7 +8,7 @@ import { AstNode } from "./AstNode";
 import { compile } from "./Parser";
 import { Step, Runtime } from "./Runtime";
 import { StandardScope } from "./Scopes/StandardScope";
-import { LValue } from "./LValue";
+import { Value } from "./Value";
 
 export class AstFor extends AstNode {
 	constructor(parseTree: any) {
@@ -32,7 +32,7 @@ export class AstFor extends AstNode {
 			// Do the condition check.
 			runtime.pushAction(Step.Callback("For test callback", () => {
 				// Get the result.
-				let result = LValue.PopAndDeref(runtime);
+				let result = Value.PopAndDeref(runtime);
 				if (!result) {
 					// Bail.
 					runtime.popActionUntil((s: Step) => s.name() !== "For marker");

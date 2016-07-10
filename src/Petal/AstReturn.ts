@@ -8,7 +8,7 @@ import { AstNode } from "./AstNode";
 import { AstCallExpression } from "./AstCallExpression";
 import { compile } from "./Parser";
 import { Step, Runtime } from "./Runtime";
-import { LValue } from "./LValue";
+import { Value } from "./Value";
 
 export class AstReturn extends AstNode {
 	constructor(parseTree: any) {
@@ -21,7 +21,7 @@ export class AstReturn extends AstNode {
 		runtime.pushAction(Step.Callback("Return unwinder", (s) => {
 			let rv = undefined;
 			if (this.arg)
-				rv = LValue.PopAndDeref(runtime);
+				rv = Value.PopAndDeref(runtime);
 
 			runtime.pushOperand(rv);
 

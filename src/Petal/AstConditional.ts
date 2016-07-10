@@ -7,7 +7,7 @@
 import { AstNode } from "./AstNode";
 import { compile } from "./Parser";
 import { Step, Runtime } from "./Runtime";
-import { LValue } from "./LValue";
+import { Value } from "./Value";
 
 export class AstConditional extends AstNode {
 	constructor(parseTree: any) {
@@ -21,7 +21,7 @@ export class AstConditional extends AstNode {
 
 	public execute(runtime: Runtime): void {
 		runtime.pushAction(Step.Callback("Conditional", () => {
-			let result = LValue.PopAndDeref(runtime);
+			let result = Value.PopAndDeref(runtime);
 
 			if (this.statement)
 				runtime.pushAction(Step.ClearOperands(runtime));

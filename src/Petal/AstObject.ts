@@ -9,7 +9,7 @@ import { AstIdentifier } from "./AstIdentifier";
 import { compile } from "./Parser";
 import { ParseException } from "./Exceptions";
 import { Step, Runtime } from "./Runtime";
-import { LValue } from "./LValue";
+import { Value } from "./Value";
 import { Utils } from "./Utils";
 
 export class AstObject extends AstNode {
@@ -44,7 +44,7 @@ export class AstObject extends AstNode {
 			// This prevents superclass properties from mixing in.
 			let result = new Object(null);
 			Utils.GetPropertyNames(this.contents).forEach((p) => {
-				let value = LValue.PopAndDeref(runtime);
+				let value = Value.PopAndDeref(runtime);
 				result[p] = value;
 			});
 			result["___petalObject"] = true;

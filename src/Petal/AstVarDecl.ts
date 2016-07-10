@@ -7,7 +7,7 @@
 import { AstNode } from "./AstNode";
 import { compile } from "./Parser";
 import { Step, Runtime } from "./Runtime";
-import { LValue } from "./LValue";
+import { Value } from "./Value";
 
 export class AstVarDecl extends AstNode {
 	constructor(parseTree: any) {
@@ -21,7 +21,7 @@ export class AstVarDecl extends AstNode {
 		runtime.pushAction(new Step(null, "Var assignment for " + this.name, (val) => {
 			let opval: any;
 			if (this.init) {
-				opval = LValue.PopAndDeref(runtime);
+				opval = Value.PopAndDeref(runtime);
 			}
 
 			runtime.currentScope().set(this.name, opval);

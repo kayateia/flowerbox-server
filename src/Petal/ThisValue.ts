@@ -21,6 +21,17 @@ export class ThisValue {
 			this.others = {};
 	}
 
+	public static IsThisValue(value: any): boolean {
+		return value instanceof ThisValue;
+	}
+
+	public static Deref(value: any): any {
+		if (!ThisValue.IsThisValue(value))
+			return value;
+		else
+			return value.value;
+	}
+
 	public thisValue: any;
 	public value: any;
 	public others: any;

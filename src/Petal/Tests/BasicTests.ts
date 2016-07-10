@@ -98,11 +98,19 @@ describe("Functional test", function() {
 	});
 
 	it("should have working member access on JSON style objects", function() {
-		let program = "var a = { b:5 }; log(a.b); a.b++; log(a.b);";
+		let program = "var a = { b:5 }; log(a.b); a.b++; log(a.b); a.b += 4; log(a.b); a.b = 1; log(a.b);";
 		let test = new TestSetup(program);
 		test.runProgram();
 
-		expect(test.output).toEqual("5\n6\n");
+		expect(test.output).toEqual("5\n6\n10\n1\n");
+	});
+
+	it("should allow for assignments to functions in objects", function() {
+		let program = "var a = { b:5, c:function() { log(this.b, 'original'); } }; a.c(); a.c = function() { log(this.b, 'new'); }; a.c();";
+		let test = new TestSetup(program);
+		test.runProgram();
+
+		expect(test.output).toEqual("5 original\n5 new\n");
 	});
 
 	it("should allow array creation and access", function() {

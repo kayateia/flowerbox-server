@@ -12,7 +12,7 @@ import { RuntimeException } from "./Exceptions";
 import { IScope } from "./IScope";
 import { StandardScope } from "./Scopes/StandardScope";
 import { ParameterScope } from "./Scopes/ParameterScope";
-import { LValue } from "./LValue";
+import { Value } from "./Value";
 import { ThisValue } from "./ThisValue";
 import { Utils } from "./Utils";
 
@@ -45,16 +45,16 @@ export class AstCallExpression extends AstNode {
 			let callee = runtime.popOperand();
 			let thisValue = null;
 			let otherInjects = {};
-			if (callee instanceof ThisValue) {
-				let tv = <ThisValue>callee;
+			if (ThisValue.IsThisValue(callee)) {
+				let tv: ThisValue = callee;
 				thisValue = tv.thisValue;
 				otherInjects = tv.others;
 			}
-			callee = LValue.Deref(runtime, callee);
+			callee = Value.Deref(runtime, callee);
 
 			let values = [];
 			for (let i=0; i<this.param.length; ++i) {
-				values.push(LValue.PopAndDeref(runtime));
+				values.push(Value.PopAndDeref(runtime));
 			}
 
 			if (callee === null || callee === undefined)
