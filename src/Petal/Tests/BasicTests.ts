@@ -152,4 +152,21 @@ describe("Functional test", function() {
 
 		expect(test.output).toEqual("5\n10\n5\n");
 	});
+
+	it("should successfully resume after an async function call", function(done) {
+		let program = "var rv = test(); log('returned', rv);";
+		let test = new TestSetup(program);
+		test.runtime.currentScope().set("test", function() {
+			return new Promise(complete => {
+				setTimeout(() => {
+					complete(5);
+				}, 1);
+			});
+		});
+		test.runProgramAsync()
+			.then(() => {
+				expect(test.output).toEqual("returned 5\n");
+				done();
+			});
+	});
 });

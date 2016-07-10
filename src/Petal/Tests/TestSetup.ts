@@ -37,6 +37,11 @@ export class TestSetup {
 		this.runtime.execute(1000);
 	}
 
+	public async runProgramAsync() {
+		this.runtime.pushAction(Petal.Step.Node("Main program", this.programCompiled));
+		await this.runtime.executeAsync(1000);
+	}
+
 	public runtime: Petal.Runtime;
 	public output: string;
 	public programCompiled: Petal.AstNode;
