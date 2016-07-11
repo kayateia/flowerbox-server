@@ -22,7 +22,7 @@ export class AstAssignment extends AstNode {
 	public execute(runtime: Runtime): void {
 		runtime.pushAction(Step.Callback("Assignment", () => {
 			let lhs = Value.GetLValue(runtime.popOperand());
-			let rhs = LValue.PopAndDeref(runtime);
+			let rhs = Value.PopAndDeref(runtime);
 
 			let newlhs;
 			switch (this.operator) {
