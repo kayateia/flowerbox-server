@@ -21,22 +21,28 @@ export class LValue {
 		this._writer = writer;
 	}
 
+	// Reads the value behind the l-value. This should never have any side effects.
 	public read(runtime: Runtime): any {
 		return this._reader(runtime);
 	}
 
+	// Writes to the value behind the l-value.
 	public write(runtime: Runtime, value: any): void {
 		this._writer(runtime, value);
 	}
 
+	// Makes a simple LValue that is read-only for a constant value.
 	public static MakeReadOnly(value: any): LValue {
 		return new LValue("Read-only Value", (rt) => value, (rt) => { throw new RuntimeException("Can't write to read-only value"); });
 	}
 
+	// Returns true if the specified object is an LValue.
 	public static IsLValue(value: any): boolean {
-		return typeof(value) === "object" && value._reader;
+		return value instanceof LValue;
 	}
 
+	// Calls the read method and returns the value it returned, if this is an LValue.
+	// Otherwise, returns the original value.
 	public static Deref(runtime: Runtime, value: any): any {
 		if (LValue.IsLValue(value))
 			return value.read();
@@ -44,6 +50,7 @@ export class LValue {
 			return value;
 	}
 
+	// Pops a value off the operand stack and calls Deref on it.
 	public static PopAndDeref(runtime: Runtime): any {
 		let value = runtime.popOperand();
 		return LValue.Deref(runtime, value);

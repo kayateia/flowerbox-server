@@ -13,6 +13,7 @@ import { IScope } from "./IScope";
 import { StandardScope } from "./Scopes/StandardScope";
 import { ParameterScope } from "./Scopes/ParameterScope";
 import { Value } from "./Value";
+import { LValue } from "./LValue";
 import { ThisValue } from "./ThisValue";
 import { Utils } from "./Utils";
 
@@ -61,6 +62,12 @@ export class AstCallExpression extends AstNode {
 				callee = this.callee;
 			else
 				callee = runtime.popOperand();
+
+			// This extra step of Deref is so that callback functions can return ThisValues to us.
+			// This is a hack. FIXME.
+			if (LValue.IsLValue(callee))
+				callee = LValue.Deref(runtime, callee);
+
 			let thisValue = null;
 			let otherInjects = {};
 			if (ThisValue.IsThisValue(callee)) {

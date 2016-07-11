@@ -1,6 +1,6 @@
 import { WobProperties } from "./World/Wob";
 
-let $env: any;
+let $parse: any;
 let $: any;
 
 export let InitWorld = [
@@ -14,7 +14,7 @@ export let InitWorld = [
 		verbs: {
 			$command: {
 				code: function() {
-					var text = $env.text;
+					var text = $parse.text;
 					if (text.startsWith("say ")) {
 						$.log("Saying", text.substr(4));
 						return true;
@@ -29,10 +29,10 @@ export let InitWorld = [
 					$.log("looking at", this.name);
 					$.log(this.desc);
 					/*var target;
-					if ($env.direct)
-						target = $env.direct;
-					else if ($env.indirect)
-						target = $env.indirect;
+					if ($parse.direct)
+						target = $parse.direct;
+					else if ($parse.indirect)
+						target = $parse.indirect;
 					else {
 						$.log("Don't know what you're looking at!");
 						return;
@@ -47,7 +47,7 @@ export let InitWorld = [
 					var root = $.get(1);
 					$.log("found root", root.name);
 					$.log("calling test2");
-					var t2r = this.test2(10);
+					var t2r = root.test2(10);
 					$.log("test2 returned",t2r);
 				}
 			},
@@ -157,13 +157,13 @@ export let InitWorld = [
 			release: {
 				sigs: [ "release self" ],
 				code: function() {
-					$.log("Thank you for releasing me,", $env.caller.name, "!");
+					$.log("Thank you for releasing me,", $parse.player.name, "!");
 				}
 			},
 			put: {
 				sigs: [ "put self in any" ],
 				code: function() {
-					$.log("Noooes,", $env.caller.name, ", why did you put me in the", $env.indirect.name, "?");
+					$.log("Noooes,", $parse.player.name, ", why did you put me in the", $parse.indirect.name, "?");
 				}
 			}
 		}

@@ -14,6 +14,7 @@ import { Value } from "./Value";
 import { Utils } from "./Utils";
 import { ObjectWrapper, IObject } from "./Objects";
 import { ThisValue } from "./ThisValue";
+import { LValue } from "./LValue";
 
 // This unfortunately covers both a.b and a["b"] (non-computed and computed).
 export class AstMemberExpression extends AstNode {
@@ -44,9 +45,14 @@ export class AstMemberExpression extends AstNode {
 			else
 				value = iobj.getAccessor(this.member);
 
-			// In case this is a function to be called, we'll store the object with the value so
-			// it can become the "this" value in the function call.
-			runtime.pushOperand(new ThisValue(obj, value));
+			// If we already got a ThisValue, don't double-wrap it. Otherwise, store the object with
+			// the value so it can become the "this" value in the function call.
+			//
+			// This mess of logic here is a hack to make it easier to return ThisValues from native callbacks. FIXME.
+			if (!ThisValue.IsThisValue(value) && !ThisValue.IsThisValue(Value.Deref(runtime, value)))
+				value = new ThisValue(obj, value);
+
+			runtime.pushOperand(value);
 		}));
 		runtime.pushAction(Step.Node("Member object", this.obj));
 		if (this.property)

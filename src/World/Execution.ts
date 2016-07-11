@@ -13,8 +13,9 @@ import { WobOperationException } from "./Exceptions";
 
 // Wraps a Wob for use within Petal.
 class WobWrapper implements Petal.IObject {
-	constructor(wob: Wob) {
+	constructor(wob: Wob, injections: any) {
 		this._wob = wob;
+		this._injections = injections;
 	}
 
 	public getAccessor(index: any): Petal.LValue {
@@ -33,9 +34,7 @@ class WobWrapper implements Petal.IObject {
 			});
 		} else if (Strings.caseIn(member, verbs)) {
 			return new Petal.LValue("Wob." + member, (runtime: Petal.Runtime) => {
-				return () => {
-					// Eventually, we'll want to call down into the other verb and pass parameters and such.
-				};
+				return new Petal.ThisValue(this, this._wob.getVerb(member).compiled, this._injections);
 			}, (runtime: Petal.Runtime, value: any) => {
 				throw new WobOperationException("Can't set new verbs right now", []);
 			});
@@ -44,12 +43,14 @@ class WobWrapper implements Petal.IObject {
 	}
 
 	private _wob: Wob;
+	private _injections: any;
 }
 
 // Represents the $ object within the game, which represents the interface to the game itself.
 class DollarObject {
-	constructor(world: World) {
+	constructor(world: World, injections: any) {
 		this._world = world;
+		this._injections = injections;
 	}
 
 	public log(): void {
@@ -64,7 +65,7 @@ class DollarObject {
 			let objNum: number = objId;
 			let obj = await this._world.getWob(objNum);
 			if (obj)
-				return new WobWrapper(obj);
+				return new WobWrapper(obj, this._injections);
 			else
 				return null;
 		} else if (typeof(objId) === "string") {
@@ -72,7 +73,7 @@ class DollarObject {
 			if (objStr.startsWith("@")) {
 				let wobs = await this._world.getWobsByGlobalId([objStr.substr(1)]);
 				if (wobs && wobs.length)
-					return new WobWrapper(wobs[0]);
+					return new WobWrapper(wobs[0], this._injections);
 				else
 					return null;
 			} else if (objStr.startsWith("/")) {
@@ -89,29 +90,30 @@ class DollarObject {
 	];
 
 	private _world: World;
+	private _injections: any;
 }
 
-// Wraps the ParseResult object for $env inside Petal.
-class DollarEnv {
-	constructor(parse: ParseResult, caller: Wob) {
+// Wraps the ParseResult object for $parse inside Petal.
+class DollarParse {
+	constructor(parse: ParseResult, player: Wob, injections: any) {
 		this.verbName = parse.verbName;
-		this.verbObject = new WobWrapper(parse.verbObject);
+		this.verbObject = new WobWrapper(parse.verbObject, injections);
 		if (parse.direct)
-			this.direct = new WobWrapper(parse.direct);
+			this.direct = new WobWrapper(parse.direct, injections);
 		this.prep = parse.prep;
 		if (parse.indirect)
-			this.indirect = new WobWrapper(parse.indirect);
+			this.indirect = new WobWrapper(parse.indirect, injections);
 		this.prep2 = parse.prep2;
 		if (parse.indirect2)
-			this.indirect2 = new WobWrapper(parse.indirect2);
+			this.indirect2 = new WobWrapper(parse.indirect2, injections);
 
-		this.caller = new WobWrapper(caller);
+		this.player = new WobWrapper(player, injections);
 
 		this.text = parse.text;
 	}
 
 	public static Members: string[] = [
-		"verbName", "verbObject", "direct", "prep", "indirect", "prep2", "indirect2", "caller", "text"
+		"verbName", "verbObject", "direct", "prep", "indirect", "prep2", "indirect2", "player", "text"
 	];
 
 	public verbName: string;
@@ -124,28 +126,28 @@ class DollarEnv {
 	public prep2: string;
 	public indirect2: WobWrapper;
 
-	public caller: WobWrapper;
+	public player: WobWrapper;
 
 	public text: string;
 }
 
 export async function executeResult(parse: ParseResult, player: Wob, world: World): Promise<void> {
 	// Get the environment ready.
-	let dollar = Petal.ObjectWrapper.WrapGeneric(new DollarObject(world), DollarObject.Members, false);
-	let dollarEnv = Petal.ObjectWrapper.WrapGeneric(new DollarEnv(parse, player), DollarEnv.Members, false);
+	let injections: any = {};
+	let dollar = Petal.ObjectWrapper.WrapGeneric(new DollarObject(world, injections), DollarObject.Members, false);
+	let dollarParse = Petal.ObjectWrapper.WrapGeneric(new DollarParse(parse, player, injections), DollarParse.Members, false);
+	injections.$ = dollar;
+	injections.$parse = dollarParse;
 
 	// Check for a global command handler on #1. If it exists, we'll call that first.
 	// FIXME: The top level scope really need to be a const scope to avoid monkey-business with $, $env, etc.
 	// Same applies below.
 	let rt = new Petal.Runtime(false);
-	let scope = rt.currentScope();
-	scope.set("$", dollar);
-	scope.set("$env", dollarEnv);
 
 	let root = await world.getWob(1);
 	let parserVerb = root.getVerb("$command");
 	if (parserVerb) {
-		let verbThis = new Petal.ThisValue(root, parserVerb.compiled, { $: dollar, $env: dollarEnv });
+		let verbThis = new Petal.ThisValue(root, parserVerb.compiled, injections);
 		let result: Petal.ExecuteResult = await rt.executeFunctionAsync(verbThis, [], 10000);
 		console.log("$command took", result.stepsUsed, "steps");
 		if (result.outOfSteps) {
@@ -157,10 +159,7 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 
 		if (parse.verb) {
 			// Reset the runtime.
-			rt = new Petal.Runtime();
-			scope = rt.currentScope();
-			scope.set("$", dollar);
-			scope.set("$env", dollarEnv);
+			rt = new Petal.Runtime(false);
 		}
 	}
 
@@ -168,7 +167,7 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 	if (parse.verb) {
 		// Set up a runtime. We'll install our runtime values from above, then call the verb code.
 		// The verb code should create a function named after the verb.
-		let verbThis = new Petal.ThisValue(new WobWrapper(parse.verbObject), parse.verb.compiled, { $: dollar, $env: dollarEnv });
+		let verbThis = new Petal.ThisValue(new WobWrapper(parse.verbObject, injections), parse.verb.compiled, injections);
 		let result: Petal.ExecuteResult = await rt.executeFunctionAsync(verbThis, [], 10000);
 		console.log(parse.verbName, "took", result.stepsUsed, "steps");
 		if (result.outOfSteps) {
