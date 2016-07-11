@@ -4,10 +4,11 @@
 	For license info, please see notes/gpl-3.0.txt under the project root.
 */
 
-import { WobOperationException } from "./Exceptions";
-import { Verb } from "./Verb";
+import { WobOperationException, InvalidCodeException } from "./Exceptions";
+import { Verb, VerbCode } from "./Verb";
 import { CaseMap } from "../Strings";
 import { World } from "./World";
+import * as Petal from "../Petal/Petal";
 
 // When a wob wants to reference another wob in its properties, one of these should be used.
 export class WobRef {
@@ -175,6 +176,52 @@ export class Wob {
 	}
 
 
+	public get verbCode(): string {
+		return this._verbCode;
+	}
+
+	public set verbCode(v: string) {
+		// Eat CRLFs.
+		if (v.indexOf("\r") >= 0)
+			v = v.replace("\r\n", "\n");
+
+		// Parse the code.
+		let parsed: any = Petal.compileFromSource(v);
+
+		// Verify that it is, in fact, just an object definition.
+		if (!Petal.Check.IsSingleObjectDef(parsed))
+			throw new InvalidCodeException("Verb code is not a single variable declaration with an object value.", parsed);
+
+		// Execute the code.
+		let rt = new Petal.Runtime();
+		let runresult = rt.executeCode(parsed, 1000);
+		console.log("Wob", this.id, "verb code executed in", runresult.stepsUsed, "steps.");
+
+		// Look for the variable that was set in the scope.
+		let scope = rt.currentScope();
+		let varnames = scope.names();
+		if (varnames.length !== 1)
+			throw new InvalidCodeException("Verb code did not produce exactly one variable name.", parsed);
+
+		// This should be a dictionary of verb name -> verb object, where each verb object
+		// contains "sigs" (an array) and "code" (a function object). The code may mutate this scope
+		// later, but we split it up for verbs here.
+		let verbsObj: any = scope.get(varnames[0]);
+		let verbNames = Petal.Utils.GetPropertyNames(verbsObj);
+		for (let vn of verbNames) {
+			let verbObj = verbsObj[vn];
+			let sigs: string[] = verbObj.sigs;
+			if (sigs === undefined || sigs === null)
+				sigs = [];
+			let code: Petal.AstNode = verbObj.code;
+			this.setVerb(vn, new Verb(vn, new VerbCode(sigs, code)));
+		}
+
+		// And set the original data for later.
+		this._verbCode = v;
+	}
+
+
 	public getLastUse(): number {
 		return this._lastUse;
 	}
@@ -198,6 +245,9 @@ export class Wob {
 	private _contents: number[];
 	private _properties: CaseMap<any>;
 	private _verbs: CaseMap<Verb>;
+
+	// The verb code for the whole wob. Individual verbs will be peeled out of this.
+	private _verbCode: string;
 
 	private _dirty: boolean;
 	private _lastUse: number;

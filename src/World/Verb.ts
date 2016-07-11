@@ -8,26 +8,25 @@ import * as Petal from "../Petal/Petal";
 import { World } from "./World";
 import { LanguageParseException } from "./Exceptions";
 
+export class VerbCode {
+	constructor(sigs: string[], code: Petal.AstNode) {
+		this.signatures = sigs;
+		this.code = code;
+	}
+
+	public signatures: string[];
+	public code: Petal.AstNode;
+}
+
 export class Verb {
-	constructor(verb: string, text: string) {
+	constructor(verb: string, code: VerbCode) {
 		this._verb = verb;
-		this.text = text;
+		this._code = code;
+		this.parseForSignatures();
 	}
 
 	public get verb(): string {
 		return this._verb;
-	}
-
-	public get text(): string {
-		return this._text;
-	}
-
-	public set text(v: string) {
-		if (v.indexOf("\r") >= 0)
-			v = v.replace("\r\n", "\n");
-		this._compiled = Petal.compileFromSource(v);
-		this.parseForSignatures(v);
-		this._text = v;
 	}
 
 	public get signatures(): VerbSig[] {
@@ -35,18 +34,12 @@ export class Verb {
 	}
 
 	public get compiled(): Petal.AstNode {
-		return this._compiled;
+		return this._code.code;
 	}
 
-	private parseForSignatures(text: string): void {
-		let verbLines: string[] =
-			text
-			.split("\n")
-			.filter(isVerbLine)
-			.map((i) => i.substr(3).trim());
-
+	private parseForSignatures(): void {
 		let newSigs: VerbSig[] = [];
-		verbLines.forEach((verbLine: string) => {
+		this._code.signatures.forEach((verbLine: string) => {
 			let sig = new VerbSig(verbLine);
 			newSigs.push(sig);
 		});
@@ -55,14 +48,8 @@ export class Verb {
 	}
 
 	private _verb: string;
-	private _text: string;
-	private _compiled: Petal.AstNode;
+	private _code: VerbCode;
 	private _signatures: VerbSig[];
-}
-
-function isVerbLine(code: string): boolean {
-	code = code.trim();
-	return code.startsWith("//#");
 }
 
 export class VerbSig {

@@ -16,6 +16,8 @@ import { Value } from "./Value";
 import { ThisValue } from "./ThisValue";
 import { Utils } from "./Utils";
 
+// This class has sort of grown beyond its original purpose and really ought to be
+// split into a couple of classes...
 export class AstCallExpression extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
@@ -27,10 +29,11 @@ export class AstCallExpression extends AstNode {
 		}
 	}
 
-	public static Create(callee: AstNode, param: AstNode[]): AstCallExpression {
+	public static Create(callee: AstNode | ThisValue, param: any[]): AstCallExpression {
 		let ace = new AstCallExpression({});
 		ace.callee = callee;
-		ace.param = param;
+		ace.literalParams = param;
+
 		return ace;
 	}
 
@@ -49,8 +52,15 @@ export class AstCallExpression extends AstNode {
 	}
 
 	public execute(runtime: Runtime): any {
+		// This can happen because of Create() above. In that case, we don't want to
+		// push whatever we got on the action stack.
+		let gotAFunction = this.callee instanceof AstFunctionInstance || !(this.callee instanceof AstNode);
 		runtime.pushAction(Step.Callback("Function execution", (v) => {
-			let callee = runtime.popOperand();
+			let callee;
+			if (gotAFunction)
+				callee = this.callee;
+			else
+				callee = runtime.popOperand();
 			let thisValue = null;
 			let otherInjects = {};
 			if (ThisValue.IsThisValue(callee)) {
@@ -64,9 +74,12 @@ export class AstCallExpression extends AstNode {
 			runtime.pushAction(Step.Extra("Call this marker", { thisValue: thisValue }));
 
 			let values = [];
-			for (let i=0; i<this.param.length; ++i) {
-				values.push(Value.PopAndDeref(runtime));
-			}
+			if (this.param) {
+				for (let i=0; i<this.param.length; ++i) {
+					values.push(Value.PopAndDeref(runtime));
+				}
+			} else if (this.literalParams)
+				values = this.literalParams;
 
 			if (callee === null || callee === undefined)
 				throw new RuntimeException("Can't call null/undefined");
@@ -88,8 +101,10 @@ export class AstCallExpression extends AstNode {
 
 				let otherInjectNames: string[] = Utils.GetPropertyNames(otherInjects);
 
-				var scope: IScope = new ParameterScope(func.scope,
-					["arguments", "this", "caller", ...otherInjectNames, ...func.params]);
+				let paramNames: string[] = ["arguments", "this", "caller",
+					...otherInjectNames,
+					...func.params];
+				let scope: IScope = new ParameterScope(func.scope, paramNames);
 				scope.set("arguments", values);
 				scope.set("this", thisValue);
 				scope.set("caller", caller);
@@ -106,13 +121,17 @@ export class AstCallExpression extends AstNode {
 			}
 			return null;
 		}));
-		runtime.pushAction(new Step(this.callee, "Callee Resolution"));
-		this.param.forEach((p: AstNode) => {
-			runtime.pushAction(new Step(p, "Parameter Resolution"));
-		});
+		if (!gotAFunction)
+			runtime.pushAction(new Step(<AstNode>this.callee, "Callee Resolution"));
+		if (this.param)
+			this.param.forEach((p: AstNode) => {
+				runtime.pushAction(new Step(p, "Parameter Resolution"));
+			});
 	}
 
 	public what: string = "CallExpression";
-	public callee: AstNode;
+	public callee: AstNode | ThisValue;
 	public param: AstNode[];
+
+	public literalParams: any[];
 }

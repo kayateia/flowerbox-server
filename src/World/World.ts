@@ -22,10 +22,21 @@ export class World {
 			let wob = await this.createWob();
 			for (let prop of Utils.GetPropertyNames(wobdef.properties))
 				wob.setProperty(prop, wobdef.properties[prop]);
-			for (let verb of Utils.GetPropertyNames(wobdef.verbs)) {
-				let vpieces = wobdef.verbs[verb];
-				wob.setVerb(verb, new Verb(verb, vpieces.join("\n")));
+
+			let verbNames = Utils.GetPropertyNames(wobdef.verbs);
+			let codePieces = [];
+			for (let vn of verbNames) {
+				let code = vn + ": { ";
+				if (wobdef.verbs[vn].sigs)
+					code += "sigs: " + JSON.stringify(wobdef.verbs[vn].sigs) + ",";
+				if (wobdef.verbs[vn].code)
+					code += "code: " + wobdef.verbs[vn].code;
+				code += " }";
+				codePieces.push(code);
 			}
+			let fullCode = "var verb = { " + codePieces.join(",") + " };";
+			wob.verbCode = fullCode;
+
 			if (wobdef.container) {
 				let container = await this.getWob(wobdef.container);
 				container.addContent(wob);

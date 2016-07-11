@@ -28,6 +28,17 @@ export class WobOperationException extends Exception {
 	public ids: number[];
 }
 
+export class InvalidCodeException extends Exception {
+	constructor(cause: string, text: string) {
+		super();
+		this.cause = cause;
+		this.text = text;
+	}
+
+	public cause: string;
+	public text: string;
+}
+
 export class LanguageParseException extends Exception {
 	constructor(cause: string, value: string) {
 		super();

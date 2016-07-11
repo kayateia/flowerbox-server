@@ -10,6 +10,7 @@ import { IActionCallback } from "./IActionCallback";
 import { IScope } from "./IScope";
 import { StandardScope } from "./Scopes/StandardScope";
 import { SuspendException, RuntimeException } from "./Exceptions";
+import { ThisValue } from "./ThisValue";
 
 export class Step {
 	constructor(node: AstNode, name?: string, callback?: IActionCallback, scope?: IScope, extra?: any) {
@@ -169,29 +170,21 @@ export class Runtime {
 		}
 	}
 
-	// This executes an arbitrary (pre-parsed) function. The program represented by the
-	// function is executed first, and then its parameters are pushed on the operand stack.
-	// Finally, the function is called.
-	public executeFunction(func: AstNode, funcName: string, param: any[], maxSteps: number): ExecuteResult {
-		this.prepFunction(func, funcName, param);
+	// This executes an arbitrary (pre-parsed) function.
+	public executeFunction(func: AstNode | ThisValue, param: any[], maxSteps: number): ExecuteResult {
+		this.pushAction(Step.Node("Call function", AstCallExpression.Create(func, [])));
 		return this.execute(maxSteps);
 	}
 
 	// Same as executeFunction(), but allows for async callbacks to happen down in code execution.
-	public async executeFunctionAsync(func: AstNode, funcName: string, param: any[], maxSteps: number): Promise<ExecuteResult> {
-		this.prepFunction(func, funcName, param);
+	public async executeFunctionAsync(func: AstNode | ThisValue, param: any[], maxSteps: number): Promise<ExecuteResult> {
+		this.pushAction(Step.Node("Call function", AstCallExpression.Create(func, [])));
 		return await this.executeAsync(maxSteps);
 	}
 
-	private prepFunction(func: AstNode, funcName: string, param: any[]): void {
-		this.pushAction(Step.Callback("Function runner", () => {
-			let funcObj = this.currentScope().get(funcName);
-			if (!funcObj)
-				throw new RuntimeException("Function name was invalid", funcName);
-			param.forEach(p => this.pushOperand(p));
-			this.pushAction(Step.Node("Call function", AstCallExpression.Create(funcObj, [])));
-		}));
-		this.pushAction(Step.Node("Parse function", func));
+	public executeCode(code: AstNode, maxSteps: number): ExecuteResult {
+		this.pushAction(Step.Node("Supplied code", code));
+		return this.execute(maxSteps);
 	}
 
 	public popAction(): Step {

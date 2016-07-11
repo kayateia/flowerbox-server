@@ -12,8 +12,8 @@ export let InitWorld = [
 			"desc": "This is an endless void existing outside of all other reality."
 		},
 		verbs: {
-			$command: [
-				function $command() {
+			$command: {
+				code: function() {
 					var text = $env.text;
 					if (text.startsWith("say ")) {
 						$.log("Saying", text.substr(4));
@@ -21,12 +21,14 @@ export let InitWorld = [
 					} else
 						return false;
 				}
-			],
-			look: [
-				"//# look none at self",
-				"//# look self",
-				function verb_look() {
-					var target;
+			},
+			look: {
+				sigs: [ "look none at self", "look self" ],
+				code: function() {
+					var target = this;
+					$.log("looking at", this.name);
+					$.log(this.desc);
+					/*var target;
 					if ($env.direct)
 						target = $env.direct;
 					else if ($env.indirect)
@@ -36,16 +38,26 @@ export let InitWorld = [
 						return;
 					}
 					$.log("looking at", target.name);
-					$.log(target.desc);
+					$.log(target.desc); */
 				}
-			],
-			test: [
-				"//# test self",
-				function verb_test() {
+			},
+			test: {
+				sigs: [ "test self" ],
+				code: function() {
 					var root = $.get(1);
 					$.log("found root", root.name);
+					$.log("calling test2");
+					var t2r = this.test2(10);
+					$.log("test2 returned",t2r);
 				}
-			]
+			},
+			test2: {
+				sigs: [ "test2 self" ],
+				code: function(a) {
+					$.log("test2 was called with",a);
+					return 5;
+				}
+			}
 		}
 	},
 	// #2
@@ -57,12 +69,12 @@ export let InitWorld = [
 		container: 1,
 		base: 1,
 		verbs: {
-			poke: [
-				"//# poke self",
-				function verb_poke() {
+			poke: {
+				sigs: [ "poke self" ],
+				code: function() {
 					$.log("poked!");
 				}
-			]
+			}
 		}
 	},
 	// #3
@@ -85,6 +97,14 @@ export let InitWorld = [
 		container: 1,
 		base: 1,
 		verbs: {
+			look: {
+				sigs: [ "look" ],
+				code: function() {
+					var target = this;
+					$.log("looking at", target.name);
+					$.log(target.desc);
+				}
+			}
 		}
 	},
 	// #5
@@ -96,14 +116,14 @@ export let InitWorld = [
 		container: 1,
 		base: 1,
 		verbs: {
-			throw: [
-				"//# throw self at any",
-				function verb_throw() {}
-			],
-			use: [
-				"//# use self on any",
-				function verb_use() {}
-			]
+			throw: {
+				sigs: [ "throw self at any" ],
+				code: function() {}
+			},
+			use: {
+				sigs: [ "use self on any" ],
+				code: function() {}
+			}
 		}
 	},
 	// #6
@@ -115,14 +135,14 @@ export let InitWorld = [
 		container: 1,
 		base: 1,
 		verbs: {
-			drink: [
-				"//# drink none from self",
-				function verb_drink() {}
-			],
-			drop: [
-				"//# drop self",
-				function verb_drop() {}
-			]
+			drink: {
+				sigs: [ "drink none from self" ],
+				code: function() {}
+			},
+			drop: {
+				sigs: [ "drop self" ],
+				code: function() {}
+			}
 		}
 	},
 	// #7
@@ -134,18 +154,18 @@ export let InitWorld = [
 		container: 1,
 		base: 1,
 		verbs: {
-			release: [
-				"//# release self",
-				function verb_release() {
+			release: {
+				sigs: [ "release self" ],
+				code: function() {
 					$.log("Thank you for releasing me,", $env.caller.name, "!");
 				}
-			],
-			put: [
-				"//# put self in any",
-				function verb_put() {
+			},
+			put: {
+				sigs: [ "put self in any" ],
+				code: function() {
 					$.log("Noooes,", $env.caller.name, ", why did you put me in the", $env.indirect.name, "?");
 				}
-			]
+			}
 		}
 	},
 	// #8
@@ -158,12 +178,12 @@ export let InitWorld = [
 		container: 4,
 		base: 1,
 		verbs: {
-			pet: [
-				"//# pet self",
-				function verb_pet() {
+			pet: {
+				sigs: [ "pet self" ],
+				code: function() {
 					$.log("Ahhh!!");
 				}
-			]
+			}
 		}
 	}
 ];

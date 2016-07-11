@@ -145,7 +145,8 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 	let root = await world.getWob(1);
 	let parserVerb = root.getVerb("$command");
 	if (parserVerb) {
-		let result: Petal.ExecuteResult = await rt.executeFunctionAsync(parserVerb.compiled, "$command", [], 10000);
+		let verbThis = new Petal.ThisValue(root, parserVerb.compiled, { $: dollar, $env: dollarEnv });
+		let result: Petal.ExecuteResult = await rt.executeFunctionAsync(verbThis, [], 10000);
 		console.log("$command took", result.stepsUsed, "steps");
 		if (result.outOfSteps) {
 			console.log("ERROR: Ran out of steps while running $command");
@@ -167,7 +168,8 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 	if (parse.verb) {
 		// Set up a runtime. We'll install our runtime values from above, then call the verb code.
 		// The verb code should create a function named after the verb.
-		let result: Petal.ExecuteResult = await rt.executeFunctionAsync(parse.verb.compiled, "verb_" + parse.verbName, [], 10000);
+		let verbThis = new Petal.ThisValue(new WobWrapper(parse.verbObject), parse.verb.compiled, { $: dollar, $env: dollarEnv });
+		let result: Petal.ExecuteResult = await rt.executeFunctionAsync(verbThis, [], 10000);
 		console.log(parse.verbName, "took", result.stepsUsed, "steps");
 		if (result.outOfSteps) {
 			console.log("ERROR: Ran out of steps while running", parse.verbName);
