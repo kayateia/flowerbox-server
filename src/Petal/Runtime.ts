@@ -7,7 +7,7 @@
 import { AstNode } from "./AstNode";
 import { AstCallExpression } from "./AstCallExpression";
 import { IActionCallback } from "./IActionCallback";
-import { IScope } from "./IScope";
+import { IScope, IScopeCatcher } from "./IScope";
 import { StandardScope } from "./Scopes/StandardScope";
 import { SuspendException, RuntimeException } from "./Exceptions";
 import { ThisValue } from "./ThisValue";
@@ -101,11 +101,12 @@ export class ExecuteResult {
 }
 
 export class Runtime {
-	constructor(verbose?: boolean) {
+	constructor(verbose?: boolean, scopeCatcher?: IScopeCatcher) {
 		this._pipeline = [];
 		this._rootScope = new StandardScope();
 		this._operandStack = [];
 		this._verbose = verbose;
+		this._scopeCatcher = scopeCatcher;
 	}
 
 	public pushAction(step: Step): void {
@@ -246,8 +247,17 @@ export class Runtime {
 		return this._rootScope;
 	}
 
+	public get verbose(): boolean {
+		return this._verbose;
+	}
+
+	public get scopeCatcher(): IScopeCatcher {
+		return this._scopeCatcher;
+	}
+
 	private _pipeline: Step[];
 	private _rootScope: IScope;
 	private _operandStack: any[];
 	private _verbose: boolean;
+	private _scopeCatcher: IScopeCatcher;
 }

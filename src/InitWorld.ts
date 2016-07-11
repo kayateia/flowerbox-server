@@ -28,28 +28,21 @@ export let InitWorld = [
 					var target = this;
 					$.log("looking at", this.name);
 					$.log(this.desc);
-					/*var target;
-					if ($parse.direct)
-						target = $parse.direct;
-					else if ($parse.indirect)
-						target = $parse.indirect;
-					else {
-						$.log("Don't know what you're looking at!");
-						return;
-					}
-					$.log("looking at", target.name);
-					$.log(target.desc); */
 				}
 			},
 			test: {
 				sigs: [ "test self" ],
-				code: function() {
-					var root = $.get(1);
-					$.log("found root", root.name);
-					$.log("calling test2");
-					var t2r = root.test2(10);
-					$.log("test2 returned",t2r);
-				}
+				code: "function() {\
+					var root = $.get(1);\
+					var root2 = #1;\
+					var root3 = @world;\
+					$.log('found root', root.name);\
+					$.log('found root2', root2.name);\
+					$.log('found root3', root3.name);\
+					$.log('calling test2');\
+					var t2r = root.test2(10);\
+					$.log('test2 returned',t2r);\
+				}"
 			},
 			test2: {
 				sigs: [ "test2 self" ],

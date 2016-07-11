@@ -131,6 +131,44 @@ class DollarParse {
 	public text: string;
 }
 
+// Simple root scope which implements Flowerbox #n and @at lookups.
+class RootScope implements Petal.IScopeCatcher {
+	constructor(world: World, injections: any) {
+		this._world = world;
+		this._injections = injections;
+	}
+
+	public get(name: string): any {
+		if (!name)
+			return null;
+		if (name[0] === "#") {
+			let num = parseInt(name.substr(1), 10);
+			return this._world.getWob(num)
+				.then(result => {
+					return new WobWrapper(result, this._injections);
+				});
+		} else if (name[0] === "@") {
+			let at = name.substr(1);
+			return this._world.getWobsByGlobalId([at])
+				.then((results) => {
+					if (results.length === 0)
+						return null;
+					else
+						return new WobWrapper(results[0], this._injections);
+				});
+		} else {
+			return null;
+		}
+	}
+
+	public requiresAsync(name: string): boolean {
+		return true;
+	}
+
+	private _world: World;
+	private _injections: any;
+}
+
 export async function executeResult(parse: ParseResult, player: Wob, world: World): Promise<void> {
 	// Get the environment ready.
 	let injections: any = {};
@@ -142,7 +180,8 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 	// Check for a global command handler on #1. If it exists, we'll call that first.
 	// FIXME: The top level scope really need to be a const scope to avoid monkey-business with $, $env, etc.
 	// Same applies below.
-	let rt = new Petal.Runtime(false);
+	let rootScope = new RootScope(world, injections);
+	let rt = new Petal.Runtime(false, rootScope);
 
 	let root = await world.getWob(1);
 	let parserVerb = root.getVerb("$command");
@@ -159,7 +198,7 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 
 		if (parse.verb) {
 			// Reset the runtime.
-			rt = new Petal.Runtime(false);
+			rt = new Petal.Runtime(false, rootScope);
 		}
 	}
 
