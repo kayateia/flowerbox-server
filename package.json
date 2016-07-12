@@ -2,13 +2,15 @@
   "name": "flowerbox",
   "version": "1.0.0",
   "description": "Flowerbox",
-  "main": "js/main.js",
+  "main": "bin/www",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node ./bin/www",
+    "test": "jasmine"
   },
   "author": "",
   "license": "GPLv3",
   "dependencies": {
+    "express": "^4.14.0",
     "pegjs": "^0.9.0"
   },
   "devDependencies": {
