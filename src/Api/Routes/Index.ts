@@ -6,12 +6,16 @@
 
 ///<reference path="../../../typings/globals/express/index.d.ts" />
 
-import * as express from "express";
+import { RouterBase } from "./RouterBase";
 
-let router = express.Router();
+export class IndexRouter extends RouterBase {
+	constructor() {
+		super();
 
-router.get("/", (req, res, next) => {
-	return res.json({ success: true });
-});
+		this.router.get("/", (req, res, next) => {
+			return res.json({ success: true });
+		});
+	}
+}
 
-export let indexRouter = router;
+export let indexRouter = new IndexRouter();
