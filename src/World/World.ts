@@ -100,6 +100,26 @@ export class World {
 		wobs[1].addContent(wobs[0]);
 	}
 
+	public async compostWob(id: number): Promise<void> {
+		let wob = await this.getWob(id);
+		if (!wob)
+			throw new WobReferenceException("Couldn't find wob for composting", id);
+
+		// Does it contain anything else? If so, for now, we fail.
+		if (wob.contents.length)
+			throw new WobOperationException("Wob can't be composted because it contains other wobs", [id, ...wob.contents]);
+
+		let container = await this.getWob(wob.container);
+		if (!container)
+			throw new WobReferenceException("Couldn't find container wob", wob.container);
+
+		// Remove it from the original container.
+		container.removeContent(wob);
+
+		// And remove it from our store.
+		this._wobCache.delete(id);
+	}
+
 	private _nextId: number;
 	private _wobCache: Map<number, Wob>;
 }
