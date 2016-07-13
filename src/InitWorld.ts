@@ -10,6 +10,7 @@ export let InitWorld = [
 			"name": "Za Waarudo",
 			"globalid": "world",
 			"desc": "This is an endless void existing outside of all other reality."
+				+ " When you stare into the void, the void stares back at you..."
 		},
 		verbs: {
 			$command: {
@@ -24,10 +25,25 @@ export let InitWorld = [
 			},
 			look: {
 				sigs: [ "look none at self", "look self" ],
-				code: function() {
-					var target = this;
-					$.log("looking at", this.name);
-					$.log(this.desc);
+				code: function(target) {
+					if (!target)
+						target = this;
+					$.log(target.name);
+					$.log(target.desc);
+					$.log();
+
+					var contents = $.contents(target);
+					if (contents.length) {
+						var names = ["Here:"];
+						for (var i=0; i<contents.length; ++i) {
+							var name = contents[i].name;
+							if (name.indexOf(' ') >= 0)
+								names.push("[" + name + "]");
+							else
+								names.push(name);
+						}
+						$.logArray(names);
+					}
 				}
 			},
 			test: {
@@ -92,11 +108,9 @@ export let InitWorld = [
 		verbs: {
 			look: {
 				sigs: [ "look" ],
-				code: function() {
-					var target = this;
-					$.log("looking at", target.name);
-					$.log(target.desc);
-				}
+				code: "function() {\
+					#1.look(this);\
+				}"
 			}
 		}
 	},

@@ -41,7 +41,7 @@ export class ObjectWrapper {
 					return item;
 				if (item instanceof Array)
 					return ObjectWrapper.WrapGeneric(item, ["copyWithin", "fill", "pop", "push", "reverse", "shift",
-						"sort", "splice", "unshift",
+						"sort", "splice", "unshift", "length",
 						"concat", "join", "slice", "toString", "indexOf", "lastIndexOf"], true);
 
 				// What's left are other generic objects. We allow read-only access to these as a convenience.

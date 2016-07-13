@@ -9,7 +9,7 @@ import { Wob } from "./Wob";
 import { World } from "./World";
 import * as Petal from "../Petal/Petal";
 import * as Strings from "../Strings";
-import { WobOperationException } from "./Exceptions";
+import { WobReferenceException, WobOperationException } from "./Exceptions";
 
 // Wraps a Wob for use within Petal.
 class WobWrapper implements Petal.IObject {
@@ -42,6 +42,10 @@ class WobWrapper implements Petal.IObject {
 		}
 	}
 
+	public get wob(): Wob {
+		return this._wob;
+	}
+
 	private _wob: Wob;
 	private _injections: any;
 }
@@ -58,6 +62,10 @@ class DollarObject {
 		for (let i=0; i<arguments.length; ++i)
 			args.push(arguments[i]);
 		console.log(">>>", ...args);
+	}
+
+	public logArray(arr: any[]): void {
+		console.log(">>>", ...arr);
 	}
 
 	public async get(objId: any): Promise<WobWrapper> {
@@ -85,8 +93,27 @@ class DollarObject {
 			return null;
 	}
 
+	public async move(obj: WobWrapper, into: WobWrapper): Promise<void> {
+		if (!obj || !into)
+			throw new WobReferenceException("Received a null wob in move()", 0);
+		if (!(obj instanceof WobWrapper) || !(into instanceof WobWrapper))
+			throw new WobReferenceException("Received a non-wob object in move()", 0);
+
+		await this._world.moveWob(obj.wob.id, into.wob.id);
+	}
+
+	public async contents(obj: WobWrapper): Promise<WobWrapper[]> {
+		if (!obj)
+			throw new WobReferenceException("Received a null wob in contents()", 0);
+		if (!(obj instanceof WobWrapper))
+			throw new WobReferenceException("Received a non-wob object in contents()", 0);
+
+		let contents = await this._world.getWobs(obj.wob.contents);
+		return contents.map(w => new WobWrapper(w, this._injections));
+	}
+
 	public static Members: string[] = [
-		"log", "get"
+		"log", "logArray", "get", "move", "contents"
 	];
 
 	private _world: World;
