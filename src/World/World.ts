@@ -4,7 +4,7 @@
 	For license info, please see notes/gpl-3.0.txt under the project root.
 */
 
-import { WobReferenceException } from "./Exceptions";
+import { WobReferenceException, WobOperationException } from "./Exceptions";
 import { Wob, WobProperties } from "./Wob";
 import { Verb } from "./Verb";
 import * as Strings from "../Strings";
@@ -82,6 +82,22 @@ export class World {
 		return new Promise<Wob[]>((success, fail) => {
 			success([...this._wobCache.values()].filter((w) => Strings.caseIn(w.getProperty(WobProperties.GlobalId), ids)));
 		});
+	}
+
+	public async moveWob(id: number, to: number) : Promise<void> {
+		let wobs = await this.getWobs([id, to]);
+		if (!wobs[0] || !wobs[1])
+			throw new WobOperationException("Couldn't find source and/or destination wobs", [id, to]);
+
+		let container = await this.getWob(wobs[0].container);
+		if (!container)
+			throw new WobOperationException("Couldn't find container", [id, wobs[0].container]);
+
+		// Remove it from the original container.
+		container.removeContent(wobs[0]);
+
+		// Add it to the new one.
+		wobs[1].addContent(wobs[0]);
 	}
 
 	private _nextId: number;

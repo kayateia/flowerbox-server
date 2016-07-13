@@ -79,6 +79,15 @@ export class Wob {
 		this._contents.push(other.id);
 	}
 
+	public removeContent(other: Wob): void {
+		this.updateLastUse();
+		if (other.container !== this._id)
+			throw new WobOperationException("Wob is not contained by us", [other.id, this._id]);
+
+		other._container = 0;
+		this._contents = this._contents.filter(x => x != other._id);
+	}
+
 	public getPropertyNames(): string[] {
 		this.updateLastUse();
 		return [...this._properties.keys()];
