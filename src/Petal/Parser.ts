@@ -21,6 +21,7 @@ import { AstObject } from "./AstObject";
 import { AstReturn } from "./AstReturn";
 import { AstStatement } from "./AstStatement";
 import { AstStatements } from "./AstStatements";
+import { AstUnaryExpression } from "./AstUnaryExpression";
 import { AstUpdate } from "./AstUpdate";
 import { AstVarStatement } from "./AstVarStatement";
 import { AstVarDecl } from "./AstVarDecl";
@@ -51,6 +52,9 @@ export function compile(parseTree: any): AstNode {
 			break;
 		case "BinaryExpression":
 			result = new AstBinaryExpression(parseTree);
+			break;
+		case "UnaryExpression":
+			result = new AstUnaryExpression(parseTree);
 			break;
 		case "CallExpression":
 			result = new AstCallExpression(parseTree);

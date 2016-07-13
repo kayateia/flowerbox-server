@@ -89,6 +89,14 @@ describe("Functional test", function() {
 		expect(test.output).toEqual("works\nworks\n");
 	});
 
+	it("should have working unary operators", function() {
+		let program = "var a = 5; if (!a) log('fail'); else log('works!');";
+		let test = new TestSetup(program);
+		test.runProgram();
+
+		expect(test.output).toEqual("works!\n");
+	});
+
 	it("should allow JSON style object construction", function() {
 		let program = "log({ a:5, 'b':'c', d:{ e:1 }, f:[1,2,3] });";
 		let test = new TestSetup(program);
