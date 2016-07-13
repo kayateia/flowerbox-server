@@ -63,7 +63,7 @@ export class World {
 		return wob;
 	}
 
-	public async getWob(id: number): Promise<Wob> {
+	public getWob(id: number): Promise<Wob> {
 		return new Promise<Wob>((success, fail) => {
 			// For now, we only support the in-memory cache.
 			success(this._wobCache.get(id));
