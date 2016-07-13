@@ -242,8 +242,9 @@ export async function parseInput(text: string, self: Wob, world: World): Promise
 	if (matches.length === 0)
 		failure = ParseError.NoVerb;
 
-	if (matches.length > 1)
-		failure = ParseError.Ambiguous;
+	// The matches are ordered by precedence, so whichever one comes first wins.
+	/*if (matches.length > 1)
+		failure = ParseError.Ambiguous; */
 
 	let result;
 	if (failure != ParseError.NoError) {
