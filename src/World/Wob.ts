@@ -209,8 +209,6 @@ export class Wob {
 		// Look for the variable that was set in the scope.
 		let scope = rt.currentScope();
 		let varnames = scope.names();
-		if (varnames.length !== 1)
-			throw new InvalidCodeException("Verb code did not produce exactly one variable name.", parsed);
 
 		// This should be a dictionary of verb name -> verb object, where each verb object
 		// contains "sigs" (an array) and "code" (a function object). The code may mutate this scope

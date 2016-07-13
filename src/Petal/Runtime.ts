@@ -9,8 +9,14 @@ import { AstCallExpression } from "./AstCallExpression";
 import { IActionCallback } from "./IActionCallback";
 import { IScope, IScopeCatcher } from "./IScope";
 import { StandardScope } from "./Scopes/StandardScope";
+import { ConstScope } from "./Scopes/ConstScope";
 import { SuspendException, RuntimeException } from "./Exceptions";
 import { ThisValue } from "./ThisValue";
+
+import * as LibFunctional from "./Lib/Functional";
+
+let runtimeLib = new ConstScope(null, new Map<string, any>());
+let runtimeRegistered = false;
 
 export class Step {
 	constructor(node: AstNode, name?: string, callback?: IActionCallback, scope?: IScope, extra?: any) {
@@ -103,10 +109,16 @@ export class ExecuteResult {
 export class Runtime {
 	constructor(verbose?: boolean, scopeCatcher?: IScopeCatcher) {
 		this._pipeline = [];
-		this._rootScope = new StandardScope();
 		this._operandStack = [];
 		this._verbose = verbose;
+
 		this._scopeCatcher = scopeCatcher;
+		this._rootScope = new StandardScope(runtimeLib);
+
+		if (!runtimeRegistered) {
+			runtimeRegistered = true;
+			LibFunctional.registerAll(runtimeLib);
+		}
 	}
 
 	public pushAction(step: Step): void {
@@ -256,8 +268,9 @@ export class Runtime {
 	}
 
 	private _pipeline: Step[];
-	private _rootScope: IScope;
 	private _operandStack: any[];
 	private _verbose: boolean;
+
+	private _rootScope: IScope;
 	private _scopeCatcher: IScopeCatcher;
 }

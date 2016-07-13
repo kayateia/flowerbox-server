@@ -2,6 +2,8 @@ import { WobProperties } from "./World/Wob";
 
 let $parse: any;
 let $: any;
+let map: any;
+let filter: any
 
 export let InitWorld = [
 	// #1
@@ -34,15 +36,10 @@ export let InitWorld = [
 
 					var contents = $.contents(target);
 					if (contents.length) {
-						var names = ["Here:"];
-						for (var i=0; i<contents.length; ++i) {
-							var name = contents[i].name;
-							if (name.indexOf(' ') >= 0)
-								names.push("[" + name + "]");
-							else
-								names.push(name);
-						}
-						$.logArray(names);
+						var names = map(contents, function(w) {
+							return w.name;
+						});
+						$.log("Here: " + names.join(", "));
 					}
 				}
 			},
