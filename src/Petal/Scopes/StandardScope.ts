@@ -15,7 +15,12 @@ export class StandardScope implements IScope {
 
 	// Set the value of this specified variable within this scope.
 	public set(name: string, value: any): void {
-		this._vars[name] = value;
+		if (this._vars.hasOwnProperty(name))
+			this._vars[name] = value;
+		else if (this._parent && this._parent.has(name))
+			this._parent.set(name, value);
+		else
+			this._vars[name] = value;
 	}
 
 	// Get the value of the specified variable if we have it; undefined otherwise.
