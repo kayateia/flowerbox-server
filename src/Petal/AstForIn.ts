@@ -12,6 +12,7 @@ import { StandardScope } from "./Scopes/StandardScope";
 import { Value } from "./Value";
 import { Utils } from "./Utils";
 import { RuntimeException } from "./Exceptions";
+import { Loops } from "./Loops";
 
 export class AstForIn extends AstNode {
 	constructor(parseTree: any) {
@@ -25,8 +26,8 @@ export class AstForIn extends AstNode {
 	}
 
 	public execute(runtime: Runtime): void {
-		// Stack marker in case we want to break or continue.
-		runtime.pushAction(Step.Nonce("ForIn marker"));
+		// Stack marker in case we want to break.
+		Loops.PushMarker(runtime, Loops.Outside);
 
 		// Push on a scope to handle what drops out of the init vars.
 		runtime.pushAction(Step.Scope("For init scope", new StandardScope(runtime.currentScope())));
@@ -61,6 +62,7 @@ export class AstForIn extends AstNode {
 
 				// And push on the body for one iteration.
 				runtime.pushAction(Step.Callback("ForIn next iteration", nextIteration));
+				Loops.PushMarker(runtime, Loops.Iteration);
 				runtime.pushAction(Step.Node("ForIn body", that.body));
 			})();
 		}));

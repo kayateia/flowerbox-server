@@ -54,6 +54,26 @@ describe("Functional test", function() {
 			"b\nc\nd\nundefined\n");
 	});
 
+	it("should continue in for loops", function() {
+		basicTest("for (var i=0; i<5; ++i) { if (i==2) continue; log(i); }",
+			"0\n1\n3\n4\n");
+	});
+
+	it("should continue in for-in loops", function() {
+		basicTest("for (var i in [1,2,3]) { if (i==2) continue; log(i); }",
+			"1\n3\n");
+	});
+
+	it("should break in for loops", function() {
+		basicTest("for (var i=0; i<5; ++i) { if (i==2) break; log(i); }",
+			"0\n1\n");
+	});
+
+	it("should break in for-in loops", function() {
+		basicTest("for (var i in [1,2,3]) { if (i==2) break; log(i); }",
+			"1\n");
+	});
+
 	it("can decl multiple variables, call external functions", function() {
 		let program = "var a=2, b=10, c='foo'; log(c); log(test()); log('after');";
 		let test = new TestSetup(program);

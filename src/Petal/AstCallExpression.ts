@@ -40,7 +40,7 @@ export class AstCallExpression extends AstNode {
 
 	// Unwinds the stack past the current function call invocation, for early return.
 	public static UnwindCurrent(runtime: Runtime): void {
-		runtime.popActionUntil((s: Step) => s.name() !== "Function scope");
+		runtime.popActionWhile((s: Step) => s.name() !== "Function scope");
 		runtime.popAction();
 	}
 

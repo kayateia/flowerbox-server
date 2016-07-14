@@ -9,8 +9,10 @@
 import { AstArray } from "./AstArray";
 import { AstAssignment } from "./AstAssignment";
 import { AstBinaryExpression } from "./AstBinaryExpression";
+import { AstBreak } from "./AstBreak";
 import { AstCallExpression } from "./AstCallExpression";
 import { AstConditional } from "./AstConditional";
+import { AstContinue } from "./AstContinue";
 import { AstFor } from "./AstFor";
 import { AstForIn } from "./AstForIn";
 import { AstFunction } from "./AstFunction";
@@ -65,6 +67,12 @@ export function compile(parseTree: any): AstNode {
 			break;
 		case "ReturnStatement":
 			result = new AstReturn(parseTree);
+			break;
+		case "BreakStatement":
+			result = new AstBreak(parseTree);
+			break;
+		case "ContinueStatement":
+			result = new AstContinue(parseTree);
 			break;
 		case "Literal":
 			result = new AstLiteral(parseTree);

@@ -207,7 +207,7 @@ export class Runtime {
 	}
 
 	// Pops actions until the function returns false.
-	public popActionUntil(unwinder: (Step) => boolean): void {
+	public popActionWhile(unwinder: (Step) => boolean): void {
 		while (this._pipeline.length && unwinder(this._pipeline[this._pipeline.length - 1])) {
 			let popped = this._pipeline.pop();
 			if (this._verbose)

@@ -9,6 +9,7 @@ import { compile } from "./Parser";
 import { Step, Runtime } from "./Runtime";
 import { StandardScope } from "./Scopes/StandardScope";
 import { Value } from "./Value";
+import { Loops } from "./Loops";
 
 export class AstFor extends AstNode {
 	constructor(parseTree: any) {
@@ -20,8 +21,8 @@ export class AstFor extends AstNode {
 	}
 
 	public execute(runtime: Runtime): void {
-		// Stack marker in case we want to break or continue.
-		runtime.pushAction(Step.Nonce("For marker"));
+		// Stack marker in case we want to break.
+		Loops.PushMarker(runtime, Loops.Outside);
 
 		// Push on a scope to handle what drops out of the init vars.
 		runtime.pushAction(Step.Scope("For init scope", new StandardScope(runtime.currentScope())));
@@ -30,6 +31,7 @@ export class AstFor extends AstNode {
 		(function pushForIteration() {
 			runtime.pushAction(Step.Callback("For next iteration", pushForIteration));
 			runtime.pushAction(new Step(that.update, "For update"));
+			Loops.PushMarker(runtime, Loops.Iteration);
 			runtime.pushAction(new Step(that.body, "For body"));
 
 			// Do the condition check.
@@ -38,8 +40,7 @@ export class AstFor extends AstNode {
 				let result = Value.PopAndDeref(runtime);
 				if (!result) {
 					// Bail.
-					runtime.popActionUntil((s: Step) => s.name() !== "For marker");
-					runtime.popAction();
+					Loops.UnwindCurrent(runtime, Loops.Outside);
 				}
 			}));
 			runtime.pushAction(new Step(that.test, "For test"));
