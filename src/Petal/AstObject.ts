@@ -36,6 +36,8 @@ export class AstObject extends AstNode {
 	}
 
 	public static IsPetalObject(object: any): boolean {
+		if (object === undefined || object === null)
+			return false;
 		return object.___petalObject;
 	}
 
