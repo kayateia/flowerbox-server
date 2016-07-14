@@ -29,6 +29,11 @@ describe("Functional test", function() {
 		expect(1).toEqual(1);
 	});
 
+	it("should have working math operators", function() {
+		basicTest("var a = 4; log(Math.floor(((a+1)*4+5)/5) % 3);",
+			"2\n");
+	});
+
 	it("should short circuit properly", function() {
 		basicTest("var a = 5; if (a == 5 || log('no1')) log('yes1'); if (!(a != 5 && log('no2'))) log('yes2');",
 			"yes1\nyes2\n");

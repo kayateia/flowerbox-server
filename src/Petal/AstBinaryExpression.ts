@@ -35,6 +35,9 @@ export class AstBinaryExpression extends AstNode {
 					case "/":
 						result = leftValue / rightValue;
 						break;
+					case "%":
+						result = leftValue % rightValue;
+						break;
 					case "*":
 						result = leftValue * rightValue;
 						break;
