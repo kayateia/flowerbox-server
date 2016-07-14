@@ -14,6 +14,7 @@ import { SuspendException, RuntimeException } from "./Exceptions";
 import { ThisValue } from "./ThisValue";
 
 import * as LibFunctional from "./Lib/Functional";
+import * as LibMath from "./Lib/Math";
 
 let runtimeLib = new ConstScope(null, new Map<string, any>());
 let runtimeRegistered = false;
@@ -118,6 +119,7 @@ export class Runtime {
 		if (!runtimeRegistered) {
 			runtimeRegistered = true;
 			LibFunctional.registerAll(runtimeLib);
+			LibMath.registerAll(runtimeLib);
 		}
 	}
 
