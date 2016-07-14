@@ -181,4 +181,14 @@ describe("Functional test", function() {
 		basicTest("log(filter([1,2,3], function(x) { return x < 3; }))",
 			"[1,2]\n");
 	});
+
+	it("should have a switch statement", function() {
+		basicTest("var a = 5; switch(a) { case 1: log(1); break; case 5: log(5); break; case 6: log(6); break; }",
+			"5\n");
+	});
+
+	it("should have fall-through switch statements", function() {
+		basicTest("var a = 5; switch(a) { case 1: log(1); break; case 5: log(5); case 6: log(6); break; }",
+			"5\n6\n");
+	});
 });

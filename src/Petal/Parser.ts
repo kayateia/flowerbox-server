@@ -24,6 +24,7 @@ import { AstObject } from "./AstObject";
 import { AstReturn } from "./AstReturn";
 import { AstStatement } from "./AstStatement";
 import { AstStatements } from "./AstStatements";
+import { AstSwitch } from "./AstSwitch";
 import { AstUnaryExpression } from "./AstUnaryExpression";
 import { AstUpdate } from "./AstUpdate";
 import { AstVarStatement } from "./AstVarStatement";
@@ -104,6 +105,9 @@ export function compile(parseTree: any): AstNode {
 			break;
 		case "ArrayExpression":
 			result = new AstArray(parseTree);
+			break;
+		case "SwitchStatement":
+			result = new AstSwitch(parseTree);
 			break;
 		default:
 			throw new ParseException("Unknown compile() token '"+ parseTree.type + "'", parseTree);

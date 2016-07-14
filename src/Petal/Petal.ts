@@ -25,6 +25,7 @@ export * from "./AstObject";
 export * from "./AstReturn";
 export * from "./AstStatement";
 export * from "./AstStatements";
+export * from "./AstSwitch";
 export * from "./AstUnaryExpression";
 export * from "./AstUpdate";
 export * from "./AstVarDecl";
