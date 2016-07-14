@@ -29,6 +29,11 @@ describe("Functional test", function() {
 		expect(1).toEqual(1);
 	});
 
+	it("should short circuit properly", function() {
+		basicTest("var a = 5; if (a == 5 || log('no1')) log('yes1'); if (!(a != 5 && log('no2'))) log('yes2');",
+			"yes1\nyes2\n");
+	});
+
 	it("should handle basic for loops", function() {
 		basicTest("for (var i=0; i<5; ++i) { log('test', i); }",
 			"test 0\ntest 1\ntest 2\ntest 3\ntest 4\n");
@@ -36,7 +41,7 @@ describe("Functional test", function() {
 
 	it("should handle complex expressions and for loops", function() {
 		basicTest("for (var i=0; i < (function () { log('inner i=', i); return i >= 5 ? 5 : i += 1 })(); i++) { log('i=', i); }",
-			"inner i= 0\ni= 0\ninner i= 1\ni= 1\ninner i= 2\ni= 2\ninner i= 3\ni= 3\ninner i= 4\ni= 4\ninner i= 5\n");
+			"inner i= 0\ni= 1\ninner i= 2\ni= 3\ninner i= 4\ni= 5\ninner i= 6\n");
 	});
 
 	it("shouldn't leak for scope variables", function() {
@@ -62,6 +67,11 @@ describe("Functional test", function() {
 	it("should continue in for-in loops", function() {
 		basicTest("for (var i in [1,2,3]) { if (i==2) continue; log(i); }",
 			"1\n3\n");
+	});
+
+	it("should continue inside a single for-in loop", function() {
+		basicTest("for (var i in [[1,2,3],[4,5,6]]) { for (var j in i) { if (j == 2) continue; log(j); } }",
+			"1\n3\n4\n5\n6\n");
 	});
 
 	it("should break in for loops", function() {

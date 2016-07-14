@@ -18,49 +18,73 @@ export class AstBinaryExpression extends AstNode {
 	}
 
 	public execute(runtime: Runtime): void {
-		runtime.pushAction(Step.Callback("Binary comparison", () => {
-			let v1 = Value.PopAndDeref(runtime);
-			let v2 = Value.PopAndDeref(runtime);
-			let result: any;
-			switch (this.operator) {
-				case "-":
-					result = v1 - v2;
-					break;
-				case "+":
-					result = v1 + v2;
-					break;
-				case "/":
-					result = v1 / v2;
-					break;
-				case "*":
-					result = v1 * v2;
-					break;
-				case "<":
-					result = v1 < v2;
-					break;
-				case ">":
-					result = v1 > v2;
-					break;
-				case "<=":
-					result = v1 <= v2;
-					break;
-				case ">=":
-					result = v1 >= v2;
-					break;
-				case "==":
-				case "===":
-					result = v1 === v2;
-					break;
-				case "!=":
-				case "!==":
-					result = v1 !== v2;
-					break;
-			}
+		let leftValue;
 
-			runtime.pushOperand(result);
+		let that = this;
+		function doRightSide() {
+			runtime.pushAction(Step.Callback("Binary comparison", () => {
+				let rightValue = Value.PopAndDeref(runtime);
+				let result: any;
+				switch (that.operator) {
+					case "-":
+						result = leftValue - rightValue;
+						break;
+					case "+":
+						result = leftValue + rightValue;
+						break;
+					case "/":
+						result = leftValue / rightValue;
+						break;
+					case "*":
+						result = leftValue * rightValue;
+						break;
+					case "<":
+						result = leftValue < rightValue;
+						break;
+					case ">":
+						result = leftValue > rightValue;
+						break;
+					case "<=":
+						result = leftValue <= rightValue;
+						break;
+					case ">=":
+						result = leftValue >= rightValue;
+						break;
+					case "==":
+					case "===":
+						result = leftValue === rightValue;
+						break;
+					case "!=":
+					case "!==":
+						result = leftValue !== rightValue;
+						break;
+					case "||":
+						result = leftValue || rightValue;
+						break;
+					case "&&":
+						result = leftValue && rightValue;
+						break;
+				}
+
+				runtime.pushOperand(result);
+			}));
+			runtime.pushAction(new Step(that.right, "BC right"));
+		}
+		runtime.pushAction(Step.Callback("Get BC left value", () => {
+			leftValue = Value.PopAndDeref(runtime);
+
+			// Implement short-circuiting here. If the operator is || and this value
+			// is true, we don't need to do anything more. Likewise, if the operator is && and
+			// this value is false, we don't need to do anything more.
+			if (this.operator === "||" && leftValue) {
+				runtime.pushOperand(true);
+			} else if (this.operator === "&&" && !leftValue) {
+				runtime.pushOperand(false);
+			} else {
+				doRightSide();
+			}
 		}));
 		runtime.pushAction(new Step(this.left, "BC left"));
-		runtime.pushAction(new Step(this.right, "BC right"));
 	}
 
 	public what: string = "BinaryExpression";
