@@ -64,6 +64,11 @@ describe("Functional test", function() {
 			"b\nc\nd\nundefined\n");
 	});
 
+	it("shouldn't consume input arrays in for-in", function() {
+		basicTest("var a = [1,2,3]; for (var i in a) { if (i == 2) continue; log(i); } log(a);",
+			"1\n3\n[1,2,3]\n");
+	});
+
 	it("should continue in for loops", function() {
 		basicTest("for (var i=0; i<5; ++i) { if (i==2) continue; log(i); }",
 			"0\n1\n3\n4\n");

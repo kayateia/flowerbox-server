@@ -47,6 +47,8 @@ export class AstForIn extends AstNode {
 
 				source = Utils.GetPropertyNames(source)
 					.filter(x => !x.startsWith("___"));
+			} else {
+				source = source.slice(0);
 			}
 
 			let that = this;
