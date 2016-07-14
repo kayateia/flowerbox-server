@@ -44,6 +44,16 @@ describe("Functional test", function() {
 			"0\n1\n2\n3\n4\nundefined\n");
 	});
 
+	it("should handle basic for-in of arrays", function() {
+		basicTest("var a=[1,2,3]; for (var i in a) log(i); log(i);",
+			"1\n2\n3\nundefined\n");
+	});
+
+	it("should handle basic for-in of objects", function() {
+		basicTest("var a={b:1,c:2,d:3}; for (var i in a) log(i); log(i);",
+			"b\nc\nd\nundefined\n");
+	});
+
 	it("can decl multiple variables, call external functions", function() {
 		let program = "var a=2, b=10, c='foo'; log(c); log(test()); log('after');";
 		let test = new TestSetup(program);

@@ -12,6 +12,7 @@ import { AstBinaryExpression } from "./AstBinaryExpression";
 import { AstCallExpression } from "./AstCallExpression";
 import { AstConditional } from "./AstConditional";
 import { AstFor } from "./AstFor";
+import { AstForIn } from "./AstForIn";
 import { AstFunction } from "./AstFunction";
 import { AstIdentifier } from "./AstIdentifier";
 import { AstLiteral } from "./AstLiteral";
@@ -76,6 +77,9 @@ export function compile(parseTree: any): AstNode {
 			break;
 		case "ForStatement":
 			result = new AstFor(parseTree);
+			break;
+		case "ForInStatement":
+			result = new AstForIn(parseTree);
 			break;
 		case "ConditionalExpression":
 		case "IfStatement":

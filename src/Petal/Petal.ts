@@ -13,6 +13,7 @@ export * from "./AstBinaryExpression";
 export * from "./AstCallExpression";
 export * from "./AstConditional";
 export * from "./AstFor";
+export * from "./AstForIn";
 export * from "./AstFunction";
 export * from "./AstIdentifier";
 export * from "./AstLiteral";
