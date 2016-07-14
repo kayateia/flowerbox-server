@@ -39,6 +39,11 @@ describe("Functional test", function() {
 			"inner i= 0\ni= 0\ninner i= 1\ni= 1\ninner i= 2\ni= 2\ninner i= 3\ni= 3\ninner i= 4\ni= 4\ninner i= 5\n");
 	});
 
+	it("shouldn't leak for scope variables", function() {
+		basicTest("for (var i=0; i<5; ++i) log(i); log(i);",
+			"0\n1\n2\n3\n4\nundefined\n");
+	});
+
 	it("can decl multiple variables, call external functions", function() {
 		let program = "var a=2, b=10, c='foo'; log(c); log(test()); log('after');";
 		let test = new TestSetup(program);

@@ -23,6 +23,9 @@ export class AstFor extends AstNode {
 		// Stack marker in case we want to break or continue.
 		runtime.pushAction(Step.Nonce("For marker"));
 
+		// Push on a scope to handle what drops out of the init vars.
+		runtime.pushAction(Step.Scope("For init scope", new StandardScope(runtime.currentScope())));
+
 		let that = this;
 		(function pushForIteration() {
 			runtime.pushAction(Step.Callback("For next iteration", pushForIteration));
