@@ -157,16 +157,26 @@ export class Runtime {
 		}
 	}
 
+	private delayer(ms: number): Promise<{}> {
+		return new Promise(r => setTimeout(r, ms));
+	}
+
 	public async executeAsync(steps: number): Promise<ExecuteResult> {
 		let stepsUsed = 0;
 		while (true) {
 			// Start out executing code.
-			let er = this.execute(steps);
+			let thisSteps = Math.min(steps - stepsUsed, 10000);
+			let er = this.execute(thisSteps);
 			stepsUsed += er.stepsUsed;
 
-			// Did we run out of total steps? If so, bail.
-			if (er.outOfSteps)
-				return new ExecuteResult(true, stepsUsed, null);
+			// Did we run out of total steps? If so, either yield or bail.
+			if (er.outOfSteps) {
+				if (stepsUsed < steps) {
+					await this.delayer(1);
+					continue;
+				} else
+					return new ExecuteResult(true, stepsUsed, null);
+			}
 
 			// Is the return value a Promise object?
 			if (er.returnValue instanceof Promise) {
