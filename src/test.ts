@@ -6,7 +6,7 @@
 "use strict";
 ///<reference path="../typings/globals/node/index.d.ts" />
 
-import { Wob } from "./World/Wob";
+import { Wob, WobProperties } from "./World/Wob";
 import { Verb } from "./World/Verb";
 import { World } from "./World/World";
 import { executeResult } from "./World/Execution";
@@ -25,11 +25,13 @@ async function tester() {
 	// Create a small in-world "game world" to test with.
 	await world.createDefault(InitWorld);
 
-	await world.moveWob(5, 4);
+	/*await world.moveWob(5, 4);
+	await world.compostWob(6);*/
 
 	// console.log(JSON.stringify(world, null, 4));
 
-	let wobs = await world.getWobs([3]);
+	// let wobs = await world.getWobs([3]);
+	let wobs = await world.getWobsByPropertyMatch(WobProperties.Name, "Kayateia");
 	(function nextLine() {
 		rl.question('> ', (answer) => {
 			InputParser.parseInput(answer, wobs[0], world)

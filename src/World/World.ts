@@ -84,6 +84,12 @@ export class World {
 		});
 	}
 
+	public getWobsByPropertyMatch(property: string, value: any): Promise<Wob[]> {
+		return new Promise<Wob[]>((success, fail) => {
+			success([...this._wobCache.values()].filter((w) => w.getProperty(property) === value));
+		});
+	}
+
 	public async moveWob(id: number, to: number) : Promise<void> {
 		let wobs = await this.getWobs([id, to]);
 		if (!wobs[0] || !wobs[1])
