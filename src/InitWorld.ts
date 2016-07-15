@@ -37,7 +37,7 @@ export let InitWorld = [
 					var contents = $.contents(target);
 					if (contents.length) {
 						var names = map(contents, function(w) {
-							return w.name;
+							return w.name + " #" + w.id;
 						});
 						$.log("Here: " + names.join(", "));
 					}
@@ -174,6 +174,7 @@ export let InitWorld = [
 			}
 		}
 	},
+
 	// #2
 	{
 		properties: {
@@ -191,18 +192,8 @@ export let InitWorld = [
 			}
 		}
 	},
+
 	// #3
-	{
-		properties: {
-			"name": "Kayateia",
-			"desc": "A hacker girl stares at you from a hooded gaze..."
-		},
-		container: 1,
-		base: 2,
-		verbs: {
-		}
-	},
-	// #4
 	{
 		properties: {
 			"name": "Room",
@@ -219,7 +210,50 @@ export let InitWorld = [
 			}
 		}
 	},
+
+	// #4
+	{
+		properties: {
+			"name": "Kayateia",
+			"desc": "A hacker girl stares at you from a hooded gaze..."
+		},
+		container: 1,
+		base: 2,
+		verbs: {
+		}
+	},
+
 	// #5
+	{
+		properties: {
+			"name": "Generic Exit",
+			"desc": "A door that doesn't seem to lead anywhere."
+		},
+		container: 1,
+		base: 1,
+		verbs: {
+			go: {
+				sigs: [ "go self", "go none in self", "go none at self", "go none through self" ]
+				code: function() {
+					var target = $.get(this.target);
+					$.log("You go into", target.name);
+					$.move(caller, target);
+					target.look();
+				}
+			}
+		}
+	},
+
+	{
+		properties: {
+			"name": "Door",
+			"desc": "This door leads to the room.",
+			"target": 3
+		},
+		container: 1,
+		base: 5
+	},
+
 	{
 		properties: {
 			"name": "Hammer",
@@ -238,7 +272,7 @@ export let InitWorld = [
 			}
 		}
 	},
-	// #6
+
 	{
 		properties: {
 			"name": "Teacup",
@@ -257,7 +291,7 @@ export let InitWorld = [
 			}
 		}
 	},
-	// #7
+
 	{
 		properties: {
 			"name": "Dog who was put in a kennel",
@@ -280,14 +314,14 @@ export let InitWorld = [
 			}
 		}
 	},
-	// #8
+
 	{
 		properties: {
 			"name": "Human person",
 			"desc": "Stand in the place where you are.",
 			"globalid": "human"
 		},
-		container: 4,
+		container: 3,
 		base: 1,
 		verbs: {
 			pet: {

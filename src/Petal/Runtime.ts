@@ -212,6 +212,10 @@ export class Runtime {
 		return this.execute(maxSteps);
 	}
 
+	public pushCallerValue(value: any): void {
+		AstCallExpression.PushPreviousThisValue(this, value);
+	}
+
 	public popAction(): Step {
 		if (this._verbose)
 			console.log("STEPPOPONE:", this._pipeline[this._pipeline.length - 1]);

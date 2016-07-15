@@ -204,7 +204,6 @@ export class Wob {
 		// Execute the code.
 		let rt = new Petal.Runtime();
 		let runresult = rt.executeCode(parsed, 1000);
-		console.log("Wob", this.id, "verb code executed in", runresult.stepsUsed, "steps.");
 
 		// Look for the variable that was set in the scope.
 		let scope = rt.currentScope();

@@ -44,6 +44,10 @@ export class AstCallExpression extends AstNode {
 		runtime.popAction();
 	}
 
+	public static PushPreviousThisValue(runtime: Runtime, value: any): void {
+		runtime.pushAction(Step.Extra("Call this marker", { thisValue: value }));
+	}
+
 	public static GetCurrentThis(runtime: Runtime): any {
 		let step = runtime.findAction((s: Step) => s.name() === "Call this marker");
 		if (!step)
@@ -78,7 +82,7 @@ export class AstCallExpression extends AstNode {
 			callee = Value.Deref(runtime, callee);
 
 			let caller = AstCallExpression.GetCurrentThis(runtime);
-			runtime.pushAction(Step.Extra("Call this marker", { thisValue: thisValue }));
+			AstCallExpression.PushPreviousThisValue(runtime, thisValue);
 
 			let values = [];
 			if (this.param) {

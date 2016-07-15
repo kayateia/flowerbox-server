@@ -22,6 +22,14 @@ class WobWrapper implements Petal.IObject {
 		if (typeof(index) !== "string")
 			throw new WobOperationException("Can't access non-string members on Wobs", []);
 
+		if (index === "id") {
+			return new Petal.LValue("Wob.id", () => {
+				return this._wob.id;
+			}, () => {
+				throw new WobOperationException("Can't set the id of objects", []);
+			});
+		}
+
 		let member: string = index;
 		let props: string[] = this._wob.getPropertyNames();
 		let verbs: string[] = this._wob.getVerbNames();
@@ -199,8 +207,13 @@ class RootScope implements Petal.IScopeCatcher {
 export async function executeResult(parse: ParseResult, player: Wob, world: World): Promise<void> {
 	// Get the environment ready.
 	let injections: any = {};
-	let dollar = Petal.ObjectWrapper.WrapGeneric(new DollarObject(world, injections), DollarObject.Members, false);
-	let dollarParse = Petal.ObjectWrapper.WrapGeneric(new DollarParse(parse, player, injections), DollarParse.Members, false);
+
+	let dollarObj = new DollarObject(world, injections);
+	let dollar = Petal.ObjectWrapper.WrapGeneric(dollarObj, DollarObject.Members, false);
+
+	let dollarParseObj = new DollarParse(parse, player, injections);
+	let dollarParse = Petal.ObjectWrapper.WrapGeneric(dollarParseObj, DollarParse.Members, false);
+
 	injections.$ = dollar;
 	injections.$parse = dollarParse;
 
@@ -214,6 +227,7 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 	let parserVerb = root.getVerb("$command");
 	if (parserVerb) {
 		let verbThis = new Petal.ThisValue(root, parserVerb.compiled, injections);
+		rt.pushCallerValue(dollarParseObj.player);
 		let result: Petal.ExecuteResult = await rt.executeFunctionAsync(verbThis, [], 100000);
 		console.log("$command took", result.stepsUsed, "steps");
 		if (result.outOfSteps) {
@@ -234,6 +248,7 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 		// Set up a runtime. We'll install our runtime values from above, then call the verb code.
 		// The verb code should create a function named after the verb.
 		let verbThis = new Petal.ThisValue(new WobWrapper(parse.verbObject, injections), parse.verb.compiled, injections);
+		rt.pushCallerValue(dollarParseObj.player);
 		let result: Petal.ExecuteResult = await rt.executeFunctionAsync(verbThis, [], 100000);
 		console.log(parse.verbName, "took", result.stepsUsed, "steps");
 		if (result.outOfSteps) {
