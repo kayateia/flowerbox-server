@@ -29,24 +29,31 @@ class WobWrapper implements Petal.IObject {
 				throw new WobOperationException("Can't set the id of objects", []);
 			});
 		}
+		if (index === "locationId") {
+			return new Petal.LValue("Wob.locationId", () => {
+				return this._wob.container;
+			}, () => {
+				throw new WobOperationException("Can't set the location of objects (use $.move)", []);
+			});
+		}
 
 		let member: string = index;
 		let props: string[] = this._wob.getPropertyNames();
 		let verbs: string[] = this._wob.getVerbNames();
 
-		if (Strings.caseIn(member, props)) {
-			return new Petal.LValue("Wob." + member, (runtime: Petal.Runtime) => {
-				return this._wob.getProperty(member);
-			}, (runtime: Petal.Runtime, value: any) => {
-				this._wob.setProperty(member, value);
-			});
-		} else if (Strings.caseIn(member, verbs)) {
+		// Check verbs first, but if it's not there, assume it's a property so that new properties can be written.
+		if (Strings.caseIn(member, verbs)) {
 			return new Petal.LValue("Wob." + member, (runtime: Petal.Runtime) => {
 				return new Petal.ThisValue(this, this._wob.getVerb(member).compiled, this._injections);
 			}, (runtime: Petal.Runtime, value: any) => {
 				throw new WobOperationException("Can't set new verbs right now", []);
 			});
-		} else {
+		} else /*if (Strings.caseIn(member, props))*/ {
+			return new Petal.LValue("Wob." + member, (runtime: Petal.Runtime) => {
+				return this._wob.getProperty(member);
+			}, (runtime: Petal.Runtime, value: any) => {
+				this._wob.setProperty(member, value);
+			});
 		}
 	}
 
@@ -101,27 +108,57 @@ class DollarObject {
 			return null;
 	}
 
-	public async move(obj: WobWrapper, into: WobWrapper): Promise<void> {
-		if (!obj || !into)
+	public async move(objOrId: WobWrapper | number, intoOrId: WobWrapper | number): Promise<void> {
+		if (!objOrId || !intoOrId)
 			throw new WobReferenceException("Received a null wob in move()", 0);
-		if (!(obj instanceof WobWrapper) || !(into instanceof WobWrapper))
+
+		if (objOrId instanceof WobWrapper)
+			objOrId = objOrId.wob.id;
+		if (intoOrId instanceof WobWrapper)
+			intoOrId = intoOrId.wob.id;
+
+		if (typeof(objOrId) !== "number" || typeof(intoOrId) !== "number")
 			throw new WobReferenceException("Received a non-wob object in move()", 0);
 
-		await this._world.moveWob(obj.wob.id, into.wob.id);
+		await this._world.moveWob(objOrId, intoOrId);
 	}
 
-	public async contents(obj: WobWrapper): Promise<WobWrapper[]> {
-		if (!obj)
+	public async contents(objOrId: WobWrapper | number): Promise<WobWrapper[]> {
+		if (!objOrId)
 			throw new WobReferenceException("Received a null wob in contents()", 0);
-		if (!(obj instanceof WobWrapper))
+
+		let wob;
+		if (typeof(objOrId) === "number")
+			wob = await this._world.getWob(objOrId);
+		if (objOrId instanceof WobWrapper)
+			wob = objOrId.wob;
+
+		if (!wob)
 			throw new WobReferenceException("Received a non-wob object in contents()", 0);
 
-		let contents = await this._world.getWobs(obj.wob.contents);
+		let contents = await this._world.getWobs(wob.contents);
 		return contents.map(w => new WobWrapper(w, this._injections));
 	}
 
+	public async create(intoOrId: WobWrapper | number): Promise<WobWrapper> {
+		if (!intoOrId)
+			throw new WobReferenceException("Received a null wob in create()", 0);
+
+		if (intoOrId instanceof WobWrapper)
+			intoOrId = intoOrId.wob.id;
+
+		if (typeof(intoOrId) !== "number")
+			throw new WobReferenceException("Received a non-wob object in create()", 0);
+
+		// Create the new object and default to a generic, baseless object.
+		let newWob = await this._world.createWob(intoOrId);
+		newWob.base = 1;
+
+		return new WobWrapper(newWob, this._injections);
+	}
+
 	public static Members: string[] = [
-		"log", "logArray", "get", "move", "contents"
+		"log", "logArray", "get", "move", "contents", "create"
 	];
 
 	private _world: World;

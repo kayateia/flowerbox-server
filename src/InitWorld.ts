@@ -19,7 +19,13 @@ export let InitWorld = [
 				code: function() {
 					var text = $parse.text;
 					if (text.startsWith("say ")) {
-						$.log("Saying", text.substr(4));
+						$.log("Saying", text.substr("say ".length));
+						return true;
+					} else if (text.startsWith("create ")) {
+						var name = text.substr("create ".length);
+						var newWob = $.create(caller.locationId);
+						newWob.name = name;
+						$.log("Poof!", name, "(#" + newWob.id + ") was created.");
 						return true;
 					} else
 						return false;

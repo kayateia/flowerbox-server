@@ -53,7 +53,7 @@ export class World {
 
 		// If there's a container specified, place the object into the container.
 		if (container) {
-			let containerWob: Wob = this._wobCache[container];
+			let containerWob: Wob = await this.getWob(container);
 			if (!containerWob)
 				throw new WobReferenceException("Can't find container", container);
 
