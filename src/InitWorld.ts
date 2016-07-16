@@ -3,7 +3,8 @@ import { WobProperties } from "./World/Wob";
 let $parse: any;
 let $: any;
 let map: any;
-let filter: any
+let filter: any;
+let caller: any;
 
 export let InitWorld = [
 	// #1
@@ -23,7 +24,7 @@ export let InitWorld = [
 						return true;
 					} else if (text.startsWith("create ")) {
 						var name = text.substr("create ".length);
-						var newWob = $.create(caller.locationId);
+						var newWob = $.create(caller.location);
 						newWob.name = name;
 						$.log("Poof!", name, "(#" + newWob.id + ") was created.");
 						return true;

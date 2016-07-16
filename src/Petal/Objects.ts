@@ -21,8 +21,9 @@ import { RuntimeException } from "./Exceptions";
 import * as Strings from "../Strings";
 
 // Simple interface for getting an LValue for a given index/name out of the wrapped object.
+// This may also return a ThisValue or a Promise.
 export interface IObject {
-	getAccessor(index: any): LValue;
+	getAccessor(index: any): any;
 }
 
 export class ObjectWrapper {

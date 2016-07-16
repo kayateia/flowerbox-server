@@ -13,12 +13,13 @@ import { WobReferenceException, WobOperationException } from "./Exceptions";
 
 // Wraps a Wob for use within Petal.
 class WobWrapper implements Petal.IObject {
-	constructor(wob: Wob, injections: any) {
+	constructor(wob: Wob, world: World, injections: any) {
 		this._wob = wob;
+		this._world = world;
 		this._injections = injections;
 	}
 
-	public getAccessor(index: any): Petal.LValue {
+	public getAccessor(index: any): any {
 		if (typeof(index) !== "string")
 			throw new WobOperationException("Can't access non-string members on Wobs", []);
 
@@ -29,12 +30,35 @@ class WobWrapper implements Petal.IObject {
 				throw new WobOperationException("Can't set the id of objects", []);
 			});
 		}
-		if (index === "locationId") {
-			return new Petal.LValue("Wob.locationId", () => {
-				return this._wob.container;
-			}, () => {
-				throw new WobOperationException("Can't set the location of objects (use $.move)", []);
-			});
+
+		let that = this;
+
+		if (index === "location") {
+			return (async function() {
+				let wob = await that._world.getWob(that._wob.container);
+
+				return new Petal.LValue("Wob.location", () => {
+					return new WobWrapper(wob, that._world, that._injections);
+				}, () => {
+					throw new WobOperationException("Can't set the location of objects (use $.move)", []);
+				});
+			})();
+		}
+		if (index === "base") {
+			return (async function() {
+				let wob = await that._world.getWob(that._wob.base);
+
+				return new Petal.LValue("Wob.base", () => {
+					return new WobWrapper(wob, that._world, that._injections);
+				}, (rt, value: any) => {
+					if (value instanceof WobWrapper)
+						value = value.wob.id;
+					if (typeof(value) !== "number" || value < 1)
+						throw new WobReferenceException("Invalid value for base wob ID", value);
+
+					this._wob.base = value;
+				});
+			})();
 		}
 
 		let member: string = index;
@@ -62,6 +86,7 @@ class WobWrapper implements Petal.IObject {
 	}
 
 	private _wob: Wob;
+	private _world: World;
 	private _injections: any;
 }
 
@@ -88,7 +113,7 @@ class DollarObject {
 			let objNum: number = objId;
 			let obj = await this._world.getWob(objNum);
 			if (obj)
-				return new WobWrapper(obj, this._injections);
+				return new WobWrapper(obj, this._world, this._injections);
 			else
 				return null;
 		} else if (typeof(objId) === "string") {
@@ -96,7 +121,7 @@ class DollarObject {
 			if (objStr.startsWith("@")) {
 				let wobs = await this._world.getWobsByGlobalId([objStr.substr(1)]);
 				if (wobs && wobs.length)
-					return new WobWrapper(wobs[0], this._injections);
+					return new WobWrapper(wobs[0], this._world, this._injections);
 				else
 					return null;
 			} else if (objStr.startsWith("/")) {
@@ -137,7 +162,7 @@ class DollarObject {
 			throw new WobReferenceException("Received a non-wob object in contents()", 0);
 
 		let contents = await this._world.getWobs(wob.contents);
-		return contents.map(w => new WobWrapper(w, this._injections));
+		return contents.map(w => new WobWrapper(w, this._world, this._injections));
 	}
 
 	public async create(intoOrId: WobWrapper | number): Promise<WobWrapper> {
@@ -154,7 +179,7 @@ class DollarObject {
 		let newWob = await this._world.createWob(intoOrId);
 		newWob.base = 1;
 
-		return new WobWrapper(newWob, this._injections);
+		return new WobWrapper(newWob, this._world, this._injections);
 	}
 
 	public static Members: string[] = [
@@ -167,19 +192,19 @@ class DollarObject {
 
 // Wraps the ParseResult object for $parse inside Petal.
 class DollarParse {
-	constructor(parse: ParseResult, player: Wob, injections: any) {
+	constructor(parse: ParseResult, player: Wob, world: World, injections: any) {
 		this.verbName = parse.verbName;
-		this.verbObject = new WobWrapper(parse.verbObject, injections);
+		this.verbObject = new WobWrapper(parse.verbObject, world, injections);
 		if (parse.direct)
-			this.direct = new WobWrapper(parse.direct, injections);
+			this.direct = new WobWrapper(parse.direct, world, injections);
 		this.prep = parse.prep;
 		if (parse.indirect)
-			this.indirect = new WobWrapper(parse.indirect, injections);
+			this.indirect = new WobWrapper(parse.indirect, world, injections);
 		this.prep2 = parse.prep2;
 		if (parse.indirect2)
-			this.indirect2 = new WobWrapper(parse.indirect2, injections);
+			this.indirect2 = new WobWrapper(parse.indirect2, world, injections);
 
-		this.player = new WobWrapper(player, injections);
+		this.player = new WobWrapper(player, world, injections);
 
 		this.text = parse.text;
 	}
@@ -217,7 +242,7 @@ class RootScope implements Petal.IScopeCatcher {
 			let num = parseInt(name.substr(1), 10);
 			return this._world.getWob(num)
 				.then(result => {
-					return new WobWrapper(result, this._injections);
+					return new WobWrapper(result, this._world, this._injections);
 				});
 		} else if (name[0] === "@") {
 			let at = name.substr(1);
@@ -226,7 +251,7 @@ class RootScope implements Petal.IScopeCatcher {
 					if (results.length === 0)
 						return null;
 					else
-						return new WobWrapper(results[0], this._injections);
+						return new WobWrapper(results[0], this._world, this._injections);
 				});
 		} else {
 			return null;
@@ -248,7 +273,7 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 	let dollarObj = new DollarObject(world, injections);
 	let dollar = Petal.ObjectWrapper.WrapGeneric(dollarObj, DollarObject.Members, false);
 
-	let dollarParseObj = new DollarParse(parse, player, injections);
+	let dollarParseObj = new DollarParse(parse, player, world, injections);
 	let dollarParse = Petal.ObjectWrapper.WrapGeneric(dollarParseObj, DollarParse.Members, false);
 
 	injections.$ = dollar;
@@ -305,7 +330,7 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 	if (parse.verb) {
 		// Set up a runtime. We'll install our runtime values from above, then call the verb code.
 		// The verb code should create a function named after the verb.
-		let verbThis = new Petal.ThisValue(new WobWrapper(parse.verbObject, injections), parse.verb.compiled, injections);
+		let verbThis = new Petal.ThisValue(new WobWrapper(parse.verbObject, world, injections), parse.verb.compiled, injections);
 		rt.pushCallerValue(dollarParseObj.player);
 		let result: Petal.ExecuteResult = await rt.executeFunctionAsync(verbThis, [], 100000);
 		console.log(parse.verbName, "took", result.stepsUsed, "steps");

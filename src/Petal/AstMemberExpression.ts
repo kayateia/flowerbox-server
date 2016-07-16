@@ -45,14 +45,34 @@ export class AstMemberExpression extends AstNode {
 			else
 				value = iobj.getAccessor(this.member);
 
-			// If we already got a ThisValue, don't double-wrap it. Otherwise, store the object with
-			// the value so it can become the "this" value in the function call.
-			//
-			// This mess of logic here is a hack to make it easier to return ThisValues from native callbacks. FIXME.
-			if (!ThisValue.IsThisValue(value) && !ThisValue.IsThisValue(Value.Deref(runtime, value)))
-				value = new ThisValue(obj, value);
+			function finishUp(finalValue) {
+				// If we already got a ThisValue, don't double-wrap it. Otherwise, store the object with
+				// the value so it can become the "this" value in the function call.
+				//
+				// This mess of logic here is a hack to make it easier to return ThisValues from native callbacks. FIXME.
+				if (!ThisValue.IsThisValue(finalValue) && !ThisValue.IsThisValue(Value.Deref(runtime, finalValue)))
+					finalValue = new ThisValue(obj, finalValue);
 
-			runtime.pushOperand(value);
+				return finalValue;
+			}
+
+			// If they returned a promise, then we have to let that flow back out and pause
+			// the execution loop. When it's finished, we'll come back here and finish up with
+			// the real value.
+			//
+			// Note that this is a REALLY ugly place to put the Promise support; more ideal would
+			// be plumbing it into LValue, but then we'd have to support async all over the place.
+			// In truth, the current design of Petal is not inspiring but it should hold for
+			// another day...
+			if (value instanceof Promise)
+				return value
+					.then(finishUp)
+					.catch((err) => {
+						throw err;
+					});
+			else {
+				runtime.pushOperand(finishUp(value));
+			}
 		}));
 		runtime.pushAction(Step.Node("Member object", this.obj));
 		if (this.property)
