@@ -10,6 +10,25 @@ import { World } from "./World";
 import * as Petal from "../Petal/Petal";
 import * as Strings from "../Strings";
 import { WobReferenceException, WobOperationException } from "./Exceptions";
+import { Notation } from "./Notation";
+
+// Wraps a notation for passing around in Petal scripts. These are opaque
+// objects and you can't do anything with them but pass them around.
+class NotationWrapper implements Petal.IObject {
+	constructor(notation: Notation) {
+		this.notation = notation;
+	}
+
+	public getAccessor(index: any): any {
+		return Petal.LValue.MakeReadOnly(null);
+	}
+
+	public toString(): string {
+		return "[Notation: " + this.notation.text + "]";
+	}
+
+	public notation: Notation;
+}
 
 // Wraps a Wob for use within Petal.
 class WobWrapper implements Petal.IObject {
@@ -182,8 +201,20 @@ class DollarObject {
 		return new WobWrapper(newWob, this._world, this._injections);
 	}
 
+	public async notate(text: string, notation: any): Promise<any> {
+		// Don't think this is quite the right exception...
+		if (typeof(text) !== "string")
+			throw new WobReferenceException("Received a non-string for notation", 0);
+
+		// Try to convert objects back out of their Petal wrappers and such, if possible.
+		if (notation instanceof WobWrapper)
+			notation = notation.wob;
+
+		return new NotationWrapper(new Notation(text, notation));
+	}
+
 	public static Members: string[] = [
-		"log", "logArray", "get", "move", "contents", "create"
+		"log", "logArray", "get", "move", "contents", "create", "notate"
 	];
 
 	private _world: World;
