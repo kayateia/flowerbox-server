@@ -273,7 +273,7 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 		let result: Petal.ExecuteResult = await rt.executeCodeAsync(compiled, immediateInjections, 100000);
 		console.log("Command took", result.stepsUsed, "steps");
 		if (result.outOfSteps) {
-			console.log("ERROR: Ran out of steps while running $command");
+			console.log("ERROR: Ran out of steps while running immediate command");
 			return;
 		}
 		if (result.returnValue)
