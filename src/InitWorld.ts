@@ -32,43 +32,35 @@ export let InitWorld = [
 						return false;
 				}
 			},
+			$sayinto: {
+				code: function(into, what) {
+					for (var o in into.contents) {
+						if (o.$hear)
+							o.$hear(what);
+					}
+				}
+			}
 			look: {
 				sigs: [ "look none at self", "look self" ],
 				code: function(target) {
+					if (!$parse.player.$hear)
+						return;
+
 					if (!target)
 						target = this;
-					$.log(target.name);
-					$.log(target.desc);
-					$.log();
 
-					var contents = $.contents(target);
+					$parse.player.$hear([$.notate(target.name, target)]);
+					$parse.player.$hear([target.desc]);
+					$parse.player.$hear([]);
+
+					var contents = target.contents;
 					if (contents.length) {
+						var arr = ["Here:"];
 						var names = map(contents, function(w) {
-							return w.name + " #" + w.id;
+							arr.push($.notate(w.name, w));
 						});
-						$.log("Here: " + names.join(", "));
+						$parse.player.$hear(arr);
 					}
-				}
-			},
-			test: {
-				sigs: [ "test self" ],
-				code: "function() {\
-					var root = $.get(1);\
-					var root2 = #1;\
-					var root3 = @world;\
-					$.log('found root', root.name);\
-					$.log('found root2', root2.name);\
-					$.log('found root3', root3.name);\
-					$.log('calling test2');\
-					var t2r = root.test2(10);\
-					$.log('test2 returned',t2r);\
-				}"
-			},
-			test2: {
-				sigs: [ "test2 self" ],
-				code: function(a) {
-					$.log("test2 was called with",a);
-					return 5;
 				}
 			},
 			maze: {
@@ -195,6 +187,14 @@ export let InitWorld = [
 				sigs: [ "poke self" ],
 				code: function() {
 					$.log("poked!");
+				}
+			},
+			$hear: {
+				// 'what' should be an array of objects to be stored for later retrieval by a client.
+				code: function(what) {
+					if (!this.output)
+						this.output = [];
+					this.output.push(what);
 				}
 			}
 		}

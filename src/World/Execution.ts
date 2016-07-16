@@ -14,7 +14,7 @@ import { Notation } from "./Notation";
 
 // Wraps a notation for passing around in Petal scripts. These are opaque
 // objects and you can't do anything with them but pass them around.
-class NotationWrapper implements Petal.IObject {
+export class NotationWrapper implements Petal.IObject {
 	constructor(notation: Notation) {
 		this.notation = notation;
 	}
@@ -79,25 +79,43 @@ class WobWrapper implements Petal.IObject {
 				});
 			})();
 		}
-
-		let member: string = index;
-		let props: string[] = this._wob.getPropertyNames();
-		let verbs: string[] = this._wob.getVerbNames();
-
-		// Check verbs first, but if it's not there, assume it's a property so that new properties can be written.
-		if (Strings.caseIn(member, verbs)) {
-			return new Petal.LValue("Wob." + member, (runtime: Petal.Runtime) => {
-				return new Petal.ThisValue(this, this._wob.getVerb(member).compiled, this._injections);
-			}, (runtime: Petal.Runtime, value: any) => {
-				throw new WobOperationException("Can't set new verbs right now", []);
-			});
-		} else /*if (Strings.caseIn(member, props))*/ {
-			return new Petal.LValue("Wob." + member, (runtime: Petal.Runtime) => {
-				return this._wob.getProperty(member);
-			}, (runtime: Petal.Runtime, value: any) => {
-				this._wob.setProperty(member, value);
-			});
+		if (index === "contents") {
+			return (async function() {
+				let contents = await that._world.getWobs(that._wob.contents);
+				return new Petal.LValue("Wob.contents", () => {
+					return contents.map(w => new WobWrapper(w, that._world, that._injections));
+				}, () => {
+					throw new WobOperationException("Can't set the contents of objects (use $.move)", []);
+				});
+			})();
 		}
+
+		return (async function() {
+			let member: string = index;
+			let props: string[] = await that._wob.getPropertyNamesI(that._world);
+			let verbs: string[] = await that._wob.getVerbNamesI(that._world);
+
+			// Check verbs first, but if it's not there, assume it's a property so that new properties can be written.
+			if (Strings.caseIn(member, verbs)) {
+				return (async function() {
+					let verb = await that._wob.getVerbI(member, that._world);
+					return new Petal.LValue("Wob." + member, (runtime: Petal.Runtime) => {
+						return new Petal.ThisValue(that, verb.compiled, that._injections);
+					}, (runtime: Petal.Runtime, value: any) => {
+						throw new WobOperationException("Can't set new verbs right now", []);
+					});
+				})();
+			} else /*if (Strings.caseIn(member, props))*/ {
+				return (async function() {
+					let prop = await that._wob.getPropertyI(member, that._world);
+					return new Petal.LValue("Wob." + member, (runtime: Petal.Runtime) => {
+						return prop;
+					}, (runtime: Petal.Runtime, value: any) => {
+						that._wob.setProperty(member, value);
+					});
+				})();
+			}
+		})();
 	}
 
 	public get wob(): Wob {
