@@ -14,6 +14,15 @@ export class ConstScope implements IScope {
 		this._contents = items;
 	}
 
+	public static FromObject(parent: IScope, obj: any): ConstScope {
+		let members = Utils.GetPropertyNames(obj);
+		let map = new Map<string, any>();
+		for (let m of members)
+			map.set(m, obj[m]);
+
+		return new ConstScope(parent, map);
+	}
+
 	public get(name: string): any {
 		if (this._contents.has(name))
 			return this._contents.get(name);

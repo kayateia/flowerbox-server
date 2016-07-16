@@ -260,6 +260,22 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 	let rootScope = new RootScope(world, injections);
 	let rt = new Petal.Runtime(false, rootScope);
 
+	// If it's a literal code line, skip the rest of this.
+	let trimmedLine = parse.text.trim();
+	if (trimmedLine[0] === ";") {
+		let compiled = Petal.compileFromSource(trimmedLine.substr(1));
+		rt.pushCallerValue(dollarParseObj.player);
+		let result: Petal.ExecuteResult = await rt.executeCodeAsync(compiled, injections, 100000);
+		console.log("Command took", result.stepsUsed, "steps");
+		if (result.outOfSteps) {
+			console.log("ERROR: Ran out of steps while running $command");
+			return;
+		}
+		if (result.returnValue)
+			console.log("Command returned:", result.returnValue);
+		return;
+	}
+
 	let root = await world.getWob(1);
 	let parserVerb = root.getVerb("$command");
 	if (parserVerb) {

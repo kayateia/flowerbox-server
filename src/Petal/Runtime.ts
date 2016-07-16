@@ -12,6 +12,7 @@ import { StandardScope } from "./Scopes/StandardScope";
 import { ConstScope } from "./Scopes/ConstScope";
 import { SuspendException, RuntimeException } from "./Exceptions";
 import { ThisValue } from "./ThisValue";
+import { Value } from "./Value";
 
 import * as LibFunctional from "./Lib/Functional";
 import * as LibMath from "./Lib/Math";
@@ -189,6 +190,9 @@ export class Runtime {
 				continue;
 			}
 
+			// Make sure it's not a wrapped value.
+			er.returnValue = Value.Deref(this, er.returnValue);
+
 			// If we get here, execution halted and we neither ran out of steps nor
 			// got a Promise back, which means... we're done!
 			return new ExecuteResult(false, stepsUsed, er.returnValue);
@@ -207,9 +211,22 @@ export class Runtime {
 		return await this.executeAsync(maxSteps);
 	}
 
-	public executeCode(code: AstNode, maxSteps: number): ExecuteResult {
+	public executeCode(code: AstNode, injections: any, maxSteps: number): ExecuteResult {
+		if (injections) {
+			this.pushAction(Step.Scope("Injections scope", ConstScope.FromObject(this.currentScope(), injections)));
+			this.pushAction(Step.Scope("Replacement root scope", new StandardScope(this.currentScope())));
+		}
 		this.pushAction(Step.Node("Supplied code", code));
 		return this.execute(maxSteps);
+	}
+
+	public async executeCodeAsync(code: AstNode, injections: any, maxSteps: number): Promise<ExecuteResult> {
+		if (injections) {
+			this.pushAction(Step.Scope("Injections scope", ConstScope.FromObject(this.currentScope(), injections)));
+			this.pushAction(Step.Scope("Replacement root scope", new StandardScope(this.currentScope())));
+		}
+		this.pushAction(Step.Node("Supplied code", code));
+		return await this.executeAsync(maxSteps);
 	}
 
 	public pushCallerValue(value: any): void {

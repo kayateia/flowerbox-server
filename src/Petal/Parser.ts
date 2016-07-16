@@ -126,5 +126,12 @@ export function compileToTree(src: string) {
 
 export function compileFromSource(src: string) {
 	let parseTree: any = compileToTree(src);
+	// console.log(JSON.stringify(parseTree, null, 4));
+
+	// For simple expressions (fragments), we want to assume that the caller wants the return value.
+	// So if we detect that structure, we'll unroll this a bit.
+	if (parseTree.type === "Program" && parseTree.body.length === 1 && parseTree.body[0].type === "ExpressionStatement")
+		parseTree = parseTree.body[0];
+
 	return compile(parseTree);
 }
