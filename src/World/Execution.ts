@@ -264,8 +264,13 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 	let trimmedLine = parse.text.trim();
 	if (trimmedLine[0] === ";") {
 		let compiled = Petal.compileFromSource(trimmedLine.substr(1));
-		rt.pushCallerValue(dollarParseObj.player);
-		let result: Petal.ExecuteResult = await rt.executeCodeAsync(compiled, injections, 100000);
+		let immediateInjections = {
+			$: injections.$,
+			$parse: injections.$parse,
+			caller: dollarParseObj.player,
+			this: null
+		};
+		let result: Petal.ExecuteResult = await rt.executeCodeAsync(compiled, immediateInjections, 100000);
 		console.log("Command took", result.stepsUsed, "steps");
 		if (result.outOfSteps) {
 			console.log("ERROR: Ran out of steps while running $command");
