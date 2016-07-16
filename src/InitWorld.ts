@@ -239,7 +239,7 @@ export let InitWorld = [
 		base: 1,
 		verbs: {
 			go: {
-				sigs: [ "go self", "go none in self", "go none at self", "go none through self" ]
+				sigs: [ "go self", "go none in self", "go none at self", "go none through self" ],
 				code: function() {
 					var target = $.get(this.target);
 					$.log("You go into", target.name);
