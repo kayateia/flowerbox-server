@@ -7,7 +7,7 @@
 import { Verb, VerbSig } from "./Verb";
 import { Wob, WobProperties } from "./Wob";
 import { World } from "./World";
-import * as Strings from "../Strings";
+import * as Strings from "../Utils/Strings";
 
 /*
 This is a simple natural language parser. It looks in the user's current room for objects

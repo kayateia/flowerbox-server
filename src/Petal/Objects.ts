@@ -18,7 +18,7 @@ import { LValue } from "./LValue";
 import { AstObject } from "./AstObject";
 import { Runtime } from "./Runtime";
 import { RuntimeException } from "./Exceptions";
-import * as Strings from "../Strings";
+import * as Strings from "../Utils/Strings";
 
 // Simple interface for getting an LValue for a given index/name out of the wrapped object.
 // This may also return a ThisValue or a Promise.

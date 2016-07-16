@@ -6,7 +6,7 @@
 
 import { WobOperationException, InvalidCodeException } from "./Exceptions";
 import { Verb, VerbCode } from "./Verb";
-import { CaseMap } from "../Strings";
+import { CaseMap } from "../Utils/Strings";
 import { World } from "./World";
 import * as Petal from "../Petal/Petal";
 

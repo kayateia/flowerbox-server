@@ -7,7 +7,7 @@
 import { WobReferenceException, WobOperationException } from "./Exceptions";
 import { Wob, WobProperties } from "./Wob";
 import { Verb } from "./Verb";
-import * as Strings from "../Strings";
+import * as Strings from "../Utils/Strings";
 import { Utils } from "../Petal/Utils";
 
 // Zaa Warudo
