@@ -1,3 +1,6 @@
+// This file is officially serving no purpose now, but I'm leaving it here in case
+// I want to use it again later.
+
 module.exports = function(grunt) {
 	grunt.initConfig({
 		pkg: grunt.file.readJSON("package.json"),
@@ -5,15 +8,6 @@ module.exports = function(grunt) {
 			base: {
 				src: ["src/**/*.ts"],
 				dest: "js"
-			}
-		},
-		exec: {
-			// This should ideally be done only when it needs doing,
-			// but I can't find a Grunt plugin that will do that.
-			gen_grammar: {
-				command: "node_modules/pegjs/bin/pegjs --cache lib/PetalGrammar.pegjs lib/PetalGrammar.js",
-				src: "lib/PetalGrammar.pegjs",
-				dest: "lib/PetalGrammar.js"
 			}
 		},
 		watch: {
@@ -29,11 +23,10 @@ module.exports = function(grunt) {
 	});
 
 	grunt.loadNpmTasks("grunt-typescript");
-	grunt.loadNpmTasks("grunt-exec");
 	grunt.loadNpmTasks("grunt-newer");
 	grunt.loadNpmTasks("grunt-contrib-watch");
 
 	// TypeScript compilation isn't working in Grunt for some reason.
 	// Use 'tsc' or an auto-compiling editor.
-	grunt.registerTask("default", ["newer:exec:gen_grammar"/*, "typescript"*/]);
+	grunt.registerTask("default", [/*"newer:exec:gen_grammar", "typescript"*/]);
 };

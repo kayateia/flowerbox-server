@@ -55,6 +55,7 @@ export function compile(parseTree: any): AstNode {
 			result = new AstMemberExpression(parseTree);
 			break;
 		case "BinaryExpression":
+		case "LogicalExpression":	// This is not actually correct, but it will get us started.
 			result = new AstBinaryExpression(parseTree);
 			break;
 		case "UnaryExpression":
@@ -117,11 +118,34 @@ export function compile(parseTree: any): AstNode {
 	return result;
 }
 
-let parser: any = require("../../lib/PetalGrammar");
+let acorn: any = require("../../lib/acorn-petal");
+
+// We have to patch the parser to allow for #n and @foo. Ideally this would be done
+// through the plugin architecture, but it doesn't expose what we need.
+/*let oldIsIdentStart = acorn.isIdentifierStart;
+acorn.isIdentifierStart = function(code, astral) {
+	console.log("isStart", code);
+	if (code === 64 || code === 35)
+		return true;
+	else
+		return oldIsIdentStart(code, astral);
+}
+
+let oldIsIdentChar = acorn.isIdentifierChar;
+acorn.isIdentifierChar = function(code, astral) {
+	console.log("isChar", code);
+	if (code === 64 || code === 35)
+		return true;
+	else
+		return oldIsIdentChar(code, astral);
+} */
 
 // This is exported primarily for testing.
 export function compileToTree(src: string) {
-	return parser.parse(src);
+	var ast = acorn.parse(src, {
+		locations: true
+	});
+	return ast;
 }
 
 export function compileFromSource(src: string) {
