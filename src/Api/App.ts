@@ -19,6 +19,8 @@ const bodyParser = require("body-parser");
 export let app = express();
 export let world = new World.World();
 
+let cors = require("cors");
+
 async function worldStartup() {
 	// Create a small in-world "game world" to test with.
 	await world.createDefault(InitWorld);
@@ -28,6 +30,7 @@ async function worldStartup() {
 
 worldStartup()
 	.then(() => {
+		app.use(cors());
 		app.use(bodyParser.json());
 		app.use(bodyParser.urlencoded({ extended: false }));
 
