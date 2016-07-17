@@ -13,7 +13,7 @@ export class AstConditional extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
 		this.test = compile(parseTree.test);
-		this.result = compile(parseTree.consequent);
+		this.consequent = compile(parseTree.consequent);
 		if (parseTree.alternate)
 			this.alternate = compile(parseTree.alternate);
 		this.statement = parseTree.type === "IfStatement";
@@ -27,7 +27,7 @@ export class AstConditional extends AstNode {
 				runtime.pushAction(Step.ClearOperands(runtime));
 
 			if (result)
-				runtime.pushAction(new Step(this.result, "Conditional result"));
+				runtime.pushAction(new Step(this.consequent, "Conditional consequent"));
 			else if (this.alternate)
 				runtime.pushAction(new Step(this.alternate, "Conditional alternate"));
 		}));
@@ -36,7 +36,7 @@ export class AstConditional extends AstNode {
 
 	public what: string = "Test";
 	public test: AstNode;
-	public result: AstNode;
+	public consequent: AstNode;
 	public alternate: AstNode;
 	public statement: boolean;
 }

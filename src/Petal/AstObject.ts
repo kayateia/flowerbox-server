@@ -15,7 +15,7 @@ import { Utils } from "./Utils";
 export class AstObject extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
-		this.contents = {};
+		this.properties = {};
 		parseTree.properties.forEach((p) => {
 			// "get" and "set" are also possible - we aren't handling them yet.
 			if (p.kind !== "init")
@@ -31,7 +31,7 @@ export class AstObject extends AstNode {
 
 			let value = compile(p.value);
 
-			this.contents[key] = value;
+			this.properties[key] = value;
 		});
 	}
 
@@ -45,17 +45,17 @@ export class AstObject extends AstNode {
 		runtime.pushAction(Step.Callback("Object constructor", () => {
 			// This prevents superclass properties from mixing in.
 			let result = new Object(null);
-			Utils.GetPropertyNames(this.contents).forEach((p) => {
+			Utils.GetPropertyNames(this.properties).forEach((p) => {
 				let value = Value.PopAndDeref(runtime);
 				result[p] = value;
 			});
 			result["___petalObject"] = true;
 			runtime.pushOperand(result);
 		}));
-		Utils.GetPropertyNames(this.contents).forEach((i) =>
-			runtime.pushAction(new Step(this.contents[i], "Object member")));
+		Utils.GetPropertyNames(this.properties).forEach((i) =>
+			runtime.pushAction(new Step(this.properties[i], "Object member")));
 	}
 
 	public what: string = "ObjectExpression";
-	public contents: any;
+	public properties: any;
 }

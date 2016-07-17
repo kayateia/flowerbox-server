@@ -14,23 +14,23 @@ export class AstReturn extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
 		if (parseTree.argument)
-			this.arg = compile(parseTree.argument);
+			this.argument = compile(parseTree.argument);
 	}
 
 	public execute(runtime: Runtime): void {
 		runtime.pushAction(Step.Callback("Return unwinder", (s) => {
 			let rv = undefined;
-			if (this.arg)
+			if (this.argument)
 				rv = Value.PopAndDeref(runtime);
 
 			runtime.pushOperand(rv);
 
 			AstCallExpression.UnwindCurrent(runtime);
 		}));
-		if (this.arg)
-			runtime.pushAction(new Step(this.arg));
+		if (this.argument)
+			runtime.pushAction(new Step(this.argument));
 	}
 
 	public what: string = "Return";
-	public arg: AstNode;
+	public argument: AstNode;
 }

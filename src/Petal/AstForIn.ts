@@ -21,7 +21,7 @@ export class AstForIn extends AstNode {
 		// We're just going to cheat on this one because the structure is always the same,
 		// and this is much simpler for us.
 		this.varName = parseTree.left.declarations[0].id.name;
-		this.source = compile(parseTree.right);
+		this.right = compile(parseTree.right);
 		this.body = compile(parseTree.body);
 	}
 
@@ -70,11 +70,11 @@ export class AstForIn extends AstNode {
 		}));
 
 		// First thing, execute the source and get that value for traversal.
-		runtime.pushAction(Step.Node("ForIn init", this.source));
+		runtime.pushAction(Step.Node("ForIn init", this.right));
 	}
 
 	public what: string = "ForIn";
 	public varName: string;
-	public source: AstNode;
+	public right: AstNode;
 	public body: AstNode;
 }

@@ -13,18 +13,18 @@ import { Value } from "./Value";
 export class AstArray extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
-		this.contents = parseTree.elements.map(compile);
+		this.elements = parseTree.elements.map(compile);
 	}
 
 	public execute(runtime: Runtime): any {
 		runtime.pushAction(Step.Callback("Array constructor", () => {
-			let result = this.contents.map(() => Value.PopAndDeref(runtime));
+			let result = this.elements.map(() => Value.PopAndDeref(runtime));
 			runtime.pushOperand(result);
 		}));
-		this.contents.forEach((i) =>
+		this.elements.forEach((i) =>
 			runtime.pushAction(new Step(i, "Array member")));
 	}
 
 	public what: string = "ArrayExpression";
-	public contents: AstNode[];
+	public elements: AstNode[];
 }

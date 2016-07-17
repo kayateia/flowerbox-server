@@ -11,15 +11,15 @@ import { compile } from "./Parser";
 export class AstVarStatement extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
-		let varsAny: any = parseTree.declarations.map(compile);
-		this.vars = varsAny;
+		let declsAny: any = parseTree.declarations.map(compile);
+		this.decls = declsAny;
 	}
 
 	public execute(runtime: any): void {
-		for (let i=this.vars.length - 1; i>=0; --i)
-			this.vars[i].execute(runtime);
+		for (let i=this.decls.length - 1; i>=0; --i)
+			this.decls[i].execute(runtime);
 	}
 
 	public what: string = "Var";
-	public vars: AstVarDecl[];
+	public decls: AstVarDecl[];
 }

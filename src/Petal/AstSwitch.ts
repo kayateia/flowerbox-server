@@ -23,7 +23,7 @@ class SwitchCase {
 export class AstSwitch extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
-		this.testValue = compile(parseTree.discriminant);
+		this.discriminant = compile(parseTree.discriminant);
 		this.cases = [];
 		for (let c of parseTree.cases) {
 			let sc = new SwitchCase(compile(c.test), c.consequent.map(compile));
@@ -39,13 +39,13 @@ export class AstSwitch extends AstNode {
 		Loops.PushMarker(runtime, Loops.Outside);
 
 		let that = this;
-		let testValue;
+		let discriminant;
 		let curTestIdx = 0;
 
 		function doIteration() {
 			// Grab the condition value.
 			let value = Value.PopAndDeref(runtime);
-			if (testValue === value) {
+			if (discriminant === value) {
 				// Yay, we found it. Push on the code for the rest of the cases. Either one
 				// will have a break statement or we'll execute it all.
 				for (let i=that.cases.length-1; i>=curTestIdx; --i) {
@@ -64,9 +64,9 @@ export class AstSwitch extends AstNode {
 			}
 		};
 
-		// Grab the testValue.
-		runtime.pushAction(Step.Callback("Switch get testValue", () => {
-			testValue = Value.PopAndDeref(runtime);
+		// Grab the discriminant.
+		runtime.pushAction(Step.Callback("Switch get discriminant", () => {
+			discriminant = Value.PopAndDeref(runtime);
 
 			// And push on the first test value execution.
 			runtime.pushAction(Step.Callback("Switch test case callback", doIteration));
@@ -74,10 +74,10 @@ export class AstSwitch extends AstNode {
 		}));
 
 		// First thing, calculate the test value.
-		runtime.pushAction(Step.Node("Switch test value", this.testValue));
+		runtime.pushAction(Step.Node("Switch test value", this.discriminant));
 	}
 
 	public what: string = "Switch";
-	public testValue: AstNode;
+	public discriminant: AstNode;
 	public cases: SwitchCase[];
 }

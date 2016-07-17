@@ -24,11 +24,10 @@ export class Check {
 			return false;
 
 		let varstmt: AstVarStatement = <AstVarStatement>stmts.body[0];
-		if (varstmt.vars.length !== 1)
+		if (varstmt.decls.length !== 1)
 			return false;
 
-		let vardecl: AstVarDecl = varstmt.vars[0];
-
+		let vardecl: AstVarDecl = varstmt.decls[0];
 		if (vardecl.init instanceof AstObject)
 			return true;
 		else

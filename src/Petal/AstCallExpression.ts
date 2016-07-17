@@ -26,7 +26,7 @@ export class AstCallExpression extends AstNode {
 		// We might not have these if the object was created synthetically.
 		if (parseTree.callee && parseTree.arguments) {
 			this.callee = compile(parseTree.callee);
-			this.param = parseTree.arguments.map(compile);
+			this.arguments = parseTree.arguments.map(compile);
 		}
 	}
 
@@ -85,8 +85,8 @@ export class AstCallExpression extends AstNode {
 			AstCallExpression.PushPreviousThisValue(runtime, thisValue);
 
 			let values = [];
-			if (this.param) {
-				for (let i=0; i<this.param.length; ++i) {
+			if (this.arguments) {
+				for (let i=0; i<this.arguments.length; ++i) {
 					values.push(Value.PopAndDeref(runtime));
 				}
 			} else if (this.literalParams)
@@ -134,15 +134,15 @@ export class AstCallExpression extends AstNode {
 		}));
 		if (!gotAFunction)
 			runtime.pushAction(new Step(<AstNode>this.callee, "Callee Resolution"));
-		if (this.param)
-			this.param.forEach((p: AstNode) => {
+		if (this.arguments)
+			this.arguments.forEach((p: AstNode) => {
 				runtime.pushAction(new Step(p, "Parameter Resolution"));
 			});
 	}
 
 	public what: string = "CallExpression";
 	public callee: AstNode | ThisValue;
-	public param: AstNode[];
+	public arguments: AstNode[];
 
 	public literalParams: any[];
 }

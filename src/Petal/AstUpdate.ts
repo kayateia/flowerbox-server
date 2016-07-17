@@ -15,7 +15,7 @@ export class AstUpdate extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
 		this.operator = parseTree.operator;
-		this.arg = compile(parseTree.argument);
+		this.argument = compile(parseTree.argument);
 		this.prefix = parseTree.prefix;
 	}
 
@@ -39,11 +39,11 @@ export class AstUpdate extends AstNode {
 			else
 				runtime.pushOperand(oldValue);
 		}));
-		runtime.pushAction(new Step(this.arg, "Update l-value"));
+		runtime.pushAction(new Step(this.argument, "Update l-value"));
 	}
 
 	public what: string = "Update";
 	public operator: string;
-	public arg: AstNode;
+	public argument: AstNode;
 	public prefix: boolean;
 }
