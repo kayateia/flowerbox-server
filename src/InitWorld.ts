@@ -192,9 +192,11 @@ export let InitWorld = [
 			$hear: {
 				// 'what' should be an array of objects to be stored for later retrieval by a client.
 				code: function(what) {
-					if (!this.output)
-						this.output = [];
-					this.output.push(what);
+					if (!this.hearlog)
+						this.hearlog = [];
+					what = what.slice(0);
+					what.unshift($.timestamp());
+					this.hearlog.push(what);
 				}
 			}
 		}

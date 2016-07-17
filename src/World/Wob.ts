@@ -25,7 +25,7 @@ export class WobProperties {
 	public static Description = "desc";			// string
 
 	// On player objects.
-	public static OutputLog = "outputlog";		// string[]
+	public static HearLog = "hearlog";			// string[]
 	public static PasswordHash = "pwhash";		// string
 	public static LastActive = "lastactive";	// int (unix timestamp)
 }

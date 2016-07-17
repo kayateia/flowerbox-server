@@ -9,7 +9,7 @@
 import { Wob, WobProperties } from "./World/Wob";
 import { Verb } from "./World/Verb";
 import { World } from "./World/World";
-import { executeResult } from "./World/Execution";
+import * as Execution from "./World/Execution";
 import * as InputParser from "./World/InputParser";
 import * as readline from "readline";
 import { InitWorld } from "./InitWorld";
@@ -25,19 +25,31 @@ async function tester() {
 	// Create a small in-world "game world" to test with.
 	await world.createDefault(InitWorld);
 
-	/*await world.moveWob(5, 4);
-	await world.compostWob(6);*/
-
-	// console.log(JSON.stringify(world, null, 4));
-
-	// let wobs = await world.getWobs([3]);
-	let wobs = await world.getWobsByPropertyMatch(WobProperties.Name, "Kayateia");
+	let player = (await world.getWobsByPropertyMatch(WobProperties.Name, "Kayateia"))[0];
 	(function nextLine() {
 		rl.question('> ', (answer) => {
-			InputParser.parseInput(answer, wobs[0], world)
+			InputParser.parseInput(answer, player, world)
 				.then((match) => {
-					executeResult(match, wobs[0], world)
+					Execution.executeResult(match, player, world)
 						.then(() => {
+							// Look for new output on the player.
+							let output = player.getProperty("hearlog");
+							if (output) {
+								output.forEach(l => {
+									let arr = [];
+									l.forEach(obj => {
+										if (obj instanceof Execution.NotationWrapper) {
+											arr.push(obj.notation.text);
+											if (obj.notation.value instanceof Wob) {
+												arr.push("(#" + obj.notation.value.id + ")");
+											}
+										} else
+											arr.push(obj.toString());
+									});
+									console.log(...arr);
+								});
+								player.setProperty("output", []);
+							}
 							nextLine();
 						})
 						.catch((e) => {

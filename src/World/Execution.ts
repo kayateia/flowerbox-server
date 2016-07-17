@@ -145,6 +145,10 @@ class DollarObject {
 		console.log(">>>", ...arr);
 	}
 
+	public timestamp(): number {
+		return Date.now();
+	}
+
 	public async get(objId: any): Promise<WobWrapper> {
 		if (typeof(objId) === "number") {
 			let objNum: number = objId;
@@ -232,7 +236,7 @@ class DollarObject {
 	}
 
 	public static Members: string[] = [
-		"log", "logArray", "get", "move", "contents", "create", "notate"
+		"log", "logArray", "timestamp", "get", "move", "contents", "create", "notate"
 	];
 
 	private _world: World;
