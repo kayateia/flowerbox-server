@@ -42,6 +42,7 @@ export function compile(parseTree: any): AstNode {
 			break;
 		case "FunctionExpression":
 		case "FunctionDeclaration":
+		case "ArrowFunctionExpression":
 			result = new AstFunction(parseTree);
 			break;
 		case "BlockStatement":

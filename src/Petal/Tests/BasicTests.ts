@@ -120,6 +120,11 @@ describe("Functional test", function() {
 			"3 2 1\nundefined\n");
 	});
 
+	it("should have working arrow functions", function() {
+		basicTest("log(map([1,2,3], a => a+1));",
+			"[2,3,4]\n");
+	});
+
 	it("should have a working update operator", function() {
 		basicTest("var a = 5; a += 5; log(a);",
 			"10\n");

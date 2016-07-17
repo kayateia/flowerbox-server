@@ -6,6 +6,7 @@
 
 import { AstNode } from "./AstNode";
 import { AstStatements } from "./AstStatements";
+import { AstReturn } from "./AstReturn";
 import { compile } from "./Parser";
 import { Runtime } from "./Runtime";
 import { IScope } from "./IScope";
@@ -33,7 +34,10 @@ export class AstFunction extends AstNode {
 		if (parseTree.id)
 			this.name = parseTree.id.name;
 		this.params = parseTree.params.map((i) => i.name);
-		this.body = new AstStatements(parseTree.body, false);
+		if (parseTree.expression)
+			this.body = AstStatements.FromStatement(new AstReturn({ argument: parseTree.body }), false);
+		else
+			this.body = new AstStatements(parseTree.body, false);
 	}
 
 	public static IsFunction(value: any): boolean {

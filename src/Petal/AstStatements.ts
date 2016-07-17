@@ -12,8 +12,16 @@ import { StandardScope } from "./Scopes/StandardScope";
 export class AstStatements extends AstNode {
 	constructor(parseTree: any, blockStatement: boolean) {
 		super(parseTree);
-		this.body = parseTree.body.map(compile);
-		this.blockStatement = blockStatement;
+		if (parseTree) {
+			this.body = parseTree.body.map(compile);
+			this.blockStatement = blockStatement;
+		}
+	}
+
+	public static FromStatement(node: AstNode, blockStatement: boolean): AstStatements {
+		let stmts = new AstStatements(null, blockStatement);
+		stmts.body = [node];
+		return stmts;
 	}
 
 	public execute(runtime: Runtime): void {
