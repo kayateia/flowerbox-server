@@ -28,10 +28,12 @@ export class HearLogItem {
 // Rich text with a wob reference.
 export class WobRef {
 	constructor(text: string, id: number) {
+		this.rich = "wob";
 		this.text = text;
 		this.id = id;
 	}
 
+	public rich: string;
 	public text: string;
 	public id: number;
 }
