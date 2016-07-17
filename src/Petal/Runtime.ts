@@ -131,10 +131,10 @@ export class Runtime {
 		this._pipeline.push(step);
 	}
 
-	public execute(steps: number): ExecuteResult {
+	public execute(steps?: number): ExecuteResult {
 		let stepsUsed = 0, stepsTotal = steps;
 		let stopEarlyValue = null;
-		while (this._pipeline.length && steps--) {
+		while (this._pipeline.length && (steps === undefined || steps === null || steps--)) {
 			let step = this._pipeline.pop();
 			++stepsUsed;
 			if (this._verbose)
@@ -159,11 +159,11 @@ export class Runtime {
 		}
 	}
 
-	public async executeAsync(steps: number): Promise<ExecuteResult> {
+	public async executeAsync(steps?: number): Promise<ExecuteResult> {
 		let stepsUsed = 0;
 		while (true) {
 			// Start out executing code.
-			let thisSteps = Math.min(steps - stepsUsed, 10000);
+			let thisSteps = !steps ? null : Math.min(steps - stepsUsed, 10000);
 			let er = this.execute(thisSteps);
 			stepsUsed += er.stepsUsed;
 
