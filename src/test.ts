@@ -26,7 +26,7 @@ async function tester() {
 	// Create a small in-world "game world" to test with.
 	await world.createDefault(InitWorld, "./notes/init");
 
-	let player = (await world.getWobsByPropertyMatch(WobProperties.Name, "Kayateia"))[0];
+	let player = (await world.getWobsByGlobalId(["kayateia"]))[0];
 	(function nextLine() {
 		rl.question('> ', (answer) => {
 			InputParser.parseInput(answer, player, world)

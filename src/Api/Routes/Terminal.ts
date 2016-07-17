@@ -99,7 +99,7 @@ export class TerminalRouter extends RouterBase {
 
 	// Returns the player's Wob or a ModelBase with an error message.
 	private async getUserWob(): Promise<World.Wob | ModelBase> {
-		let players = await this.world.getWobsByPropertyMatch(World.WobProperties.Name, "Kayateia");
+		let players = await this.world.getWobsByGlobalId(["Kayateia"]);
 		if (players.length !== 1)
 			return new ModelBase(false, "No such player exists");
 		return players[0];
