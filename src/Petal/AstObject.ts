@@ -6,7 +6,7 @@
 
 import { AstNode } from "./AstNode";
 import { AstIdentifier } from "./AstIdentifier";
-import { compile } from "./Parser";
+import { parse } from "./Parser";
 import { ParseException } from "./Exceptions";
 import { Step, Runtime } from "./Runtime";
 import { Value } from "./Value";
@@ -29,7 +29,7 @@ export class AstObject extends AstNode {
 			else
 				throw new ParseException("Unknown key type '" + key.type + "' for object property name", parseTree);
 
-			let value = compile(p.value);
+			let value = parse(p.value);
 
 			this.properties[key] = value;
 		});

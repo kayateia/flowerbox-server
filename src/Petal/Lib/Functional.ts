@@ -31,7 +31,7 @@ let filter = function(array, func) {
 
 export function registerAll(scope: ConstScope): void {
 	let code = "var a = { map:" + map + ", filter:" + filter + "};";
-	let ast = Parser.compileFromSource(code);
+	let ast = Parser.parseFromSource(code);
 	let rt = new Runtime();
 	let tempScope = new StandardScope(rt.currentScope());
 	rt.pushAction(Step.Scope("Scope catcher", tempScope));
@@ -39,7 +39,7 @@ export function registerAll(scope: ConstScope): void {
 	let result = rt.execute(10000);
 	if (result.outOfSteps)
 		throw new RuntimeException("Ran out of steps while executing library code setup", null);
-	let compiledFuncs = tempScope.get("a");
-	for (let name of Utils.GetPropertyNames(compiledFuncs))
-		scope.setConst(name, compiledFuncs[name]);
+	let parsedFuncs = tempScope.get("a");
+	for (let name of Utils.GetPropertyNames(parsedFuncs))
+		scope.setConst(name, parsedFuncs[name]);
 }

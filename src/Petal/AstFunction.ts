@@ -7,7 +7,6 @@
 import { AstNode } from "./AstNode";
 import { AstStatements } from "./AstStatements";
 import { AstReturn } from "./AstReturn";
-import { compile } from "./Parser";
 import { Runtime } from "./Runtime";
 import { IScope } from "./IScope";
 import { StandardScope } from "./Scopes/StandardScope";

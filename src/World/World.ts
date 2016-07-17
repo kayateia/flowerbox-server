@@ -29,6 +29,7 @@ export class World {
 				// Do nothing - it gets no verbs.
 			} else if (typeof(wobdef.verbs) === "string") {
 				let p = path.join(basePath, wobdef.verbs);
+				console.log("loading", p);
 				let contents = (await FsPromises.readFile(p)).toString();
 				wob.verbCode = contents;
 			} else {

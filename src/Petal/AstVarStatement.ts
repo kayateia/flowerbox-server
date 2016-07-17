@@ -6,12 +6,12 @@
 
 import { AstNode } from "./AstNode";
 import { AstVarDecl } from "./AstVarDecl";
-import { compile } from "./Parser";
+import { parse } from "./Parser";
 
 export class AstVarStatement extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
-		let declsAny: any = parseTree.declarations.map(compile);
+		let declsAny: any = parseTree.declarations.map(parse);
 		this.decls = declsAny;
 	}
 

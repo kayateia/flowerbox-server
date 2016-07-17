@@ -5,7 +5,6 @@
 */
 
 import { AstNode } from "./AstNode";
-import { compile } from "./Parser";
 import { Runtime } from "./Runtime";
 import { LValue } from "./LValue";
 

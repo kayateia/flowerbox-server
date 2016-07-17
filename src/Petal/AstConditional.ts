@@ -5,17 +5,17 @@
 */
 
 import { AstNode } from "./AstNode";
-import { compile } from "./Parser";
+import { parse } from "./Parser";
 import { Step, Runtime } from "./Runtime";
 import { Value } from "./Value";
 
 export class AstConditional extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
-		this.test = compile(parseTree.test);
-		this.consequent = compile(parseTree.consequent);
+		this.test = parse(parseTree.test);
+		this.consequent = parse(parseTree.consequent);
 		if (parseTree.alternate)
-			this.alternate = compile(parseTree.alternate);
+			this.alternate = parse(parseTree.alternate);
 		this.statement = parseTree.type === "IfStatement";
 	}
 

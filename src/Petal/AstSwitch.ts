@@ -5,7 +5,7 @@
 */
 
 import { AstNode } from "./AstNode";
-import { compile } from "./Parser";
+import { parse } from "./Parser";
 import { Step, Runtime } from "./Runtime";
 import { Value } from "./Value";
 import { Loops } from "./Loops";
@@ -23,10 +23,10 @@ class SwitchCase {
 export class AstSwitch extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
-		this.discriminant = compile(parseTree.discriminant);
+		this.discriminant = parse(parseTree.discriminant);
 		this.cases = [];
 		for (let c of parseTree.cases) {
-			let sc = new SwitchCase(compile(c.test), c.consequent.map(compile));
+			let sc = new SwitchCase(parse(c.test), c.consequent.map(parse));
 			this.cases.push(sc);
 		}
 	}

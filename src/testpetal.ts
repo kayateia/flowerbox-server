@@ -10,14 +10,15 @@ var output;
 console.log(acorn); */
 
 try {
-	output = Petal.compileFromSource(
-		"var a = 5; if (a == 5 || log('no1')) log('yes1'); if (!(a != 5 && log('no2'))) log('yes2');"
+	output = Petal.parseFromSource(
+		"log(map([1,2,3], a => a+1));"
+		// "var a = 5; if (a == 5 || log('no1')) log('yes1'); if (!(a != 5 && log('no2'))) log('yes2');"
 		// "var a = [1,2,3]; for (var @i in a) { if (@i == 2) continue; log(@i); } log(a);"
 		// "var a = ''; for (var i=0; i<5; ++i) a += 'a'; log(a);"
 		// "for (var i=0; i<5; ++i) { if (i == 2) continue; log(i); }"
 		// "for (var i=0; i<5; ++i) log(i); log(i);"
 		// "var a=[1,2,3]; for (var i in a) log(i);"
-		// "var verb = { a:{ b:[ 'foo', 'bar' ], c:function() {} } };"
+		// "var verb = { a:{ b:[ 'foo', 'bar' ], c:function(){} } };"
 		// "var a=5; if (a==5) { var b = 'test'; console.log('this rocks!'); } console.log('b value', b);"
 		// "var a = [1,2,3]; console.log(a[1], a.indexOf, a['indexOf']);"
 		// "var a = { b:5 }; console.log(a.b); a.b++; console.log(a.b);"

@@ -7,7 +7,7 @@
 import { AstNode } from "./AstNode";
 import { Step, Runtime } from "./Runtime";
 import { RuntimeException } from "./Exceptions";
-import { compile } from "./Parser";
+import { parse } from "./Parser";
 import { LValue } from "./LValue";
 import { Value } from "./Value";
 
@@ -15,7 +15,7 @@ export class AstUpdate extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
 		this.operator = parseTree.operator;
-		this.argument = compile(parseTree.argument);
+		this.argument = parse(parseTree.argument);
 		this.prefix = parseTree.prefix;
 	}
 

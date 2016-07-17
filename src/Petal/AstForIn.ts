@@ -6,7 +6,7 @@
 
 import { AstNode } from "./AstNode";
 import { AstObject } from "./AstObject";
-import { compile } from "./Parser";
+import { parse } from "./Parser";
 import { Step, Runtime } from "./Runtime";
 import { StandardScope } from "./Scopes/StandardScope";
 import { Value } from "./Value";
@@ -21,8 +21,8 @@ export class AstForIn extends AstNode {
 		// We're just going to cheat on this one because the structure is always the same,
 		// and this is much simpler for us.
 		this.varName = parseTree.left.declarations[0].id.name;
-		this.right = compile(parseTree.right);
-		this.body = compile(parseTree.body);
+		this.right = parse(parseTree.right);
+		this.body = parse(parseTree.body);
 	}
 
 	public execute(runtime: Runtime): void {

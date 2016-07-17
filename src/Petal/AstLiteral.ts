@@ -5,7 +5,6 @@
 */
 
 import { AstNode } from "./AstNode";
-import { compile } from "./Parser";
 
 export class AstLiteral extends AstNode {
 	constructor(parseTree: any) {

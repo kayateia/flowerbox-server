@@ -11,7 +11,7 @@ export class TestSetup {
 		this.runtime = new Petal.Runtime(verbose);
 		this.output = "";
 		this.runtime.currentScope().set("log", this.getLogger());
-		this.programCompiled = Petal.compileFromSource(program);
+		this.programParsed = Petal.parseFromSource(program);
 	}
 
 	public getLogger() {
@@ -33,16 +33,16 @@ export class TestSetup {
 	}
 
 	public runProgram() {
-		this.runtime.pushAction(Petal.Step.Node("Main program", this.programCompiled));
+		this.runtime.pushAction(Petal.Step.Node("Main program", this.programParsed));
 		this.runtime.execute(1000);
 	}
 
 	public async runProgramAsync() {
-		this.runtime.pushAction(Petal.Step.Node("Main program", this.programCompiled));
+		this.runtime.pushAction(Petal.Step.Node("Main program", this.programParsed));
 		await this.runtime.executeAsync(1000);
 	}
 
 	public runtime: Petal.Runtime;
 	public output: string;
-	public programCompiled: Petal.AstNode;
+	public programParsed: Petal.AstNode;
 }

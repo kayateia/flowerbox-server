@@ -5,7 +5,7 @@
 */
 
 import { AstNode } from "./AstNode";
-import { compile } from "./Parser";
+import { parse } from "./Parser";
 import { Step, Runtime } from "./Runtime";
 import { RuntimeException } from "./Exceptions";
 import { LValue } from "./LValue";
@@ -15,8 +15,8 @@ export class AstAssignment extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
 		this.operator = parseTree.operator;
-		this.left = compile(parseTree.left);
-		this.right = compile(parseTree.right);
+		this.left = parse(parseTree.left);
+		this.right = parse(parseTree.right);
 	}
 
 	public execute(runtime: Runtime): void {

@@ -7,7 +7,7 @@
 import { AstNode } from "./AstNode";
 import { AstIdentifier } from "./AstIdentifier";
 import { AstFunction } from "./AstFunction";
-import { compile } from "./Parser";
+import { parse } from "./Parser";
 import { Step, Runtime } from "./Runtime";
 import { RuntimeException } from "./Exceptions";
 import { Value } from "./Value";
@@ -20,11 +20,11 @@ import { LValue } from "./LValue";
 export class AstMemberExpression extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
-		this.obj = compile(parseTree.object);
+		this.obj = parse(parseTree.object);
 		if (!parseTree.computed) {
 			this.member = parseTree.property.name;
 		} else {
-			this.property = compile(parseTree.property);
+			this.property = parse(parseTree.property);
 		}
 	}
 

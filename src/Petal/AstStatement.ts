@@ -5,14 +5,14 @@
 */
 
 import { AstNode } from "./AstNode";
-import { compile } from "./Parser";
+import { parse } from "./Parser";
 import { Step, Runtime } from "./Runtime";
 
 export class AstStatement extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
 		if (parseTree.expression)
-			this.statement = compile(parseTree.expression);
+			this.statement = parse(parseTree.expression);
 	}
 
 	public execute(runtime: Runtime): void {

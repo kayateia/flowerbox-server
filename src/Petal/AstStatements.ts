@@ -5,7 +5,7 @@
 */
 
 import { AstNode } from "./AstNode";
-import { compile } from "./Parser";
+import { parse } from "./Parser";
 import { Step, Runtime } from "./Runtime";
 import { StandardScope } from "./Scopes/StandardScope";
 
@@ -13,7 +13,7 @@ export class AstStatements extends AstNode {
 	constructor(parseTree: any, blockStatement: boolean) {
 		super(parseTree);
 		if (parseTree) {
-			this.body = parseTree.body.map(compile);
+			this.body = parseTree.body.map(parse);
 			this.blockStatement = blockStatement;
 		}
 	}

@@ -6,7 +6,7 @@
 
 import { AstNode } from "./AstNode";
 import { AstCallExpression } from "./AstCallExpression";
-import { compile } from "./Parser";
+import { parse } from "./Parser";
 import { Step, Runtime } from "./Runtime";
 import { Value } from "./Value";
 
@@ -14,7 +14,7 @@ export class AstReturn extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
 		if (parseTree.argument)
-			this.argument = compile(parseTree.argument);
+			this.argument = parse(parseTree.argument);
 	}
 
 	public execute(runtime: Runtime): void {

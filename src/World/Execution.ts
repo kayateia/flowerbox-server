@@ -349,7 +349,7 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 	// If it's a literal code line, skip the rest of this.
 	let trimmedLine = parse.text.trim();
 	if (trimmedLine[0] === ";") {
-		let compiled = Petal.compileFromSource(trimmedLine.substr(1));
+		let compiled = Petal.parseFromSource(trimmedLine.substr(1));
 		let immediateInjections = {
 			$: injections.$,
 			$parse: injections.$parse,

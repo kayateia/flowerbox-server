@@ -31,8 +31,7 @@ import { AstVarStatement } from "./AstVarStatement";
 import { AstVarDecl } from "./AstVarDecl";
 import { ParseException } from "./Exceptions";
 
-// This is exported primarily for testing.
-export function compile(parseTree: any): AstNode {
+export function parse(parseTree: any): AstNode {
 	let result: AstNode;
 	switch(parseTree.type) {
 		case "Program":
@@ -112,7 +111,7 @@ export function compile(parseTree: any): AstNode {
 			result = new AstSwitch(parseTree);
 			break;
 		default:
-			throw new ParseException("Unknown compile() token '"+ parseTree.type + "'", parseTree);
+			throw new ParseException("Unknown parse() token '"+ parseTree.type + "'", parseTree);
 	}
 
 	// console.log("converted", JSON.stringify(parseTree, null, 4), " to ", JSON.stringify(result, null, 4));
@@ -142,15 +141,15 @@ acorn.isIdentifierChar = function(code, astral) {
 } */
 
 // This is exported primarily for testing.
-export function compileToTree(src: string) {
+export function parseToTree(src: string) {
 	var ast = acorn.parse(src, {
 		locations: true
 	});
 	return ast;
 }
 
-export function compileFromSource(src: string) {
-	let parseTree: any = compileToTree(src);
+export function parseFromSource(src: string) {
+	let parseTree: any = parseToTree(src);
 	// console.log(JSON.stringify(parseTree, null, 4));
 
 	// For simple expressions (fragments), we want to assume that the caller wants the return value.
@@ -158,5 +157,5 @@ export function compileFromSource(src: string) {
 	if (parseTree.type === "Program" && parseTree.body.length === 1 && parseTree.body[0].type === "ExpressionStatement")
 		parseTree = parseTree.body[0];
 
-	return compile(parseTree);
+	return parse(parseTree);
 }

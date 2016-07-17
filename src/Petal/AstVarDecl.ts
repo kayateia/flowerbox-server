@@ -5,7 +5,7 @@
 */
 
 import { AstNode } from "./AstNode";
-import { compile } from "./Parser";
+import { parse } from "./Parser";
 import { Step, Runtime } from "./Runtime";
 import { Value } from "./Value";
 
@@ -14,7 +14,7 @@ export class AstVarDecl extends AstNode {
 		super(parseTree);
 		this.name = parseTree.id.name;
 		if (parseTree.init)
-			this.init = compile(parseTree.init);
+			this.init = parse(parseTree.init);
 	}
 
 	public execute(runtime: Runtime): void {

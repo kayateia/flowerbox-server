@@ -5,7 +5,7 @@
 */
 
 import { AstNode } from "./AstNode";
-import { compile } from "./Parser";
+import { parse } from "./Parser";
 import { Step, Runtime } from "./Runtime";
 import { StandardScope } from "./Scopes/StandardScope";
 import { Value } from "./Value";
@@ -14,10 +14,10 @@ import { Loops } from "./Loops";
 export class AstFor extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
-		this.init = compile(parseTree.init);
-		this.test = compile(parseTree.test);
-		this.update = compile(parseTree.update);
-		this.body = compile(parseTree.body);
+		this.init = parse(parseTree.init);
+		this.test = parse(parseTree.test);
+		this.update = parse(parseTree.update);
+		this.body = parse(parseTree.body);
 	}
 
 	public execute(runtime: Runtime): void {

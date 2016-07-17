@@ -6,14 +6,14 @@
 
 import { AstNode } from "./AstNode";
 import { AstIdentifier } from "./AstIdentifier";
-import { compile } from "./Parser";
+import { parse } from "./Parser";
 import { Step, Runtime } from "./Runtime";
 import { Value } from "./Value";
 
 export class AstArray extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
-		this.elements = parseTree.elements.map(compile);
+		this.elements = parseTree.elements.map(parse);
 	}
 
 	public execute(runtime: Runtime): any {

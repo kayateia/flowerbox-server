@@ -195,7 +195,7 @@ export class Wob {
 			v = v.replace("\r\n", "\n");
 
 		// Parse the code.
-		let parsed: any = Petal.compileFromSource(v);
+		let parsed: any = Petal.parseFromSource(v);
 
 		// Verify that it is, in fact, just an object definition.
 		if (!Petal.Check.IsSingleObjectDef(parsed))

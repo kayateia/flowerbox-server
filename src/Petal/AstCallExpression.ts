@@ -6,7 +6,7 @@
 
 import { AstNode } from "./AstNode";
 import { AstFunction, AstFunctionInstance } from "./AstFunction";
-import { compile } from "./Parser";
+import { parse } from "./Parser";
 import { Step, Runtime } from "./Runtime";
 import { RuntimeException } from "./Exceptions";
 import { IScope } from "./IScope";
@@ -25,8 +25,8 @@ export class AstCallExpression extends AstNode {
 
 		// We might not have these if the object was created synthetically.
 		if (parseTree.callee && parseTree.arguments) {
-			this.callee = compile(parseTree.callee);
-			this.arguments = parseTree.arguments.map(compile);
+			this.callee = parse(parseTree.callee);
+			this.arguments = parseTree.arguments.map(parse);
 		}
 	}
 

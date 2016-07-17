@@ -6,15 +6,15 @@
 
 import { AstNode } from "./AstNode";
 import { Step, Runtime } from "./Runtime";
-import { compile } from "./Parser";
+import { parse } from "./Parser";
 import { Value } from "./Value";
 
 export class AstBinaryExpression extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
 		this.operator = parseTree.operator;
-		this.left = compile(parseTree.left);
-		this.right = compile(parseTree.right);
+		this.left = parse(parseTree.left);
+		this.right = parse(parseTree.right);
 	}
 
 	public execute(runtime: Runtime): void {
