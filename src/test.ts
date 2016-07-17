@@ -34,7 +34,7 @@ async function tester() {
 						.then(() => {
 							// Look for new output on the player.
 							let output = player.getProperty("hearlog");
-							if (output) {
+							if (output && output.length) {
 								output.forEach(l => {
 									let arr = [];
 									l.forEach(obj => {
@@ -48,7 +48,7 @@ async function tester() {
 									});
 									console.log(...arr);
 								});
-								player.setProperty("output", []);
+								player.setProperty("hearlog", []);
 							}
 							nextLine();
 						})

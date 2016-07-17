@@ -5,7 +5,7 @@
 */
 
 import { ParseResult, ParseError } from "./InputParser";
-import { Wob } from "./Wob";
+import { Wob, WobProperties } from "./Wob";
 import { World } from "./World";
 import * as Petal from "../Petal/Petal";
 import * as Strings from "../Utils/Strings";
@@ -223,10 +223,18 @@ class DollarObject {
 		return new WobWrapper(newWob, this._world, this._injections);
 	}
 
-	public async notate(text: string, notation: any): Promise<any> {
-		// Don't think this is quite the right exception...
-		if (typeof(text) !== "string")
+	public async notate(text: any, notation: any): Promise<any> {
+		// Allow users to pass in only a wob and get a notation.
+		if (text instanceof WobWrapper) {
+			notation = text;
+			text = await notation.wob.getPropertyI(WobProperties.Name, this._world);
+		}
+
+		if (typeof(text) !== "string") {
+			console.log(text);
+			// Don't think this is quite the right exception...
 			throw new WobReferenceException("Received a non-string for notation", 0);
+		}
 
 		// Try to convert objects back out of their Petal wrappers and such, if possible.
 		if (notation instanceof WobWrapper)
@@ -362,7 +370,7 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 	let root = await world.getWob(1);
 	let parserVerb = root.getVerb("$command");
 	if (parserVerb) {
-		let verbThis = new Petal.ThisValue(root, parserVerb.compiled, injections);
+		let verbThis = new Petal.ThisValue(new WobWrapper(root, world, injections), parserVerb.compiled, injections);
 		rt.pushCallerValue(dollarParseObj.player);
 		let result: Petal.ExecuteResult = await rt.executeFunctionAsync(verbThis, [], 100000);
 		console.log("$command took", result.stepsUsed, "steps");

@@ -19,14 +19,26 @@ export let InitWorld = [
 			$command: {
 				code: function() {
 					var text = $parse.text;
+					if (text.startsWith('"'))
+						text = "say " + text.substr(1);
+					else if (text.startsWith(':'))
+						text = "emote " + text.substr(1);
 					if (text.startsWith("say ")) {
-						$.log("Saying", text.substr("say ".length));
+						text = text.substr("say ".length);
+						$.log("Saying", text);
+						this.$sayinto(caller.location, [$.notate(caller), "says,", text]);
+						return true;
+					} else if (text.startsWith("emote ")) {
+						text = text.substr("emote ".length);
+						$.log("Emoting", text);
+						this.$sayinto(caller.location, [$.notate(caller), text]);
 						return true;
 					} else if (text.startsWith("create ")) {
 						var name = text.substr("create ".length);
 						var newWob = $.create(caller.location);
 						newWob.name = name;
-						$.log("Poof!", name, "(#" + newWob.id + ") was created.");
+						$.log("Created", name, "(#" + newWob.id + ")");
+						this.$sayinto(caller.location, ["Poof!", $.notate(newWob), "was created."]);
 						return true;
 					} else
 						return false;
@@ -49,16 +61,14 @@ export let InitWorld = [
 					if (!target)
 						target = this;
 
-					$parse.player.$hear([$.notate(target.name, target)]);
+					$parse.player.$hear([$.notate(target)]);
 					$parse.player.$hear([target.desc]);
 					$parse.player.$hear([]);
 
 					var contents = target.contents;
 					if (contents.length) {
 						var arr = ["Here:"];
-						var names = map(contents, function(w) {
-							arr.push($.notate(w.name, w));
-						});
+						map(contents, function(w) { arr.push($.notate(w)); });
 						$parse.player.$hear(arr);
 					}
 				}
@@ -183,12 +193,6 @@ export let InitWorld = [
 		container: 1,
 		base: 1,
 		verbs: {
-			poke: {
-				sigs: [ "poke self" ],
-				code: function() {
-					$.log("poked!");
-				}
-			},
 			$hear: {
 				// 'what' should be an array of objects to be stored for later retrieval by a client.
 				code: function(what) {
@@ -311,9 +315,10 @@ export let InitWorld = [
 		verbs: {
 			release: {
 				sigs: [ "release self" ],
-				code: function() {
-					$.log("Thank you for releasing me,", $parse.player.name, "!");
-				}
+				code: 'function() {\
+					#1.$sayinto(this.location, [$.notate(this), "was released!"]);\
+					$parse.player.$hear(["Thank you for releasing me,", $.notate($parse.player), "!"]);\
+				}'
 			},
 			put: {
 				sigs: [ "put self in any" ],
@@ -335,9 +340,9 @@ export let InitWorld = [
 		verbs: {
 			pet: {
 				sigs: [ "pet self" ],
-				code: function() {
-					$.log("Ahhh!!");
-				}
+				code: 'function() {\
+					#1.$sayinto(this.location, [$.notate(this), "says, Ahhh!!"]);\
+				}'
 			}
 		}
 	}
