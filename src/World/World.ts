@@ -9,6 +9,8 @@ import { Wob, WobProperties } from "./Wob";
 import { Verb } from "./Verb";
 import * as Strings from "../Utils/Strings";
 import { Utils } from "../Petal/Utils";
+import * as FsPromises from "../Async/FsPromises";
+import * as path from "path";
 
 // Zaa Warudo
 export class World {
@@ -17,25 +19,33 @@ export class World {
 		this._wobCache = new Map<number, Wob>();
 	}
 
-	public async createDefault(init: any): Promise<void> {
+	public async createDefault(init: any, basePath: string): Promise<void> {
 		for (let wobdef of init) {
 			let wob = await this.createWob();
 			for (let prop of Utils.GetPropertyNames(wobdef.properties))
 				wob.setProperty(prop, wobdef.properties[prop]);
 
-			let verbNames = Utils.GetPropertyNames(wobdef.verbs);
-			let codePieces = [];
-			for (let vn of verbNames) {
-				let code = vn + ": { ";
-				if (wobdef.verbs[vn].sigs)
-					code += "sigs: " + JSON.stringify(wobdef.verbs[vn].sigs) + ",";
-				if (wobdef.verbs[vn].code)
-					code += "code: " + wobdef.verbs[vn].code;
-				code += " }";
-				codePieces.push(code);
+			if (!wobdef.verbs) {
+				// Do nothing - it gets no verbs.
+			} else if (typeof(wobdef.verbs) === "string") {
+				let p = path.join(basePath, wobdef.verbs);
+				let contents = (await FsPromises.readFile(p)).toString();
+				wob.verbCode = contents;
+			} else {
+				let verbNames = Utils.GetPropertyNames(wobdef.verbs);
+				let codePieces = [];
+				for (let vn of verbNames) {
+					let code = vn + ": { ";
+					if (wobdef.verbs[vn].sigs)
+						code += "sigs: " + JSON.stringify(wobdef.verbs[vn].sigs) + ",";
+					if (wobdef.verbs[vn].code)
+						code += "code: " + wobdef.verbs[vn].code;
+					code += " }";
+					codePieces.push(code);
+				}
+				let fullCode = "var verb = { " + codePieces.join(",") + " };";
+				wob.verbCode = fullCode;
 			}
-			let fullCode = "var verb = { " + codePieces.join(",") + " };";
-			wob.verbCode = fullCode;
 
 			if (wobdef.container) {
 				let container = await this.getWob(wobdef.container);

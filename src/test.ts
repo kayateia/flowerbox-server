@@ -12,7 +12,8 @@ import { World } from "./World/World";
 import * as Execution from "./World/Execution";
 import * as InputParser from "./World/InputParser";
 import * as readline from "readline";
-import { InitWorld } from "./InitWorld";
+
+let InitWorld = require("../notes/init/InitWorld");
 
 let world = new World();
 
@@ -23,7 +24,7 @@ const rl = readline.createInterface({
 
 async function tester() {
 	// Create a small in-world "game world" to test with.
-	await world.createDefault(InitWorld);
+	await world.createDefault(InitWorld, "./notes/init");
 
 	let player = (await world.getWobsByPropertyMatch(WobProperties.Name, "Kayateia"))[0];
 	(function nextLine() {

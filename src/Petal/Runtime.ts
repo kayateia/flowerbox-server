@@ -13,6 +13,7 @@ import { ConstScope } from "./Scopes/ConstScope";
 import { SuspendException, RuntimeException } from "./Exceptions";
 import { ThisValue } from "./ThisValue";
 import { Value } from "./Value";
+import * as CorePromises from "../Async/CorePromises";
 
 import * as LibFunctional from "./Lib/Functional";
 import * as LibMath from "./Lib/Math";
@@ -158,10 +159,6 @@ export class Runtime {
 		}
 	}
 
-	private delayer(ms: number): Promise<{}> {
-		return new Promise(r => setTimeout(r, ms));
-	}
-
 	public async executeAsync(steps: number): Promise<ExecuteResult> {
 		let stepsUsed = 0;
 		while (true) {
@@ -173,7 +170,7 @@ export class Runtime {
 			// Did we run out of total steps? If so, either yield or bail.
 			if (er.outOfSteps) {
 				if (stepsUsed < steps) {
-					await this.delayer(1);
+					await CorePromises.delay(1);
 					continue;
 				} else
 					return new ExecuteResult(true, stepsUsed, null);

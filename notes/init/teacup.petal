@@ -1,0 +1,10 @@
+var verbs = {
+	drink: {
+		sigs: [ "drink none from self" ],
+		code: function() {}
+	},
+	drop: {
+		sigs: [ "drop self" ],
+		code: function() {}
+	}
+};

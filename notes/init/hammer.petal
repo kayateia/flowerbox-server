@@ -1,0 +1,10 @@
+var verbs = {
+	throw: {
+		sigs: [ "throw self at any" ],
+		code: function() {}
+	},
+	use: {
+		sigs: [ "use self on any" ],
+		code: function() {}
+	}
+};

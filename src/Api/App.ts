@@ -8,13 +8,13 @@
 
 import * as express from "express";
 import * as World from "../World/All";
-import { InitWorld } from "../InitWorld";
 import { indexRouter } from "./Routes/Index";
 import { terminalRouter } from "./Routes/Terminal";
 import { userRouter } from "./Routes/User";
 import { worldRouter } from "./Routes/World";
 
 const bodyParser = require("body-parser");
+const InitWorld = require("../../notes/init/InitWorld");
 
 export let app = express();
 export let world = new World.World();
@@ -23,7 +23,7 @@ let cors = require("cors");
 
 async function worldStartup() {
 	// Create a small in-world "game world" to test with.
-	await world.createDefault(InitWorld);
+	await world.createDefault(InitWorld, "./notes/init");
 	for (let r of [indexRouter, terminalRouter, userRouter, worldRouter])
 		r.world = world;
 }

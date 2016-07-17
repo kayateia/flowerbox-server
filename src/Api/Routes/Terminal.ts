@@ -10,7 +10,7 @@ import { RouterBase } from "./RouterBase";
 import { ModelBase } from "../Model/ModelBase";
 import { HearLog, HearLogItem, WobRef } from "../Model/HearLog";
 import * as World from "../../World/All";
-import { CorePromises } from "../../Async/CorePromises";
+import * as CorePromises from "../../Async/CorePromises";
 
 export class TerminalRouter extends RouterBase {
 	constructor() {
@@ -51,7 +51,7 @@ export class TerminalRouter extends RouterBase {
 		let output: any[][] = this.newerThan(player.getProperty(World.WobProperties.HearLog), since);
 		let count = 10000 / 500;
 		while (count-- && !output.length) {
-			await CorePromises.Delay(500);
+			await CorePromises.delay(500);
 			output = this.newerThan(player.getProperty(World.WobProperties.HearLog), since);
 			if (output.length)
 				break;
