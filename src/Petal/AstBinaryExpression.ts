@@ -8,6 +8,8 @@ import { AstNode } from "./AstNode";
 import { Runtime } from "./Runtime";
 import { parse } from "./Parser";
 import { Value } from "./Value";
+import { Compiler } from "./Compiler";
+import { Step } from "./Step";
 
 export class AstBinaryExpression extends AstNode {
 	constructor(parseTree: any) {
@@ -17,78 +19,84 @@ export class AstBinaryExpression extends AstNode {
 		this.right = parse(parseTree.right);
 	}
 
-	/*public execute(runtime: Runtime): void {
-		let leftValue;
+	public compile(compiler: Compiler): void {
+		// This will push the left on the operand stack.
+		this.left.compile(compiler);
 
-		let that = this;
-		function doRightSide() {
-			runtime.pushAction(Step.Callback("Binary comparison", () => {
-				let rightValue = Value.PopAndDeref(runtime);
-				let result: any;
-				switch (that.operator) {
-					case "-":
-						result = leftValue - rightValue;
-						break;
-					case "+":
-						result = leftValue + rightValue;
-						break;
-					case "/":
-						result = leftValue / rightValue;
-						break;
-					case "%":
-						result = leftValue % rightValue;
-						break;
-					case "*":
-						result = leftValue * rightValue;
-						break;
-					case "<":
-						result = leftValue < rightValue;
-						break;
-					case ">":
-						result = leftValue > rightValue;
-						break;
-					case "<=":
-						result = leftValue <= rightValue;
-						break;
-					case ">=":
-						result = leftValue >= rightValue;
-						break;
-					case "==":
-					case "===":
-						result = leftValue === rightValue;
-						break;
-					case "!=":
-					case "!==":
-						result = leftValue !== rightValue;
-						break;
-					case "||":
-						result = leftValue || rightValue;
-						break;
-					case "&&":
-						result = leftValue && rightValue;
-						break;
-				}
+		let skipRight = compiler.newLabel(this);
 
-				runtime.pushOperand(result);
-			}));
-			runtime.pushAction(new Step(that.right, "BC right"));
-		}
-		runtime.pushAction(Step.Callback("Get BC left value", () => {
-			leftValue = Value.PopAndDeref(runtime);
-
-			// Implement short-circuiting here. If the operator is || and this value
-			// is true, we don't need to do anything more. Likewise, if the operator is && and
-			// this value is false, we don't need to do anything more.
+		compiler.emit(new Step("Check BE left", this, (runtime: Runtime) => {
+			let leftValue = Value.PopAndDeref(runtime);
 			if (this.operator === "||" && leftValue) {
-				runtime.pushOperand(true);
-			} else if (this.operator === "&&" && !leftValue) {
-				runtime.pushOperand(false);
-			} else {
-				doRightSide();
+				runtime.pushOperand(leftValue);
+				runtime.gotoPC(skipRight);
+				return;
 			}
+			if (this.operator === "&&" && !leftValue) {
+				runtime.pushOperand(false);
+				runtime.gotoPC(skipRight);
+				return;
+			}
+			// Put it back for the BE right.
+			runtime.pushOperand(leftValue);
 		}));
-		runtime.pushAction(new Step(this.left, "BC left"));
-	} */
+
+		// This will push the right on the operand stack.
+		this.right.compile(compiler);
+
+		compiler.emit(new Step("Check BE right", this, (runtime: Runtime) => {
+			let rightValue = Value.PopAndDeref(runtime);
+			let leftValue = runtime.popOperand();
+			let result: any;
+			switch (this.operator) {
+				case "-":
+					result = leftValue - rightValue;
+					break;
+				case "+":
+					result = leftValue + rightValue;
+					break;
+				case "/":
+					result = leftValue / rightValue;
+					break;
+				case "%":
+					result = leftValue % rightValue;
+					break;
+				case "*":
+					result = leftValue * rightValue;
+					break;
+				case "<":
+					result = leftValue < rightValue;
+					break;
+				case ">":
+					result = leftValue > rightValue;
+					break;
+				case "<=":
+					result = leftValue <= rightValue;
+					break;
+				case ">=":
+					result = leftValue >= rightValue;
+					break;
+				case "==":
+				case "===":
+					result = leftValue === rightValue;
+					break;
+				case "!=":
+				case "!==":
+					result = leftValue !== rightValue;
+					break;
+				case "||":
+					result = leftValue || rightValue;
+					break;
+				case "&&":
+					result = leftValue && rightValue;
+					break;
+			}
+
+			runtime.pushOperand(result);
+		}));
+
+		skipRight.pc = compiler.pc;
+	}
 
 	public what: string = "BinaryExpression";
 	public operator: string;
