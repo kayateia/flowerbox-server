@@ -50,7 +50,7 @@ var log = function() {
 		args.push(arguments[i]);
 	console.log("LOG OUTPUT:", ...args);
 };
-runtime.currentScope.set("log", log);
+runtime.currentScope.set("log", Petal.Address.Function(log));
 
 /*let petalConsole: any = Object.create(null);
 petalConsole.log = log;
@@ -59,7 +59,7 @@ runtime.currentScope().set("console", Petal.ObjectWrapper.WrapGeneric(petalConso
 /*runtime.pushAction(Petal.Step.Node("Main program", output));
 runtime.execute(1000); */
 let compiler = new Petal.Compiler();
-output.compile(compiler);
+compiler.compile(output);
 let program = compiler.program;
 console.log(program);
 runtime.execute(program);

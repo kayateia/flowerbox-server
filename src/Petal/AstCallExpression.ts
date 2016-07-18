@@ -18,6 +18,7 @@ import { LValue } from "./LValue";
 import { ThisValue } from "./ThisValue";
 import { Utils } from "./Utils";
 import { Compiler } from "./Compiler";
+import { Address } from "./Address";
 
 // This class has sort of grown beyond its original purpose and really ought to be
 // split into a couple of classes...
@@ -65,12 +66,12 @@ export class AstCallExpression extends AstNode {
 		compiler.emit(new Step("Call", this, (runtime: Runtime) => {
 			// The top item on the operand stack should be an address or a native function.
 			// If it's a native function, we just pop off the parameters and call it.
-			let fp = runtime.getOperand(this.arguments.length);
-			if (typeof(fp) === "function") {
+			let address: Address = runtime.getOperand(this.arguments.length);
+			if (address.func) {
 				let args = [];
 				for (let i=this.arguments.length-1; i>=0; --i)
 					args.push(runtime.getOperand(i));
-				let result = fp(...args);
+				let result = address.func(...args);
 				runtime.returnValue = result;
 			} else {
 				// Push our current location on the stack. (The return address.)

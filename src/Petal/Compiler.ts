@@ -5,9 +5,12 @@
 */
 
 import { Step } from "./Step";
+import { AstNode } from "./AstNode";
+import { Module } from "./Module";
 
 export class Compiler {
 	public program: Step[];
+	public node: AstNode;
 
 	constructor() {
 		this.program = [];
@@ -21,5 +24,14 @@ export class Compiler {
 
 	public replace(pc: number, step: Step): void {
 		this.program[pc] = step;
+	}
+
+	public compile(node: AstNode): void {
+		this.node = node;
+		this.node.compile(this);
+	}
+
+	public get module(): Module {
+		return new Module(this.program, this.node);
 	}
 }
