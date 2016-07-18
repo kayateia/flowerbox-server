@@ -6,8 +6,9 @@
 
 import { AstNode } from "./AstNode";
 import { parse } from "./Parser";
-import { Step, Runtime } from "./Runtime";
+import { Runtime } from "./Runtime";
 import { Compiler } from "./Compiler";
+import { Step } from "./Step";
 
 export class AstStatement extends AstNode {
 	constructor(parseTree: any) {
@@ -17,12 +18,13 @@ export class AstStatement extends AstNode {
 	}
 
 	public compile(compiler: Compiler): void {
+		compiler.emit(new Step("Pre-statement bp save", this, (runtime: Runtime) => {
+			runtime.pushBase();
+		}));
 		this.statement.compile(compiler);
-	}
-
-	public execute(runtime: Runtime): void {
-		if (this.statement)
-			runtime.pushAction(new Step(this.statement, "Statement"));
+		compiler.emit(new Step("Post-statement bp restore", this, (runtime: Runtime) => {
+			runtime.popBase();
+		}));
 	}
 
 	public what: string = "Statement";

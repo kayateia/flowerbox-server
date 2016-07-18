@@ -60,6 +60,10 @@ export class AstCallExpression extends AstNode {
 	} */
 
 	public compile(compiler: Compiler): void {
+		compiler.emit(new Step("Call prelude", this, (runtime: Runtime) => {
+			runtime.pushBase();
+		}));
+
 		(<AstNode>this.callee).compile(compiler);
 		this.arguments.forEach(a => a.compile(compiler));
 
@@ -79,7 +83,7 @@ export class AstCallExpression extends AstNode {
 			}
 		}));
 		compiler.emit(new Step("Call cleanup", this, (runtime: Runtime) => {
-			runtime.discardOperands(1 + this.arguments.length);
+			runtime.popBase();
 		}));
 	}
 

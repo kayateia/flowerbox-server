@@ -37,8 +37,24 @@ export class ExecuteResult {
 }
 
 export class Runtime {
+	public address: Address;
+	private _programStack: Address[];
+	private _scopeStack: IScope[];
+	private _operandStack: any[];
+	private _baseStack: number[];
+	private _setPC: boolean;
+
+	// We'll just make these raw values for now.
+	public returnValue: any;
+
+	private _verbose: boolean;
+
+	private _rootScope: IScope;
+	private _scopeCatcher: IScopeCatcher;
+
 	constructor(verbose?: boolean, scopeCatcher?: IScopeCatcher) {
 		this._operandStack = [];
+		this._baseStack = [];
 		this._programStack = [];
 		this._scopeStack = [];
 		this._verbose = verbose;
@@ -68,7 +84,7 @@ export class Runtime {
 		}
 
 		while (this._operandStack.length > 0)
-			console.log(this.popOperand());
+			console.log("LEFTOVER", this.popOperand());
 	}
 
 	public pushPC(address?: Address): void {
@@ -112,10 +128,45 @@ export class Runtime {
 		return this._rootScope;
 	}
 
-	public address: Address;
-	public _programStack: Address[];
-	public _scopeStack: IScope[];
-	public _setPC: boolean;
+	public pushOperand(val: any): void {
+		if (this._verbose)
+			console.log("OPPUSH:", val);
+		this._operandStack.push(val);
+	}
+
+	public popOperand(): any {
+		let val = this._operandStack.pop();
+		if (this._verbose)
+			console.log("OPPOP:", val);
+		return val;
+	}
+
+	public getOperand(index: number): any {
+		if (index >= this._operandStack.length)
+			throw new RuntimeException("Operand stack underflow");
+
+		return this._operandStack[this._operandStack.length - (index+1)];
+	}
+
+	public discardOperands(count: number): void {
+		if (count > this._operandStack.length)
+			throw new RuntimeException("Operand stack underflow");
+
+		for (let i=0; i<count; ++i)
+			this.popOperand();
+	}
+
+	public pushBase(): void {
+		this._baseStack.push(this._operandStack.length);
+	}
+
+	public popBase(): void {
+		let count = this._baseStack.pop();
+		if (count > this._operandStack.length)
+			throw new RuntimeException("Base pointer is higher than the operand stack's top");
+
+		this._operandStack = this._operandStack.slice(0, count);
+	}
 
 	/* public pushAction(step: Step): void {
 		if (this._verbose)
@@ -254,40 +305,6 @@ export class Runtime {
 		console.log("");
 	} */
 
-	public pushOperand(val: any): void {
-		if (this._verbose)
-			console.log("OPPUSH:", val);
-		this._operandStack.push(val);
-	}
-
-	public popOperand(): any {
-		let val = this._operandStack.pop();
-		if (this._verbose)
-			console.log("OPPOP:", val);
-		return val;
-	}
-
-	public getOperand(index: number): any {
-		if (index >= this._operandStack.length)
-			throw new RuntimeException("Operand stack underflow");
-
-		return this._operandStack[this._operandStack.length - (index+1)];
-	}
-
-	public discardOperands(count: number): void {
-		if (count > this._operandStack.length)
-			throw new RuntimeException("Operand stack underflow");
-
-		for (let i=0; i<count; ++i)
-			this.popOperand();
-	}
-
-	public clearOperand(): void {
-		if (this._verbose)
-			console.log("OPCLEAR");
-		this._operandStack = [];
-	}
-
 	public get verbose(): boolean {
 		return this._verbose;
 	}
@@ -295,14 +312,4 @@ export class Runtime {
 	public get scopeCatcher(): IScopeCatcher {
 		return this._scopeCatcher;
 	}
-
-	// We'll just make these raw values for now.
-	public returnValue: any;
-
-	private _pipeline: Step[];
-	private _operandStack: any[];
-	private _verbose: boolean;
-
-	private _rootScope: IScope;
-	private _scopeCatcher: IScopeCatcher;
 }

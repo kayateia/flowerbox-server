@@ -43,6 +43,10 @@ export class AstFunction extends AstNode {
 			closureScope = scope;
 			if (this.name)
 				scope.set(this.name, funcStart);
+
+			// Even if it has no name, we push it on the operand stack as a value in case
+			// someone was trying to call it or assign it to a variable.
+			runtime.pushOperand(funcStart);
 		}));
 
 		// We don't actually want to execute the function code here, just define it. So
@@ -77,7 +81,6 @@ export class AstFunction extends AstNode {
 		// Now replace the instruction above to properly skip over the function.
 		let afterLabel = compiler.newLabel(this);
 		compiler.replace(skipOver.pc, new Step("Skip over function body", this, (runtime: Runtime) => {
-			console.log(afterLabel);
 			runtime.gotoPC(afterLabel);
 		}));
 	}
