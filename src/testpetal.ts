@@ -11,7 +11,7 @@ console.log(acorn); */
 
 try {
 	output = Petal.parseFromSource(
-		"function test() { log('test!'); } log('this is a test!');\nlog('this too!');\ntest();\n"
+		"function test(a) { log('test!', a); } log('this is a test!');\nlog('this too!');\ntest('woot');\n"
 		// "log(map([1,2,3], a => a+1));"
 		// "var a = 5; if (a == 5 || log('no1')) log('yes1'); if (!(a != 5 && log('no2'))) log('yes2');"
 		// "var a = [1,2,3]; for (var @i in a) { if (@i == 2) continue; log(@i); } log(a);"

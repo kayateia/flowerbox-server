@@ -40,6 +40,7 @@ export class Runtime {
 	constructor(verbose?: boolean, scopeCatcher?: IScopeCatcher) {
 		this._operandStack = [];
 		this._programStack = [];
+		this._scopeStack = [];
 		this._verbose = verbose;
 
 		this._scopeCatcher = scopeCatcher;
@@ -97,8 +98,23 @@ export class Runtime {
 		this.gotoPC(address);
 	}
 
+	public pushScope(scope: IScope): void {
+		this._scopeStack.push(scope);
+	}
+
+	public popScope(): IScope {
+		return this._scopeStack.pop();
+	}
+
+	public get currentScope(): IScope {
+		if (this._scopeStack.length)
+			return this._scopeStack[this._scopeStack.length-1];
+		return this._rootScope;
+	}
+
 	public address: Address;
 	public _programStack: Address[];
+	public _scopeStack: IScope[];
 	public _setPC: boolean;
 
 	/* public pushAction(step: Step): void {
@@ -270,14 +286,6 @@ export class Runtime {
 		if (this._verbose)
 			console.log("OPCLEAR");
 		this._operandStack = [];
-	}
-
-	public get currentScope(): IScope {
-		/*for (let i=this._pipeline.length - 1; i>=0; --i) {
-			if (this._pipeline[i].scope())
-				return this._pipeline[i].scope();
-		} */
-		return this._rootScope;
 	}
 
 	public get verbose(): boolean {
