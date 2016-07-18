@@ -22,7 +22,7 @@ export class AstIdentifier extends AstNode {
 
 	public compile(compiler: Compiler): void {
 		compiler.emit(new Step("Identifier '" + this.name + "' lookup", this, (runtime: Runtime) => {
-			let scope = runtime.currentScope();
+			let scope = runtime.currentScope;
 			if (!scope.has(this.name))
 				throw new RuntimeException("Can't look up variable", this.name);
 

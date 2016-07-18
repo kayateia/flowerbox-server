@@ -32,7 +32,7 @@ export class AstCallExpression extends AstNode {
 		}
 	}
 
-	public static Create(callee: AstNode | ThisValue, param: any[]): AstCallExpression {
+	/*public static Create(callee: AstNode | ThisValue, param: any[]): AstCallExpression {
 		let ace = new AstCallExpression({});
 		ace.callee = callee;
 		ace.literalParams = param;
@@ -56,20 +56,22 @@ export class AstCallExpression extends AstNode {
 			return null;
 		else
 			return step.extra().thisValue;
-	}
+	} */
 
 	public compile(compiler: Compiler): void {
-		this.arguments.forEach(a => a.compile(compiler));
 		(<AstNode>this.callee).compile(compiler);
+		this.arguments.forEach(a => a.compile(compiler));
 
 		compiler.emit(new Step("Call", this, (runtime: Runtime) => {
 			// The top item on the operand stack should be an address or a native function.
 			// If it's a native function, we just pop off the parameters and call it.
-			let fp = runtime.popOperand();
+			let fp = runtime.getOperand(this.arguments.length);
 			if (typeof(fp) === "function") {
-				let args = this.arguments.map(a => runtime.popOperand()).reverse();
+				let args = [];
+				for (let i=this.arguments.length-1; i>=0; --i)
+					args.push(runtime.getOperand(i));
 				let result = fp(...args);
-				runtime.pushOperand(result);
+				runtime.returnValue = result;
 			} else {
 				// Push our current location on the stack. (The return address.)
 				// runtime.pushPC();
@@ -77,8 +79,11 @@ export class AstCallExpression extends AstNode {
 				// Set the new location.
 				// runtime.gotoPC(fp);
 
-				// 
+				//
 			}
+		}));
+		compiler.emit(new Step("Call cleanup", this, (runtime: Runtime) => {
+			runtime.discardOperands(1 + this.arguments.length);
 		}));
 	}
 

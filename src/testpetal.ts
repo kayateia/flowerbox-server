@@ -50,7 +50,7 @@ var log = function() {
 		args.push(arguments[i]);
 	console.log("LOG OUTPUT:", ...args);
 };
-runtime.currentScope().set("log", log);
+runtime.currentScope.set("log", log);
 
 /*let petalConsole: any = Object.create(null);
 petalConsole.log = log;

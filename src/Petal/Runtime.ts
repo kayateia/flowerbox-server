@@ -213,13 +213,28 @@ export class Runtime {
 		return val;
 	}
 
+	public getOperand(index: number): any {
+		if (index >= this._operandStack.length)
+			throw new RuntimeException("Operand stack underflow");
+
+		return this._operandStack[this._operandStack.length - (index+1)];
+	}
+
+	public discardOperands(count: number): void {
+		if (count > this._operandStack.length)
+			throw new RuntimeException("Operand stack underflow");
+
+		for (let i=0; i<count; ++i)
+			this.popOperand();
+	}
+
 	public clearOperand(): void {
 		if (this._verbose)
 			console.log("OPCLEAR");
 		this._operandStack = [];
 	}
 
-	public currentScope(): IScope {
+	public get currentScope(): IScope {
 		/*for (let i=this._pipeline.length - 1; i>=0; --i) {
 			if (this._pipeline[i].scope())
 				return this._pipeline[i].scope();
@@ -234,6 +249,9 @@ export class Runtime {
 	public get scopeCatcher(): IScopeCatcher {
 		return this._scopeCatcher;
 	}
+
+	// We'll just make these raw values for now.
+	public returnValue: any;
 
 	private _pipeline: Step[];
 	private _operandStack: any[];
