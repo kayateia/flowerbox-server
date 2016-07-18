@@ -6,7 +6,7 @@
 
 import { AstNode } from "./AstNode";
 import { parse } from "./Parser";
-import { Step, Runtime } from "./Runtime";
+import { Runtime } from "./Runtime";
 import { RuntimeException } from "./Exceptions";
 import { LValue } from "./LValue";
 import { Value } from "./Value";
@@ -19,7 +19,7 @@ export class AstAssignment extends AstNode {
 		this.right = parse(parseTree.right);
 	}
 
-	public execute(runtime: Runtime): void {
+	/*public execute(runtime: Runtime): void {
 		runtime.pushAction(Step.Callback("Assignment", () => {
 			let lhs = Value.GetLValue(runtime.popOperand());
 			let rhs = Value.PopAndDeref(runtime);
@@ -50,7 +50,7 @@ export class AstAssignment extends AstNode {
 		}));
 		runtime.pushAction(new Step(this.left, "Assignment LHS"));
 		runtime.pushAction(new Step(this.right, "Assignment RHS"));
-	}
+	} */
 
 	public what: string = "Assignment";
 	public operator: string;

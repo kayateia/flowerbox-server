@@ -7,7 +7,8 @@
 import { AstNode } from "./AstNode";
 import { AstFunction, AstFunctionInstance } from "./AstFunction";
 import { parse } from "./Parser";
-import { Step, Runtime } from "./Runtime";
+import { Runtime } from "./Runtime";
+import { Step } from "./Step";
 import { RuntimeException } from "./Exceptions";
 import { IScope } from "./IScope";
 import { StandardScope } from "./Scopes/StandardScope";
@@ -16,6 +17,7 @@ import { Value } from "./Value";
 import { LValue } from "./LValue";
 import { ThisValue } from "./ThisValue";
 import { Utils } from "./Utils";
+import { Compiler } from "./Compiler";
 
 // This class has sort of grown beyond its original purpose and really ought to be
 // split into a couple of classes...
@@ -45,7 +47,7 @@ export class AstCallExpression extends AstNode {
 	}
 
 	public static PushPreviousThisValue(runtime: Runtime, value: any): void {
-		runtime.pushAction(Step.Extra("Call this marker", { thisValue: value }));
+		// runtime.pushAction(Step.Extra("Call this marker", { thisValue: value }));
 	}
 
 	public static GetCurrentThis(runtime: Runtime): any {
@@ -56,7 +58,31 @@ export class AstCallExpression extends AstNode {
 			return step.extra().thisValue;
 	}
 
-	public execute(runtime: Runtime): any {
+	public compile(compiler: Compiler): void {
+		this.arguments.forEach(a => a.compile(compiler));
+		(<AstNode>this.callee).compile(compiler);
+
+		compiler.emit(new Step("Call", this, (runtime: Runtime) => {
+			// The top item on the operand stack should be an address or a native function.
+			// If it's a native function, we just pop off the parameters and call it.
+			let fp = runtime.popOperand();
+			if (typeof(fp) === "function") {
+				let args = this.arguments.map(a => runtime.popOperand()).reverse();
+				let result = fp(...args);
+				runtime.pushOperand(result);
+			} else {
+				// Push our current location on the stack. (The return address.)
+				// runtime.pushPC();
+
+				// Set the new location.
+				// runtime.gotoPC(fp);
+
+				// 
+			}
+		}));
+	}
+
+	/*public execute(runtime: Runtime): any {
 		// This can happen because of Create() above. In that case, we don't want to
 		// push whatever we got on the action stack.
 		let gotAFunction = this.callee instanceof AstFunctionInstance || !(this.callee instanceof AstNode);
@@ -138,7 +164,7 @@ export class AstCallExpression extends AstNode {
 			this.arguments.forEach((p: AstNode) => {
 				runtime.pushAction(new Step(p, "Parameter Resolution"));
 			});
-	}
+	} */
 
 	public what: string = "CallExpression";
 	public callee: AstNode | ThisValue;

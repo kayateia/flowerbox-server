@@ -46,7 +46,7 @@ export class AstFunction extends AstNode {
 	}
 
 	// We basically just "execute" like an R-Value, to be set in variables or called directly.
-	public execute(runtime: Runtime): void {
+	/*public execute(runtime: Runtime): void {
 		// Make an instance with an inner scope linked to the current outer scope.
 		let instance: AstFunctionInstance = new AstFunctionInstance(this, runtime.currentScope());
 
@@ -57,7 +57,7 @@ export class AstFunction extends AstNode {
 
 		// And push our value on the operand stack.
 		runtime.pushOperand(instance);
-	}
+	} */
 
 	public what: string = "Function";
 	public name: string;

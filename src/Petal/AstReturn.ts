@@ -7,7 +7,7 @@
 import { AstNode } from "./AstNode";
 import { AstCallExpression } from "./AstCallExpression";
 import { parse } from "./Parser";
-import { Step, Runtime } from "./Runtime";
+import { Runtime } from "./Runtime";
 import { Value } from "./Value";
 
 export class AstReturn extends AstNode {
@@ -17,7 +17,7 @@ export class AstReturn extends AstNode {
 			this.argument = parse(parseTree.argument);
 	}
 
-	public execute(runtime: Runtime): void {
+	/*public execute(runtime: Runtime): void {
 		runtime.pushAction(Step.Callback("Return unwinder", (s) => {
 			let rv = undefined;
 			if (this.argument)
@@ -29,7 +29,7 @@ export class AstReturn extends AstNode {
 		}));
 		if (this.argument)
 			runtime.pushAction(new Step(this.argument));
-	}
+	} */
 
 	public what: string = "Return";
 	public argument: AstNode;

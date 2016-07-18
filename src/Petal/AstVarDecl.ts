@@ -6,7 +6,7 @@
 
 import { AstNode } from "./AstNode";
 import { parse } from "./Parser";
-import { Step, Runtime } from "./Runtime";
+import { Runtime } from "./Runtime";
 import { Value } from "./Value";
 
 export class AstVarDecl extends AstNode {
@@ -17,7 +17,7 @@ export class AstVarDecl extends AstNode {
 			this.init = parse(parseTree.init);
 	}
 
-	public execute(runtime: Runtime): void {
+	/* public execute(runtime: Runtime): void {
 		runtime.pushAction(new Step(null, "Var assignment for " + this.name, (val) => {
 			let opval: any;
 			if (this.init) {
@@ -28,7 +28,7 @@ export class AstVarDecl extends AstNode {
 		}));
 		if (this.init)
 			runtime.pushAction(new Step(this.init, "Var decl init value"));
-	}
+	} */
 
 	public what: string = "VarDecl";
 	public name: string;

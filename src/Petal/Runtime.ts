@@ -14,88 +14,13 @@ import { SuspendException, RuntimeException } from "./Exceptions";
 import { ThisValue } from "./ThisValue";
 import { Value } from "./Value";
 import * as CorePromises from "../Async/CorePromises";
+import { Step } from "./Step";
 
-import * as LibFunctional from "./Lib/Functional";
+/*import * as LibFunctional from "./Lib/Functional";
 import * as LibMath from "./Lib/Math";
 
 let runtimeLib = new ConstScope(null, new Map<string, any>());
-let runtimeRegistered = false;
-
-export class Step {
-	constructor(node: AstNode, name?: string, callback?: IActionCallback, scope?: IScope, extra?: any) {
-		this._node = node;
-		this._name = name;
-		this._callback = callback;
-		this._scope = scope;
-		this._extra = extra;
-	}
-
-	public static ClearOperands(runtime: Runtime): Step {
-		return new Step(null, "Clear Operand Stack", (v) => {
-			runtime.clearOperand();
-		});
-	}
-
-	public static Callback(name: string, callback: IActionCallback): Step {
-		return new Step(null, name, callback);
-	}
-
-	public static Scope(name: string, scope: IScope): Step {
-		return new Step(null, name, null, scope);
-	}
-
-	public static Node(name: string, node: AstNode): Step {
-		return new Step(node, name);
-	}
-
-	public static Nonce(name: string): Step {
-		return new Step(null, name);
-	}
-
-	public static Extra(name: string, extra: any): Step {
-		return new Step(null, name, null, null, extra);
-	}
-
-	public execute(runtime: Runtime): any {
-		// console.log("EXECUTING", this._name, ":", this._node);
-		if (this._node && this._callback)
-			throw new RuntimeException("Can't have both a node and a callback on one step");
-		let result;
-		if (this._node)
-			result = this._node.execute(runtime);
-
-		if (this._callback)
-			result = this._callback(this);
-
-		return result;
-	}
-
-	public node(): AstNode {
-		return this._node;
-	}
-
-	public name(): string {
-		return this._name;
-	}
-
-	public callback(): IActionCallback {
-		return this._callback;
-	}
-
-	public scope(): IScope {
-		return this._scope;
-	}
-
-	public extra(): any {
-		return this._extra;
-	}
-
-	private _node: AstNode;
-	private _name: string;
-	private _callback: IActionCallback;
-	private _scope: IScope;
-	private _extra: any;
-}
+let runtimeRegistered = false; */
 
 export class ExecuteResult {
 	constructor(outOfSteps: boolean, stepsUsed: number, returnValue: any) {
@@ -116,16 +41,29 @@ export class Runtime {
 		this._verbose = verbose;
 
 		this._scopeCatcher = scopeCatcher;
-		this._rootScope = new StandardScope(runtimeLib);
+		this._rootScope = new StandardScope();
+		// this._rootScope = new StandardScope(runtimeLib);
 
-		if (!runtimeRegistered) {
+		/*if (!runtimeRegistered) {
 			runtimeRegistered = true;
 			LibFunctional.registerAll(runtimeLib);
 			LibMath.registerAll(runtimeLib);
-		}
+		} */
 	}
 
-	public pushAction(step: Step): void {
+	public execute(program: Step[]): any {
+		for (this.pc=0; this.pc<program.length; ++this.pc) {
+			program[this.pc].execute(this);
+		}
+
+		while (this._operandStack.length > 0)
+			console.log(this.popOperand());
+	}
+
+	public program: Step[];
+	public pc: number;
+
+	/* public pushAction(step: Step): void {
 		if (this._verbose)
 			console.log("STEPPUSH", step.name(), ":", step.node(), ":", step.scope());
 		this._pipeline.push(step);
@@ -260,7 +198,7 @@ export class Runtime {
 			console.log(this._pipeline[i]);
 		console.log("END ACTION STACK DUMP");
 		console.log("");
-	}
+	} */
 
 	public pushOperand(val: any): void {
 		if (this._verbose)
@@ -282,10 +220,10 @@ export class Runtime {
 	}
 
 	public currentScope(): IScope {
-		for (let i=this._pipeline.length - 1; i>=0; --i) {
+		/*for (let i=this._pipeline.length - 1; i>=0; --i) {
 			if (this._pipeline[i].scope())
 				return this._pipeline[i].scope();
-		}
+		} */
 		return this._rootScope;
 	}
 

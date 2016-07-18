@@ -6,7 +6,7 @@
 
 import { AstNode } from "./AstNode";
 import { parse } from "./Parser";
-import { Step, Runtime } from "./Runtime";
+import { Runtime } from "./Runtime";
 import { Value } from "./Value";
 import { Loops } from "./Loops";
 
@@ -31,7 +31,7 @@ export class AstSwitch extends AstNode {
 		}
 	}
 
-	public execute(runtime: Runtime): void {
+	/*public execute(runtime: Runtime): void {
 		if (this.cases.length < 1)
 			return;
 
@@ -75,7 +75,7 @@ export class AstSwitch extends AstNode {
 
 		// First thing, calculate the test value.
 		runtime.pushAction(Step.Node("Switch test value", this.discriminant));
-	}
+	} */
 
 	public what: string = "Switch";
 	public discriminant: AstNode;

@@ -7,6 +7,9 @@
 import { AstNode } from "./AstNode";
 import { Runtime } from "./Runtime";
 import { LValue } from "./LValue";
+import { Step } from "./Step";
+import { Compiler } from "./Compiler";
+import { RuntimeException } from "./Exceptions";
 
 export class AstIdentifier extends AstNode {
 	constructor(parseTree: any) {
@@ -17,7 +20,18 @@ export class AstIdentifier extends AstNode {
 			this.name = parseTree.name;
 	}
 
-	public execute(runtime: Runtime): any {
+	public compile(compiler: Compiler): void {
+		compiler.emit(new Step("Identifier '" + this.name + "' lookup", this, (runtime: Runtime) => {
+			let scope = runtime.currentScope();
+			if (!scope.has(this.name))
+				throw new RuntimeException("Can't look up variable", this.name);
+
+			let value = scope.get(this.name);
+			runtime.pushOperand(value);
+		}));
+	}
+
+	/*public execute(runtime: Runtime): any {
 		let scope = runtime.currentScope();
 
 		if (!scope.has(this.name)) {
@@ -41,7 +55,7 @@ export class AstIdentifier extends AstNode {
 		}, (rt, value) => {
 			scope.set(this.name, value);
 		}));
-	}
+	} */
 
 	public what: string = "Identifier";
 	public name: string;

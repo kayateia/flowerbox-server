@@ -6,7 +6,7 @@
 
 import { AstNode } from "./AstNode";
 import { parse } from "./Parser";
-import { Step, Runtime } from "./Runtime";
+import { Runtime } from "./Runtime";
 import { Value } from "./Value";
 
 export class AstConditional extends AstNode {
@@ -19,7 +19,7 @@ export class AstConditional extends AstNode {
 		this.statement = parseTree.type === "IfStatement";
 	}
 
-	public execute(runtime: Runtime): void {
+	/*public execute(runtime: Runtime): void {
 		runtime.pushAction(Step.Callback("Conditional", () => {
 			let result = Value.PopAndDeref(runtime);
 
@@ -32,7 +32,7 @@ export class AstConditional extends AstNode {
 				runtime.pushAction(new Step(this.alternate, "Conditional alternate"));
 		}));
 		runtime.pushAction(new Step(this.test, "Conditional test"));
-	}
+	} */
 
 	public what: string = "Test";
 	public test: AstNode;

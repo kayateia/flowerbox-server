@@ -7,7 +7,7 @@
 import { AstNode } from "./AstNode";
 import { AstIdentifier } from "./AstIdentifier";
 import { parse } from "./Parser";
-import { Step, Runtime } from "./Runtime";
+import { Runtime } from "./Runtime";
 import { Value } from "./Value";
 
 export class AstArray extends AstNode {
@@ -16,14 +16,14 @@ export class AstArray extends AstNode {
 		this.elements = parseTree.elements.map(parse);
 	}
 
-	public execute(runtime: Runtime): any {
+	/*public execute(runtime: Runtime): any {
 		runtime.pushAction(Step.Callback("Array constructor", () => {
 			let result = this.elements.map(() => Value.PopAndDeref(runtime));
 			runtime.pushOperand(result);
 		}));
 		this.elements.forEach((i) =>
 			runtime.pushAction(new Step(i, "Array member")));
-	}
+	} */
 
 	public what: string = "ArrayExpression";
 	public elements: AstNode[];

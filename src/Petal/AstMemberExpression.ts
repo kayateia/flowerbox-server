@@ -8,7 +8,7 @@ import { AstNode } from "./AstNode";
 import { AstIdentifier } from "./AstIdentifier";
 import { AstFunction } from "./AstFunction";
 import { parse } from "./Parser";
-import { Step, Runtime } from "./Runtime";
+import { Runtime } from "./Runtime";
 import { RuntimeException } from "./Exceptions";
 import { Value } from "./Value";
 import { Utils } from "./Utils";
@@ -28,7 +28,7 @@ export class AstMemberExpression extends AstNode {
 		}
 	}
 
-	public execute(runtime: Runtime): void {
+	/*public execute(runtime: Runtime): void {
 		// See IObject.ts for more info about what's going on in here.
 		runtime.pushAction(Step.Callback("Member lookup", () => {
 			let obj = Value.PopAndDeref(runtime);
@@ -77,7 +77,7 @@ export class AstMemberExpression extends AstNode {
 		runtime.pushAction(Step.Node("Member object", this.obj));
 		if (this.property)
 			runtime.pushAction(Step.Node("Member index", this.property));
-	}
+	} */
 
 	public what: string = "MemberExpression";
 	public obj: AstNode;

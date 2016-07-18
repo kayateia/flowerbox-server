@@ -11,7 +11,8 @@ console.log(acorn); */
 
 try {
 	output = Petal.parseFromSource(
-		"log(map([1,2,3], a => a+1));"
+		"log('this is a test!');\nlog('this too!');\n"
+		// "log(map([1,2,3], a => a+1));"
 		// "var a = 5; if (a == 5 || log('no1')) log('yes1'); if (!(a != 5 && log('no2'))) log('yes2');"
 		// "var a = [1,2,3]; for (var @i in a) { if (@i == 2) continue; log(@i); } log(a);"
 		// "var a = ''; for (var i=0; i<5; ++i) a += 'a'; log(a);"
@@ -51,10 +52,15 @@ var log = function() {
 };
 runtime.currentScope().set("log", log);
 
-let petalConsole: any = Object.create(null);
+/*let petalConsole: any = Object.create(null);
 petalConsole.log = log;
-runtime.currentScope().set("console", Petal.ObjectWrapper.WrapGeneric(petalConsole, ["log"]));
+runtime.currentScope().set("console", Petal.ObjectWrapper.WrapGeneric(petalConsole, ["log"])); */
 
-runtime.pushAction(Petal.Step.Node("Main program", output));
-runtime.execute(1000);
-console.log("Output scope:", runtime.currentScope());
+/*runtime.pushAction(Petal.Step.Node("Main program", output));
+runtime.execute(1000); */
+let compiler = new Petal.Compiler();
+output.compile(compiler);
+let program = compiler.program;
+console.log(program);
+runtime.execute(program);
+// console.log("Output scope:", runtime.currentScope());

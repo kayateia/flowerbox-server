@@ -5,7 +5,7 @@
 */
 
 import { AstNode } from "./AstNode";
-import { Step, Runtime } from "./Runtime";
+import { Runtime } from "./Runtime";
 import { Loops } from "./Loops";
 
 export class AstContinue extends AstNode {
@@ -13,9 +13,9 @@ export class AstContinue extends AstNode {
 		super(parseTree);
 	}
 
-	public execute(runtime: Runtime): void {
+	/*public execute(runtime: Runtime): void {
 		Loops.UnwindCurrent(runtime, Loops.Iteration);
-	}
+	}*/
 
 	public what: string = "Continue";
 }

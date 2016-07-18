@@ -6,7 +6,7 @@
 
 import { AstNode } from "./AstNode";
 import { parse } from "./Parser";
-import { Step, Runtime } from "./Runtime";
+import { Runtime } from "./Runtime";
 import { StandardScope } from "./Scopes/StandardScope";
 import { Value } from "./Value";
 import { Loops } from "./Loops";
@@ -20,7 +20,7 @@ export class AstFor extends AstNode {
 		this.body = parse(parseTree.body);
 	}
 
-	public execute(runtime: Runtime): void {
+	/*public execute(runtime: Runtime): void {
 		// Stack marker in case we want to break.
 		Loops.PushMarker(runtime, Loops.Outside);
 
@@ -48,7 +48,7 @@ export class AstFor extends AstNode {
 
 		// First thing, for loop init.
 		runtime.pushAction(new Step(this.init, "For init"));
-	}
+	} */
 
 	public what: string = "For";
 	public init: AstNode;

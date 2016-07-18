@@ -7,12 +7,17 @@
 import { AstNode } from "./AstNode";
 import { parse } from "./Parser";
 import { Step, Runtime } from "./Runtime";
+import { Compiler } from "./Compiler";
 
 export class AstStatement extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
 		if (parseTree.expression)
 			this.statement = parse(parseTree.expression);
+	}
+
+	public compile(compiler: Compiler): void {
+		this.statement.compile(compiler);
 	}
 
 	public execute(runtime: Runtime): void {

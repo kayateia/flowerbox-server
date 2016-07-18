@@ -8,7 +8,7 @@ import { AstNode } from "./AstNode";
 import { AstIdentifier } from "./AstIdentifier";
 import { parse } from "./Parser";
 import { ParseException } from "./Exceptions";
-import { Step, Runtime } from "./Runtime";
+import { Runtime } from "./Runtime";
 import { Value } from "./Value";
 import { Utils } from "./Utils";
 
@@ -41,7 +41,7 @@ export class AstObject extends AstNode {
 		return object.___petalObject;
 	}
 
-	public execute(runtime: Runtime): any {
+	/*public execute(runtime: Runtime): any {
 		runtime.pushAction(Step.Callback("Object constructor", () => {
 			// This prevents superclass properties from mixing in.
 			let result = new Object(null);
@@ -54,7 +54,7 @@ export class AstObject extends AstNode {
 		}));
 		Utils.GetPropertyNames(this.properties).forEach((i) =>
 			runtime.pushAction(new Step(this.properties[i], "Object member")));
-	}
+	} */
 
 	public what: string = "ObjectExpression";
 	public properties: any;

@@ -7,7 +7,7 @@
 import { AstNode } from "./AstNode";
 import { AstObject } from "./AstObject";
 import { parse } from "./Parser";
-import { Step, Runtime } from "./Runtime";
+import { Runtime } from "./Runtime";
 import { StandardScope } from "./Scopes/StandardScope";
 import { Value } from "./Value";
 import { Utils } from "./Utils";
@@ -25,7 +25,7 @@ export class AstForIn extends AstNode {
 		this.body = parse(parseTree.body);
 	}
 
-	public execute(runtime: Runtime): void {
+	/*public execute(runtime: Runtime): void {
 		// Stack marker in case we want to break.
 		Loops.PushMarker(runtime, Loops.Outside);
 
@@ -71,7 +71,7 @@ export class AstForIn extends AstNode {
 
 		// First thing, execute the source and get that value for traversal.
 		runtime.pushAction(Step.Node("ForIn init", this.right));
-	}
+	}*/
 
 	public what: string = "ForIn";
 	public varName: string;

@@ -5,7 +5,7 @@
 */
 
 import { AstNode } from "./AstNode";
-import { Step, Runtime } from "./Runtime";
+import { Runtime } from "./Runtime";
 import { RuntimeException } from "./Exceptions";
 import { parse } from "./Parser";
 import { LValue } from "./LValue";
@@ -19,7 +19,7 @@ export class AstUpdate extends AstNode {
 		this.prefix = parseTree.prefix;
 	}
 
-	public execute(runtime: Runtime): void {
+	/*public execute(runtime: Runtime): void {
 		runtime.pushAction(Step.Callback("Update callback", () => {
 			let lval: LValue = Value.GetLValue(runtime.popOperand());
 			let oldValue = LValue.Deref(runtime, lval);
@@ -40,7 +40,7 @@ export class AstUpdate extends AstNode {
 				runtime.pushOperand(oldValue);
 		}));
 		runtime.pushAction(new Step(this.argument, "Update l-value"));
-	}
+	} */
 
 	public what: string = "Update";
 	public operator: string;

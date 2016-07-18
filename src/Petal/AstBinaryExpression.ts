@@ -5,7 +5,7 @@
 */
 
 import { AstNode } from "./AstNode";
-import { Step, Runtime } from "./Runtime";
+import { Runtime } from "./Runtime";
 import { parse } from "./Parser";
 import { Value } from "./Value";
 
@@ -17,7 +17,7 @@ export class AstBinaryExpression extends AstNode {
 		this.right = parse(parseTree.right);
 	}
 
-	public execute(runtime: Runtime): void {
+	/*public execute(runtime: Runtime): void {
 		let leftValue;
 
 		let that = this;
@@ -88,7 +88,7 @@ export class AstBinaryExpression extends AstNode {
 			}
 		}));
 		runtime.pushAction(new Step(this.left, "BC left"));
-	}
+	} */
 
 	public what: string = "BinaryExpression";
 	public operator: string;

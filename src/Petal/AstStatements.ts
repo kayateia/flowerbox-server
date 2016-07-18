@@ -6,8 +6,10 @@
 
 import { AstNode } from "./AstNode";
 import { parse } from "./Parser";
-import { Step, Runtime } from "./Runtime";
+import { Runtime } from "./Runtime";
+import { Step } from "./Step";
 import { StandardScope } from "./Scopes/StandardScope";
+import { Compiler } from "./Compiler";
 
 export class AstStatements extends AstNode {
 	constructor(parseTree: any, blockStatement: boolean) {
@@ -24,7 +26,11 @@ export class AstStatements extends AstNode {
 		return stmts;
 	}
 
-	public execute(runtime: Runtime): void {
+	public compile(compiler: Compiler): void {
+		this.body.forEach(n => n.compile(compiler));
+	}
+
+	/*public execute(runtime: Runtime): void {
 		if (!this.body.length)
 			return;
 
@@ -41,7 +47,7 @@ export class AstStatements extends AstNode {
 				runtime.pushAction(new Step(this.body[i]));
 			}
 		}
-	}
+	} */
 
 	public what: string = "Statements";
 	public body: AstNode[];

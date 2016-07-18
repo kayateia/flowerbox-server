@@ -5,6 +5,9 @@
 */
 
 import { AstNode } from "./AstNode";
+import { Step } from "./Step";
+import { Runtime } from "./Runtime";
+import { Compiler } from "./Compiler";
 
 export class AstLiteral extends AstNode {
 	constructor(parseTree: any) {
@@ -12,9 +15,15 @@ export class AstLiteral extends AstNode {
 		this.value = parseTree.value;
 	}
 
-	public execute(runtime: any): any {
-		runtime.pushOperand(this.value);
+	public compile(compiler: Compiler): void {
+		compiler.emit(new Step("Literal '" + this.value + "'", this, (runtime: Runtime) => {
+			runtime.pushOperand(this.value);
+		}));
 	}
+
+	/* public execute(runtime: any): any {
+		runtime.pushOperand(this.value);
+	} */
 
 	public what: string = "Literal";
 	public value: any;

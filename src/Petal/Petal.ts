@@ -31,6 +31,7 @@ export * from "./AstUpdate";
 export * from "./AstVarDecl";
 export * from "./AstVarStatement";
 export * from "./Check";
+export * from "./Compiler";
 export * from "./Exceptions";
 export * from "./IActionCallback";
 export * from "./IScope";
