@@ -10,6 +10,9 @@ import { AstReturn } from "./AstReturn";
 import { Runtime } from "./Runtime";
 import { IScope } from "./IScope";
 import { StandardScope } from "./Scopes/StandardScope";
+import { Compiler } from "./Compiler";
+import { Step } from "./Step";
+import { Address } from "./Address";
 
 // This is what's actually pushed on the stack when we execute, to guarantee a unique scope.
 export class AstFunctionInstance extends AstNode {
@@ -43,6 +46,38 @@ export class AstFunction extends AstNode {
 		if (value === null || value === undefined)
 			return false;
 		return value.what === "Function" || value.what === "FunctionInstance";
+	}
+
+	public compile(compiler: Compiler): void {
+		let funcStart = compiler.newLabel(this);
+
+		// Add to the current scope, and capture it for use in the function.
+		compiler.emit(new Step("Function call symbol", this, (runtime: Runtime) => {
+			let scope = runtime.currentScope;
+			if (this.name)
+				scope.set(this.name, funcStart);
+		}));
+
+		// We don't actually want to execute the function code here, just define it. So
+		// we'll start by skipping over the function code.
+		let skipOver = compiler.newLabel(this);
+		compiler.emit(new Step("Temp", this, () => {}));
+
+		// Now we'll compile the function contents.
+		funcStart.pc = compiler.pc;
+		this.body.compile(compiler);
+
+		// Compile a "just in case" default return.
+		compiler.emit(new Step("Function return", this, (runtime: Runtime) => {
+			runtime.popPC();
+		}));
+
+		// Now replace the instruction above to properly skip over the function.
+		let afterLabel = compiler.newLabel(this);
+		compiler.replace(skipOver.pc, new Step("Skip over function body", this, (runtime: Runtime) => {
+			console.log(afterLabel);
+			runtime.gotoPC(afterLabel);
+		}));
 	}
 
 	// We basically just "execute" like an R-Value, to be set in variables or called directly.

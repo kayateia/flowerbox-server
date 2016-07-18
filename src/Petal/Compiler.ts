@@ -7,6 +7,8 @@
 import { Step } from "./Step";
 import { AstNode } from "./AstNode";
 import { Module } from "./Module";
+import * as Strings from "../Utils/Strings";
+import { Address } from "./Address";
 
 export class Compiler {
 	public program: Step[];
@@ -17,7 +19,7 @@ export class Compiler {
 	}
 
 	public emit(step: Step): number {
-		let address = this.program.length;
+		let address = this.pc;
 		this.program.push(step);
 		return address;
 	}
@@ -29,6 +31,14 @@ export class Compiler {
 	public compile(node: AstNode): void {
 		this.node = node;
 		this.node.compile(this);
+	}
+
+	public newLabel(node: AstNode): Address {
+		return new Address(this.pc, this.module, node);
+	}
+
+	public get pc(): number {
+		return this.program.length;
 	}
 
 	public get module(): Module {

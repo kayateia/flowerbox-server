@@ -15,6 +15,8 @@ import { ThisValue } from "./ThisValue";
 import { Value } from "./Value";
 import * as CorePromises from "../Async/CorePromises";
 import { Step } from "./Step";
+import { Module } from "./Module";
+import { Address } from "./Address";
 
 /*import * as LibFunctional from "./Lib/Functional";
 import * as LibMath from "./Lib/Math";
@@ -36,8 +38,8 @@ export class ExecuteResult {
 
 export class Runtime {
 	constructor(verbose?: boolean, scopeCatcher?: IScopeCatcher) {
-		this._pipeline = [];
 		this._operandStack = [];
+		this._programStack = [];
 		this._verbose = verbose;
 
 		this._scopeCatcher = scopeCatcher;
@@ -51,17 +53,53 @@ export class Runtime {
 		} */
 	}
 
-	public execute(program: Step[]): any {
-		for (this.pc=0; this.pc<program.length; ++this.pc) {
-			program[this.pc].execute(this);
+	public execute(): any {
+		while (this.address.pc < this.address.module.program.length) {
+			if (this.verbose) {
+				let step = this.address.module.program[this.address.pc];
+				console.log("STEP:", step.name, ",", (<any>step.node).what, ",", step.callback.toString());
+			}
+			this.address.module.program[this.address.pc].execute(this);
+			if (!this._setPC)
+				++this.address.pc;
+			else
+				this._setPC = false;
 		}
 
 		while (this._operandStack.length > 0)
 			console.log(this.popOperand());
 	}
 
-	public program: Step[];
-	public pc: number;
+	public pushPC(address?: Address): void {
+		if (!address)
+			address = this.address;
+		this._programStack.push(address);
+	}
+
+	public popPC(): void {
+		// We have to create a new Address here to avoid mucking up the source Address.
+		let address = this._programStack.pop();
+		this.address = new Address(address.pc, address.module, address.node);
+		this._setPC = true;
+	}
+
+	public gotoPC(address: Address): void {
+		// See above in popPC().
+		this.address = new Address(address.pc, address.module, address.node);
+		this._setPC = true;
+	}
+
+	// This is like a combo push/goto, but it also makes sure that the pushed
+	// address is the next one after the current one, so we don't get an infinite
+	// call loop.
+	public callPC(address: Address): void {
+		this.pushPC(new Address(this.address.pc + 1, this.address.module, this.address.node));
+		this.gotoPC(address);
+	}
+
+	public address: Address;
+	public _programStack: Address[];
+	public _setPC: boolean;
 
 	/* public pushAction(step: Step): void {
 		if (this._verbose)

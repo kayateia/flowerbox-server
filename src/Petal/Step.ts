@@ -24,15 +24,15 @@ export class Step {
 		return result;
 	}
 
-	public node(): AstNode {
+	public get node(): AstNode {
 		return this._node;
 	}
 
-	public name(): string {
+	public get name(): string {
 		return this._name;
 	}
 
-	public callback(): IActionCallback {
+	public get callback(): IActionCallback {
 		return this._callback;
 	}
 

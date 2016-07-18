@@ -74,13 +74,8 @@ export class AstCallExpression extends AstNode {
 				let result = address.func(...args);
 				runtime.returnValue = result;
 			} else {
-				// Push our current location on the stack. (The return address.)
-				// runtime.pushPC();
-
-				// Set the new location.
-				// runtime.gotoPC(fp);
-
-				//
+				// Push our current location on the stack (the return address) and set the new location.
+				runtime.callPC(address);
 			}
 		}));
 		compiler.emit(new Step("Call cleanup", this, (runtime: Runtime) => {

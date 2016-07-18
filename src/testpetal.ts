@@ -4,14 +4,14 @@ import * as Petal from "./Petal/Petal";
 import * as fs from "fs";
 
 //var output = Parser.compileToTree(
-var output;
+let output;
 
 /*let acorn = require("acorn");
 console.log(acorn); */
 
 try {
 	output = Petal.parseFromSource(
-		"log('this is a test!');\nlog('this too!');\n"
+		"function test() { log('test!'); } log('this is a test!');\nlog('this too!');\ntest();\n"
 		// "log(map([1,2,3], a => a+1));"
 		// "var a = 5; if (a == 5 || log('no1')) log('yes1'); if (!(a != 5 && log('no2'))) log('yes2');"
 		// "var a = [1,2,3]; for (var @i in a) { if (@i == 2) continue; log(@i); } log(a);"
@@ -60,7 +60,9 @@ runtime.currentScope().set("console", Petal.ObjectWrapper.WrapGeneric(petalConso
 runtime.execute(1000); */
 let compiler = new Petal.Compiler();
 compiler.compile(output);
-let program = compiler.program;
-console.log(program);
-runtime.execute(program);
+let mod = compiler.module;
+console.log(mod);
+runtime.gotoPC(new Petal.Address(0, compiler.module, output));
+runtime.execute();
+
 // console.log("Output scope:", runtime.currentScope());
