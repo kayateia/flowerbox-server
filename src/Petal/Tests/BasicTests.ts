@@ -97,9 +97,9 @@ describe("Functional test", function() {
 	it("can decl multiple variables, call external functions", function() {
 		let program = "var a=2, b=10, c='foo'; log(c); log(test()); log('after');";
 		let test = new TestSetup(program);
-		test.runtime.currentScope().set("test", function() {
+		test.runtime.currentScope.set("test", Petal.Address.Function(function() {
 			return 5;
-		});
+		}));
 		test.runProgram();
 
 		expect(test.output).toEqual("foo\n5\nafter\n");
@@ -183,13 +183,13 @@ describe("Functional test", function() {
 	it("should successfully resume after an async function call", function(done) {
 		let program = "var rv = test(); log('returned', rv);";
 		let test = new TestSetup(program);
-		test.runtime.currentScope().set("test", function() {
+		test.runtime.currentScope.set("test", Petal.Address.Function(function() {
 			return new Promise(complete => {
 				setTimeout(() => {
 					complete(5);
 				}, 1);
 			});
-		});
+		}));
 		test.runProgramAsync()
 			.then(() => {
 				expect(test.output).toEqual("returned 5\n");

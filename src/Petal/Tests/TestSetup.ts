@@ -10,7 +10,7 @@ export class TestSetup {
 	constructor(program: string, verbose?: boolean) {
 		this.runtime = new Petal.Runtime(verbose);
 		this.output = "";
-		this.runtime.currentScope().set("log", this.getLogger());
+		this.runtime.currentScope.set("log", Petal.Address.Function(this.getLogger()));
 		this.programParsed = Petal.parseFromSource(program);
 	}
 
@@ -33,13 +33,16 @@ export class TestSetup {
 	}
 
 	public runProgram() {
-		this.runtime.pushAction(Petal.Step.Node("Main program", this.programParsed));
-		this.runtime.execute(1000);
+		let compiler = new Petal.Compiler();
+		compiler.compile(this.programParsed);
+		let mod = compiler.module;
+		this.runtime.gotoPC(new Petal.Address(0, mod, this.programParsed));
+		this.runtime.execute();
 	}
 
 	public async runProgramAsync() {
-		this.runtime.pushAction(Petal.Step.Node("Main program", this.programParsed));
-		await this.runtime.executeAsync(1000);
+		/*this.runtime.pushAction(Petal.Step.Node("Main program", this.programParsed));
+		await this.runtime.executeAsync(1000); */
 	}
 
 	public runtime: Petal.Runtime;
