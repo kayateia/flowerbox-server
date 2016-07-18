@@ -174,7 +174,7 @@ class DollarObject {
 			return null;
 	}
 
-	public async move(objOrId: WobWrapper | number, intoOrId: WobWrapper | number): Promise<void> {
+	public async move(objOrId: any /*WobWrapper | number*/, intoOrId: any /*WobWrapper | number*/): Promise<void> {
 		if (!objOrId || !intoOrId)
 			throw new WobReferenceException("Received a null wob in move()", 0);
 
@@ -189,7 +189,7 @@ class DollarObject {
 		await this._world.moveWob(objOrId, intoOrId);
 	}
 
-	public async contents(objOrId: WobWrapper | number): Promise<WobWrapper[]> {
+	public async contents(objOrId: any /*WobWrapper | number*/): Promise<WobWrapper[]> {
 		if (!objOrId)
 			throw new WobReferenceException("Received a null wob in contents()", 0);
 
@@ -206,7 +206,7 @@ class DollarObject {
 		return contents.map(w => new WobWrapper(w, this._world, this._injections));
 	}
 
-	public async create(intoOrId: WobWrapper | number): Promise<WobWrapper> {
+	public async create(intoOrId: any /*WobWrapper | number*/): Promise<WobWrapper> {
 		if (!intoOrId)
 			throw new WobReferenceException("Received a null wob in create()", 0);
 

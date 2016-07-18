@@ -47,7 +47,7 @@ async function tester() {
 										} else
 											arr.push(obj.toString());
 									});
-									console.log(...arr);
+									(<any>console.log)(...arr);
 								});
 								player.setProperty("hearlog", []);
 							}

@@ -25,9 +25,10 @@ export class TerminalRouter extends RouterBase {
 	}
 
 	public async command(req, res, next): Promise<ModelBase> {
-		let player = await this.getUserWob();
-		if (player instanceof ModelBase)
-			return player;
+		let playerAny = await this.getUserWob();
+		if (playerAny instanceof ModelBase)
+			return playerAny;
+		let player: World.Wob = playerAny;
 
 		let match = await World.parseInput(req.params.command, player, this.world);
 		await World.executeResult(match, player, this.world);
@@ -43,9 +44,10 @@ export class TerminalRouter extends RouterBase {
 		if (!since)
 			since = 0;
 
-		let player = await this.getUserWob();
-		if (player instanceof ModelBase)
-			return player;
+		let playerAny = await this.getUserWob();
+		if (playerAny instanceof ModelBase)
+			return playerAny;
+		let player: World.Wob = playerAny;
 
 		// If we don't have new output immediately available, then turn it into a long-wait push request.
 		let output: any[][] = this.newerThan(player.getProperty(World.WobProperties.HearLog), since);
@@ -98,7 +100,7 @@ export class TerminalRouter extends RouterBase {
 	}
 
 	// Returns the player's Wob or a ModelBase with an error message.
-	private async getUserWob(): Promise<World.Wob | ModelBase> {
+	private async getUserWob(): Promise<any /*World.Wob | ModelBase*/> {
 		let players = await this.world.getWobsByGlobalId(["Kayateia"]);
 		if (players.length !== 1)
 			return new ModelBase(false, "No such player exists");
