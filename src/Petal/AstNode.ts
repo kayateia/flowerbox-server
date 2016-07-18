@@ -6,8 +6,21 @@
 
 import { Compiler } from "./Compiler";
 
+export class Location {
+	constructor(line: number, column: number) {
+		this.line = line;
+		this.column = column;
+	}
+
+	public line: number;
+	public column: number;
+}
+
 export class AstNode {
 	constructor(parseTree: any) {
+		if (parseTree.loc) {
+			this.loc = new Location(parseTree.loc.start.line, parseTree.loc.start.column);
+		}
 		// this.originalTree = parseTree;
 	}
 
@@ -18,4 +31,6 @@ export class AstNode {
 	}
 
 	// public originalTree: any;
+
+	public loc: Location;
 }
