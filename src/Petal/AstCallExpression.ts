@@ -5,7 +5,7 @@
 */
 
 import { AstNode } from "./AstNode";
-import { AstFunction, AstFunctionInstance } from "./AstFunction";
+import { AstFunction } from "./AstFunction";
 import { parse } from "./Parser";
 import { Runtime } from "./Runtime";
 import { Step } from "./Step";
@@ -66,11 +66,11 @@ export class AstCallExpression extends AstNode {
 		compiler.emit(new Step("Call", this, (runtime: Runtime) => {
 			// The top item on the operand stack should be an address or a native function.
 			// If it's a native function, we just pop off the parameters and call it.
-			let address: Address = runtime.getOperand(this.arguments.length);
+			let address: Address = Value.Deref(runtime, runtime.getOperand(this.arguments.length));
 			if (address.func) {
 				let args = [];
 				for (let i=this.arguments.length-1; i>=0; --i)
-					args.push(runtime.getOperand(i));
+					args.push(Value.Deref(runtime, runtime.getOperand(i)));
 				let result = address.func(...args);
 				runtime.returnValue = result;
 			} else {

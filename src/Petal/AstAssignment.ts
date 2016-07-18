@@ -10,6 +10,8 @@ import { Runtime } from "./Runtime";
 import { RuntimeException } from "./Exceptions";
 import { LValue } from "./LValue";
 import { Value } from "./Value";
+import { Compiler } from "./Compiler";
+import { Step } from "./Step";
 
 export class AstAssignment extends AstNode {
 	constructor(parseTree: any) {
@@ -19,10 +21,13 @@ export class AstAssignment extends AstNode {
 		this.right = parse(parseTree.right);
 	}
 
-	/*public execute(runtime: Runtime): void {
-		runtime.pushAction(Step.Callback("Assignment", () => {
-			let lhs = Value.GetLValue(runtime.popOperand());
+	public compile(compiler: Compiler): void {
+		this.left.compile(compiler);
+		this.right.compile(compiler);
+
+		compiler.emit(new Step("Assignment '" + this.operator + "'", this, (runtime: Runtime) => {
 			let rhs = Value.PopAndDeref(runtime);
+			let lhs = Value.GetLValue(runtime.popOperand());
 
 			let newlhs;
 			switch (this.operator) {
@@ -48,9 +53,7 @@ export class AstAssignment extends AstNode {
 			lhs.write(runtime, newlhs);
 			runtime.pushOperand(newlhs);
 		}));
-		runtime.pushAction(new Step(this.left, "Assignment LHS"));
-		runtime.pushAction(new Step(this.right, "Assignment RHS"));
-	} */
+	}
 
 	public what: string = "Assignment";
 	public operator: string;

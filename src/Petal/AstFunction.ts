@@ -15,22 +15,6 @@ import { Step } from "./Step";
 import { Address } from "./Address";
 import { ParameterScope } from "./Scopes/ParameterScope";
 
-// This is what's actually pushed on the stack when we execute, to guarantee a unique scope.
-export class AstFunctionInstance extends AstNode {
-	constructor(orig: AstFunction, parentScope: IScope) {
-		super({});
-		this.name = orig.name;
-		this.params = orig.params;
-		this.body = orig.body;
-		this.scope = new StandardScope(parentScope);
-	}
-	public what: string = "FunctionInstance";
-	public name: string;
-	public params: string[];
-	public body: AstStatements;
-	public scope: IScope;
-}
-
 export class AstFunction extends AstNode {
 	constructor(parseTree: any) {
 		super(parseTree);
@@ -97,20 +81,6 @@ export class AstFunction extends AstNode {
 			runtime.gotoPC(afterLabel);
 		}));
 	}
-
-	// We basically just "execute" like an R-Value, to be set in variables or called directly.
-	/*public execute(runtime: Runtime): void {
-		// Make an instance with an inner scope linked to the current outer scope.
-		let instance: AstFunctionInstance = new AstFunctionInstance(this, runtime.currentScope());
-
-		// Set a variable with our name if requested.
-		let curScope = runtime.currentScope();
-		if (this.name)
-			curScope.set(this.name, instance);
-
-		// And push our value on the operand stack.
-		runtime.pushOperand(instance);
-	} */
 
 	public what: string = "Function";
 	public name: string;
