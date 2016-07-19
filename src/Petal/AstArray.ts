@@ -18,10 +18,10 @@ export class AstArray extends AstNode {
 	}
 
 	public compile(compiler: Compiler): void {
-		this.elements.reverse().forEach(i => i.compile(compiler));
+		this.elements.forEach(i => i.compile(compiler));
 
 		compiler.emit("Array constructor", this, (runtime: Runtime) => {
-			let result = this.elements.map(() => Value.PopAndDeref(runtime));
+			let result = this.elements.map(() => Value.PopAndDeref(runtime)).reverse();
 			runtime.pushOperand(result);
 		});
 	}
