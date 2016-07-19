@@ -26,41 +26,31 @@ export class AstStatements extends AstNode {
 	}
 
 	public compile(compiler: Compiler): void {
+		if (this.blockStatement) {
+			compiler.emit("Pre-block scope push", this, (runtime: Runtime) => {
+				// If we're in a block statement, also push on a new scope.
+				runtime.pushScope(new StandardScope(runtime.currentScope));
+			});
+		}
+
 		this.body.forEach(n => {
 			compiler.emit("Pre-statement bp save", this, (runtime: Runtime) => {
 				runtime.pushBase();
-
-				// If we're in a block statement, also push on a new scope.
-				runtime.pushScope(new StandardScope(runtime.currentScope));
 			});
 
 			n.compile(compiler);
 
 			compiler.emit("Post-statement bp restore", this, (runtime: Runtime) => {
-				runtime.popScope();
 				runtime.popBase();
 			});
 		});
-	}
 
-	/*public execute(runtime: Runtime): void {
-		if (!this.body.length)
-			return;
-
-		// If we're entering a block (if statement, for loop, etc) then add a new scope
-		// for any inner variables that might be declared.
-		if (this.blockStatement)
-			runtime.pushAction(Step.Scope("Block scope", new StandardScope(runtime.currentScope())));
-
-		runtime.pushAction(Step.ClearOperands(runtime));
-		runtime.pushAction(new Step(this.body[this.body.length - 1]));
-		if (this.body.length > 1) {
-			for (let i=this.body.length - 2; i>=0; --i) {
-				runtime.pushAction(Step.ClearOperands(runtime));
-				runtime.pushAction(new Step(this.body[i]));
-			}
+		if (this.blockStatement) {
+			compiler.emit("Post-block scope pop", this, (runtime: Runtime) => {
+				runtime.popScope();
+			});
 		}
-	} */
+	}
 
 	public what: string = "Statements";
 	public body: AstNode[];
