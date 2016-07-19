@@ -29,11 +29,15 @@ export class AstStatements extends AstNode {
 		this.body.forEach(n => {
 			compiler.emit("Pre-statement bp save", this, (runtime: Runtime) => {
 				runtime.pushBase();
+
+				// If we're in a block statement, also push on a new scope.
+				runtime.pushScope(new StandardScope(runtime.currentScope));
 			});
 
 			n.compile(compiler);
 
 			compiler.emit("Post-statement bp restore", this, (runtime: Runtime) => {
+				runtime.popScope();
 				runtime.popBase();
 			});
 		});
