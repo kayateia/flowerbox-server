@@ -10,6 +10,7 @@ import { Runtime } from "./Runtime";
 import { StandardScope } from "./Scopes/StandardScope";
 import { Value } from "./Value";
 import { Loops } from "./Loops";
+import { Compiler } from "./Compiler";
 
 export class AstFor extends AstNode {
 	constructor(parseTree: any) {
@@ -20,35 +21,37 @@ export class AstFor extends AstNode {
 		this.body = parse(parseTree.body);
 	}
 
-	/*public execute(runtime: Runtime): void {
-		// Stack marker in case we want to break.
-		Loops.PushMarker(runtime, Loops.Outside);
+	public compile(compiler: Compiler): void {
+		compiler.emit("For init scope", this, (runtime: Runtime) => {
+			// Push on a scope to handle what drops out of the init vars.
+			runtime.pushScope(new StandardScope(runtime.currentScope));
+		});
 
-		// Push on a scope to handle what drops out of the init vars.
-		runtime.pushAction(Step.Scope("For init scope", new StandardScope(runtime.currentScope())));
+		this.init.compile(compiler);
 
-		let that = this;
-		(function pushForIteration() {
-			runtime.pushAction(Step.Callback("For next iteration", pushForIteration));
-			runtime.pushAction(new Step(that.update, "For update"));
-			Loops.PushMarker(runtime, Loops.Iteration);
-			runtime.pushAction(new Step(that.body, "For body"));
+		let checkLabel = compiler.newLabel(this);
 
-			// Do the condition check.
-			runtime.pushAction(Step.Callback("For test callback", () => {
-				// Get the result.
-				let result = Value.PopAndDeref(runtime);
-				if (!result) {
-					// Bail.
-					Loops.UnwindCurrent(runtime, Loops.Outside);
-				}
-			}));
-			runtime.pushAction(new Step(that.test, "For test"));
-		})();
+		this.test.compile(compiler);
 
-		// First thing, for loop init.
-		runtime.pushAction(new Step(this.init, "For init"));
-	} */
+		let postLoopLabel = compiler.newLabel(this);
+		compiler.emit("For test checker", this, (runtime: Runtime) => {
+			let testResult = Value.PopAndDeref(runtime);
+			if (!testResult)
+				runtime.gotoPC(postLoopLabel);
+		});
+
+		this.body.compile(compiler);
+		this.update.compile(compiler);
+
+		compiler.emit("For loop looptie loop", this, (runtime: Runtime) => {
+			runtime.gotoPC(checkLabel);
+		});
+
+		postLoopLabel.pc = compiler.pc;
+		compiler.emit("Drop for scope", this, (runtime: Runtime) => {
+			runtime.popScope();
+		});
+	}
 
 	public what: string = "For";
 	public init: AstNode;
