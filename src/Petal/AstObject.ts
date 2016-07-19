@@ -11,6 +11,7 @@ import { ParseException } from "./Exceptions";
 import { Runtime } from "./Runtime";
 import { Value } from "./Value";
 import { Utils } from "./Utils";
+import { Compiler } from "./Compiler";
 
 export class AstObject extends AstNode {
 	constructor(parseTree: any) {
@@ -41,8 +42,11 @@ export class AstObject extends AstNode {
 		return object.___petalObject;
 	}
 
-	/*public execute(runtime: Runtime): any {
-		runtime.pushAction(Step.Callback("Object constructor", () => {
+	public compile(compiler: Compiler): void {
+		Utils.GetPropertyNames(this.properties).reverse().forEach(i =>
+			this.properties[i].compile(compiler));
+
+		compiler.emit("Object collection", this, (runtime: Runtime) => {
 			// This prevents superclass properties from mixing in.
 			let result = new Object(null);
 			Utils.GetPropertyNames(this.properties).forEach((p) => {
@@ -51,10 +55,8 @@ export class AstObject extends AstNode {
 			});
 			result["___petalObject"] = true;
 			runtime.pushOperand(result);
-		}));
-		Utils.GetPropertyNames(this.properties).forEach((i) =>
-			runtime.pushAction(new Step(this.properties[i], "Object member")));
-	} */
+		});
+	}
 
 	public what: string = "ObjectExpression";
 	public properties: any;
