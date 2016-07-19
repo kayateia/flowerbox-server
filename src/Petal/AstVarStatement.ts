@@ -20,11 +20,6 @@ export class AstVarStatement extends AstNode {
 		this.decls.forEach(d => d.compile(compiler));
 	}
 
-	/*public execute(runtime: any): void {
-		for (let i=this.decls.length - 1; i>=0; --i)
-			this.decls[i].execute(runtime);
-	} */
-
 	public what: string = "Var";
 	public decls: AstVarDecl[];
 }
