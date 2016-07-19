@@ -7,7 +7,6 @@
 import { AstNode } from "./AstNode";
 import { parse } from "./Parser";
 import { Runtime } from "./Runtime";
-import { Step } from "./Step";
 import { StandardScope } from "./Scopes/StandardScope";
 import { Compiler } from "./Compiler";
 
@@ -28,15 +27,15 @@ export class AstStatements extends AstNode {
 
 	public compile(compiler: Compiler): void {
 		this.body.forEach(n => {
-			compiler.emit(new Step("Pre-statement bp save", this, (runtime: Runtime) => {
+			compiler.emit("Pre-statement bp save", this, (runtime: Runtime) => {
 				runtime.pushBase();
-			}));
+			});
 
 			n.compile(compiler);
 
-			compiler.emit(new Step("Post-statement bp restore", this, (runtime: Runtime) => {
+			compiler.emit("Post-statement bp restore", this, (runtime: Runtime) => {
 				runtime.popBase();
-			}));
+			});
 		});
 	}
 

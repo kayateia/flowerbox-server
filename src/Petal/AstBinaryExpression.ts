@@ -9,7 +9,6 @@ import { Runtime } from "./Runtime";
 import { parse } from "./Parser";
 import { Value } from "./Value";
 import { Compiler } from "./Compiler";
-import { Step } from "./Step";
 
 export class AstBinaryExpression extends AstNode {
 	constructor(parseTree: any) {
@@ -25,7 +24,7 @@ export class AstBinaryExpression extends AstNode {
 
 		let skipRight = compiler.newLabel(this);
 
-		compiler.emit(new Step("Check BE left", this, (runtime: Runtime) => {
+		compiler.emit("Check BE left", this, (runtime: Runtime) => {
 			let leftValue = Value.PopAndDeref(runtime);
 			if (this.operator === "||" && leftValue) {
 				runtime.pushOperand(leftValue);
@@ -39,12 +38,12 @@ export class AstBinaryExpression extends AstNode {
 			}
 			// Put it back for the BE right.
 			runtime.pushOperand(leftValue);
-		}));
+		});
 
 		// This will push the right on the operand stack.
 		this.right.compile(compiler);
 
-		compiler.emit(new Step("Check BE right", this, (runtime: Runtime) => {
+		compiler.emit("Check BE right", this, (runtime: Runtime) => {
 			let rightValue = Value.PopAndDeref(runtime);
 			let leftValue = runtime.popOperand();
 			let result: any;
@@ -93,7 +92,7 @@ export class AstBinaryExpression extends AstNode {
 			}
 
 			runtime.pushOperand(result);
-		}));
+		});
 
 		skipRight.pc = compiler.pc;
 	}

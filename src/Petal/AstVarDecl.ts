@@ -8,7 +8,6 @@ import { AstNode } from "./AstNode";
 import { parse } from "./Parser";
 import { Runtime } from "./Runtime";
 import { Value } from "./Value";
-import { Step } from "./Step";
 import { Compiler } from "./Compiler";
 
 export class AstVarDecl extends AstNode {
@@ -23,12 +22,12 @@ export class AstVarDecl extends AstNode {
 		if (this.init)
 			this.init.compile(compiler);
 
-		compiler.emit(new Step("Vardecl init", this, (runtime: Runtime) => {
+		compiler.emit("Vardecl init", this, (runtime: Runtime) => {
 			let value;
 			if (this.init)
 				value = Value.PopAndDeref(runtime);
 			runtime.currentScope.set(this.name, value);
-		}));
+		});
 	}
 
 	public what: string = "VarDecl";

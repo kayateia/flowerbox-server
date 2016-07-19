@@ -11,7 +11,6 @@ import { RuntimeException } from "./Exceptions";
 import { LValue } from "./LValue";
 import { Value } from "./Value";
 import { Compiler } from "./Compiler";
-import { Step } from "./Step";
 
 export class AstAssignment extends AstNode {
 	constructor(parseTree: any) {
@@ -25,7 +24,7 @@ export class AstAssignment extends AstNode {
 		this.left.compile(compiler);
 		this.right.compile(compiler);
 
-		compiler.emit(new Step("Assignment '" + this.operator + "'", this, (runtime: Runtime) => {
+		compiler.emit("Assignment '" + this.operator + "'", this, (runtime: Runtime) => {
 			let rhs = Value.PopAndDeref(runtime);
 			let lhs = Value.GetLValue(runtime.popOperand());
 
@@ -52,7 +51,7 @@ export class AstAssignment extends AstNode {
 
 			lhs.write(runtime, newlhs);
 			runtime.pushOperand(newlhs);
-		}));
+		});
 	}
 
 	public what: string = "Assignment";

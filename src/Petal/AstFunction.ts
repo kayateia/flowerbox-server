@@ -11,9 +11,9 @@ import { Runtime } from "./Runtime";
 import { IScope } from "./IScope";
 import { StandardScope } from "./Scopes/StandardScope";
 import { Compiler } from "./Compiler";
-import { Step } from "./Step";
 import { Address } from "./Address";
 import { ParameterScope } from "./Scopes/ParameterScope";
+import { Step } from "./Step";
 
 export class AstFunction extends AstNode {
 	constructor(parseTree: any) {
@@ -38,7 +38,7 @@ export class AstFunction extends AstNode {
 		let closureScope;
 
 		// Add to the current scope, and capture it for use in the function.
-		compiler.emit(new Step("Function call symbol", this, (runtime: Runtime) => {
+		compiler.emit("Function call symbol", this, (runtime: Runtime) => {
 			let scope = runtime.currentScope;
 			closureScope = scope;
 			if (this.name)
@@ -47,18 +47,18 @@ export class AstFunction extends AstNode {
 			// Even if it has no name, we push it on the operand stack as a value in case
 			// someone was trying to call it or assign it to a variable.
 			runtime.pushOperand(funcStart);
-		}));
+		});
 
 		// We don't actually want to execute the function code here, just define it. So
 		// we'll start by skipping over the function code.
 		let skipOver = compiler.newLabel(this);
-		compiler.emit(new Step("Temp", this, () => {}));
+		compiler.emit("Temp", this, () => {});
 
 		// Now we'll compile the function contents.
 		funcStart.pc = compiler.pc;
 
 		// Pull in the parameter values.
-		compiler.emit(new Step("Function parameters and closure", this, (runtime: Runtime) => {
+		compiler.emit("Function parameters and closure", this, (runtime: Runtime) => {
 			let paramScope = new ParameterScope(closureScope, this.params);
 			for (let i=0; i<this.params.length; ++i) {
 				let val = runtime.getOperand(i);
@@ -67,16 +67,16 @@ export class AstFunction extends AstNode {
 				paramScope.set(this.params[this.params.length - (1+i)], val);
 			}
 			runtime.pushScope(paramScope);
-		}));
+		});
 
 		// And the function body.
 		this.body.compile(compiler);
 
 		// Compile a "just in case" default return.
-		compiler.emit(new Step("Function return", this, (runtime: Runtime) => {
+		compiler.emit("Function return", this, (runtime: Runtime) => {
 			runtime.popScope();
 			runtime.popPC();
-		}));
+		});
 
 		// Now replace the instruction above to properly skip over the function.
 		let afterLabel = compiler.newLabel(this);

@@ -18,9 +18,9 @@ export class Compiler {
 		this.program = [];
 	}
 
-	public emit(step: Step): number {
+	public emit(name: string, node: AstNode, callback: any): number {
 		let address = this.pc;
-		this.program.push(step);
+		this.program.push(new Step(name, node, callback));
 		return address;
 	}
 

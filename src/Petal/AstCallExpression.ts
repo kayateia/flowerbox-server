@@ -8,7 +8,6 @@ import { AstNode } from "./AstNode";
 import { AstFunction } from "./AstFunction";
 import { parse } from "./Parser";
 import { Runtime } from "./Runtime";
-import { Step } from "./Step";
 import { RuntimeException } from "./Exceptions";
 import { IScope } from "./IScope";
 import { StandardScope } from "./Scopes/StandardScope";
@@ -60,14 +59,14 @@ export class AstCallExpression extends AstNode {
 	} */
 
 	public compile(compiler: Compiler): void {
-		compiler.emit(new Step("Call prelude", this, (runtime: Runtime) => {
+		compiler.emit("Call prelude", this, (runtime: Runtime) => {
 			runtime.pushBase();
-		}));
+		});
 
 		(<AstNode>this.callee).compile(compiler);
 		this.arguments.forEach(a => a.compile(compiler));
 
-		compiler.emit(new Step("Call", this, (runtime: Runtime) => {
+		compiler.emit("Call", this, (runtime: Runtime) => {
 			// The top item on the operand stack should be an address or a native function.
 			// If it's a native function, we just pop off the parameters and call it.
 			let address: Address = Value.Deref(runtime, runtime.getOperand(this.arguments.length));
@@ -81,10 +80,10 @@ export class AstCallExpression extends AstNode {
 				// Push our current location on the stack (the return address) and set the new location.
 				runtime.callPC(address);
 			}
-		}));
-		compiler.emit(new Step("Call cleanup", this, (runtime: Runtime) => {
+		});
+		compiler.emit("Call cleanup", this, (runtime: Runtime) => {
 			runtime.popBase();
-		}));
+		});
 	}
 
 	/*public execute(runtime: Runtime): any {

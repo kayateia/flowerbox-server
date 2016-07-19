@@ -7,7 +7,6 @@
 import { AstNode } from "./AstNode";
 import { Runtime } from "./Runtime";
 import { LValue } from "./LValue";
-import { Step } from "./Step";
 import { Compiler } from "./Compiler";
 import { RuntimeException } from "./Exceptions";
 
@@ -21,7 +20,7 @@ export class AstIdentifier extends AstNode {
 	}
 
 	public compile(compiler: Compiler): void {
-		compiler.emit(new Step("Identifier '" + this.name + "' lookup", this, (runtime: Runtime) => {
+		compiler.emit("Identifier '" + this.name + "' lookup", this, (runtime: Runtime) => {
 			let scope = runtime.currentScope;
 			if (!scope.has(this.name)) {
 				// Try the scope catcher.
@@ -41,7 +40,7 @@ export class AstIdentifier extends AstNode {
 					scope.set(this.name, value);
 				}));
 			}
-		}));
+		});
 	}
 
 	public what: string = "Identifier";
