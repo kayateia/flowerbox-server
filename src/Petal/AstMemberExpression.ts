@@ -15,6 +15,7 @@ import { Utils } from "./Utils";
 import { ObjectWrapper, IObject } from "./Objects";
 import { ThisValue } from "./ThisValue";
 import { LValue } from "./LValue";
+import { Compiler } from "./Compiler";
 
 // This unfortunately covers both a.b and a["b"] (non-computed and computed).
 export class AstMemberExpression extends AstNode {
@@ -26,6 +27,32 @@ export class AstMemberExpression extends AstNode {
 		} else {
 			this.property = parse(parseTree.property);
 		}
+	}
+
+	// FIXME: Doesn't handle ThisValues.
+	public compile(compiler: Compiler): void {
+		this.obj.compile(compiler);
+		if (this.property)
+			this.property.compile(compiler);
+
+		compiler.emit("Member lookup", this, (runtime: Runtime) => {
+			let property;
+			if (this.property)
+				property = Value.PopAndDeref(runtime);
+			let obj = Value.PopAndDeref(runtime);
+
+			let iobj: IObject = ObjectWrapper.Wrap(obj);
+			if (!iobj)
+				throw new RuntimeException("Can't wrap object for lookup", obj);
+
+			let value;
+			if (this.property)
+				value = iobj.getAccessor(property);
+			else
+				value = iobj.getAccessor(this.member);
+
+			runtime.pushOperand(value);
+		});
 	}
 
 	/*public execute(runtime: Runtime): void {
