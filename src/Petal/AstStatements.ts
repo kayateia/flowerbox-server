@@ -27,7 +27,17 @@ export class AstStatements extends AstNode {
 	}
 
 	public compile(compiler: Compiler): void {
-		this.body.forEach(n => n.compile(compiler));
+		this.body.forEach(n => {
+			compiler.emit(new Step("Pre-statement bp save", this, (runtime: Runtime) => {
+				runtime.pushBase();
+			}));
+
+			n.compile(compiler);
+
+			compiler.emit(new Step("Post-statement bp restore", this, (runtime: Runtime) => {
+				runtime.popBase();
+			}));
+		});
 	}
 
 	/*public execute(runtime: Runtime): void {
