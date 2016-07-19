@@ -67,22 +67,35 @@ export class AstCallExpression extends AstNode {
 		this.arguments.forEach(a => a.compile(compiler));
 
 		compiler.emit("Call", this, (runtime: Runtime) => {
+			// Deref all of the arguments - no passing l-values past a function boundary.
+			for (let i=this.arguments.length-1; i>=0; --i) {
+				if (runtime.verbose)
+					console.log("DEREF", runtime.getOperand(i), Value.Deref(runtime, runtime.getOperand(i)));
+				runtime.setOperand(i, Value.Deref(runtime, runtime.getOperand(i)));
+			}
+
 			// The top item on the operand stack should be an address or a native function.
 			// If it's a native function, we just pop off the parameters and call it.
 			let address: Address = Value.Deref(runtime, runtime.getOperand(this.arguments.length));
+			if (runtime.verbose) {
+				console.log("DEREF", runtime.getOperand(this.arguments.length), address);
+				console.log("CALLING", address);
+			}
 			if (address.func) {
 				let args = [];
 				for (let i=this.arguments.length-1; i>=0; --i)
-					args.push(Value.Deref(runtime, runtime.getOperand(i)));
+					args.push(runtime.getOperand(i));
 				let result = address.func(...args);
 				runtime.returnValue = result;
 			} else {
+
 				// Push our current location on the stack (the return address) and set the new location.
 				runtime.callPC(address);
 			}
 		});
 		compiler.emit("Call cleanup", this, (runtime: Runtime) => {
 			runtime.popBase();
+			runtime.pushOperand(runtime.returnValue);
 		});
 	}
 
