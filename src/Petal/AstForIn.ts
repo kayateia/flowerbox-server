@@ -13,6 +13,8 @@ import { Value } from "./Value";
 import { Utils } from "./Utils";
 import { RuntimeException } from "./Exceptions";
 import { Loops } from "./Loops";
+import { Compiler } from "./Compiler";
+import { Address } from "./Address";
 
 export class AstForIn extends AstNode {
 	constructor(parseTree: any) {
@@ -25,15 +27,18 @@ export class AstForIn extends AstNode {
 		this.body = parse(parseTree.body);
 	}
 
-	/*public execute(runtime: Runtime): void {
-		// Stack marker in case we want to break.
-		Loops.PushMarker(runtime, Loops.Outside);
+	public compile(compiler: Compiler): void {
+		compiler.pushLoop(this);
 
-		// Push on a scope to handle what drops out of the init vars.
-		runtime.pushAction(Step.Scope("For init scope", new StandardScope(runtime.currentScope())));
+		compiler.emit("For-in init scope", this, (runtime: Runtime) => {
+			// Push on a scope to handle what drops out of the init vars.
+			runtime.pushScope(new StandardScope(runtime.currentScope));
+		});
 
-		runtime.pushAction(Step.Callback("ForIn outer", () => {
-			// Get the value from the init.
+		this.right.compile(compiler);
+
+		compiler.emit("For-in pre-loop", this, (runtime: Runtime) => {
+			// Convert the source into something we can hack and slash.
 			let source = Value.PopAndDeref(runtime);
 
 			// For arrays, we just enumerate the contents. For objects, we enumerate their keys.
@@ -51,30 +56,42 @@ export class AstForIn extends AstNode {
 				source = source.slice(0);
 			}
 
-			let that = this;
-			(function nextIteration() {
-				if (!source.length)
-					return;
+			// Put it back on the stack for our use as the loop goes on.
+			runtime.pushOperand(source);
+		});
 
-				// Peel off the first item in the list.
-				let item = source.shift();
+		// Compile the body.
+		this.nextLabel = compiler.newLabel(this);
+		compiler.emit("For-in pre-body", this, (runtime: Runtime) => {
+			let right = runtime.getOperand(0);
+			if (right.length === 0) {
+				runtime.gotoPC(this.postLoopLabel);
+				return;
+			}
 
-				// Set its value in the scope.
-				runtime.currentScope().set(that.varName, item);
+			let next = right.shift();
+			runtime.currentScope.set(this.varName, next);
+		});
+		this.body.compile(compiler);
 
-				// And push on the body for one iteration.
-				runtime.pushAction(Step.Callback("ForIn next iteration", nextIteration));
-				Loops.PushMarker(runtime, Loops.Iteration);
-				runtime.pushAction(Step.Node("ForIn body", that.body));
-			})();
-		}));
+		// And loop back up to the next iteration.
+		compiler.emit("For-in looptie loop", this, (runtime: Runtime) => {
+			runtime.gotoPC(this.nextLabel);
+		});
 
-		// First thing, execute the source and get that value for traversal.
-		runtime.pushAction(Step.Node("ForIn init", this.right));
-	}*/
+		this.postLoopLabel = compiler.newLabel(this);
+		compiler.emit("For-in post-body", this, (runtime: Runtime) => {
+			runtime.popOperand();
+			runtime.popScope();
+		});
+	}
 
 	public what: string = "ForIn";
 	public varName: string;
 	public right: AstNode;
 	public body: AstNode;
+
+	// For use by break/continue inside.
+	public nextLabel: Address;
+	public postLoopLabel: Address;
 }
