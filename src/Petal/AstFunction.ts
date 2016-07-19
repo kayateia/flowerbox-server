@@ -34,6 +34,7 @@ export class AstFunction extends AstNode {
 	}
 
 	public compile(compiler: Compiler): void {
+		compiler.pushFunc(this);
 		let funcStart = compiler.newLabel(this);
 		let closureScope;
 
@@ -52,7 +53,10 @@ export class AstFunction extends AstNode {
 		// We don't actually want to execute the function code here, just define it. So
 		// we'll start by skipping over the function code.
 		let skipOver = compiler.newLabel(this);
-		compiler.emit("Temp", this, () => {});
+		let afterLabel;
+		compiler.replace(skipOver.pc, new Step("Skip over function body", this, (runtime: Runtime) => {
+			runtime.gotoPC(afterLabel);
+		}));
 
 		// Now we'll compile the function contents.
 		funcStart.pc = compiler.pc;
@@ -62,31 +66,33 @@ export class AstFunction extends AstNode {
 			let paramScope = new ParameterScope(closureScope, this.params);
 			for (let i=0; i<this.params.length; ++i) {
 				let val = runtime.getOperand(i);
-				if (val instanceof Address)
-					break;
+				/*if (val instanceof Address)
+					break; */
 				paramScope.set(this.params[this.params.length - (1+i)], val);
 			}
-			runtime.pushScope(paramScope);
+
+			let funcScope = new StandardScope(paramScope);
+			runtime.pushScope(funcScope);
 		});
 
 		// And the function body.
 		this.body.compile(compiler);
 
 		// Compile a "just in case" default return.
+		this.endLabel = compiler.newLabel(this);
 		compiler.emit("Function return", this, (runtime: Runtime) => {
 			runtime.popScope();
 			runtime.popPC();
 		});
 
 		// Now replace the instruction above to properly skip over the function.
-		let afterLabel = compiler.newLabel(this);
-		compiler.replace(skipOver.pc, new Step("Skip over function body", this, (runtime: Runtime) => {
-			runtime.gotoPC(afterLabel);
-		}));
+		afterLabel = compiler.newLabel(this);
+		compiler.popFunc();
 	}
 
 	public what: string = "Function";
 	public name: string;
 	public params: string[];
 	public body: AstStatements;
+	public endLabel: Address;
 }

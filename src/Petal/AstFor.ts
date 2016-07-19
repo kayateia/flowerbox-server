@@ -11,6 +11,7 @@ import { StandardScope } from "./Scopes/StandardScope";
 import { Value } from "./Value";
 import { Loops } from "./Loops";
 import { Compiler } from "./Compiler";
+import { Address } from "./Address";
 
 export class AstFor extends AstNode {
 	constructor(parseTree: any) {
@@ -22,6 +23,8 @@ export class AstFor extends AstNode {
 	}
 
 	public compile(compiler: Compiler): void {
+		compiler.pushLoop(this);
+
 		compiler.emit("For init scope", this, (runtime: Runtime) => {
 			// Push on a scope to handle what drops out of the init vars.
 			runtime.pushScope(new StandardScope(runtime.currentScope));
@@ -33,24 +36,28 @@ export class AstFor extends AstNode {
 
 		this.test.compile(compiler);
 
-		let postLoopLabel = compiler.newLabel(this);
+		this.postLoopLabel = compiler.newLabel(this);
 		compiler.emit("For test checker", this, (runtime: Runtime) => {
 			let testResult = Value.PopAndDeref(runtime);
 			if (!testResult)
-				runtime.gotoPC(postLoopLabel);
+				runtime.gotoPC(this.postLoopLabel);
 		});
 
 		this.body.compile(compiler);
+
+		this.nextLabel = compiler.newLabel(this);
 		this.update.compile(compiler);
 
 		compiler.emit("For loop looptie loop", this, (runtime: Runtime) => {
 			runtime.gotoPC(checkLabel);
 		});
 
-		postLoopLabel.pc = compiler.pc;
+		this.postLoopLabel.pc = compiler.pc;
 		compiler.emit("Drop for scope", this, (runtime: Runtime) => {
 			runtime.popScope();
 		});
+
+		compiler.popLoop();
 	}
 
 	public what: string = "For";
@@ -58,4 +65,8 @@ export class AstFor extends AstNode {
 	public test: AstNode;
 	public update: AstNode;
 	public body: AstNode;
+
+	// For use by break/continue inside.
+	public nextLabel: Address;
+	public postLoopLabel: Address;
 }

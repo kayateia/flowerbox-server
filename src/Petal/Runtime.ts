@@ -81,6 +81,9 @@ export class Runtime {
 				++this.address.pc;
 			else
 				this._setPC = false;
+
+			/*if (!(this.address instanceof Address))
+				throw new RuntimeException("this.address isn't a valid Address", this.address); */
 		}
 
 		while (this._operandStack.length > 0)
@@ -155,6 +158,13 @@ export class Runtime {
 			throw new RuntimeException("Operand stack underflow");
 
 		return this._operandStack[this._operandStack.length - (index+1)];
+	}
+
+	public setOperand(index: number, value: any): void {
+		if (index >= this._operandStack.length)
+			throw new RuntimeException("Operand stack underflow");
+
+		this._operandStack[this._operandStack.length - (index+1)] = value;
 	}
 
 	public discardOperands(count: number): void {
