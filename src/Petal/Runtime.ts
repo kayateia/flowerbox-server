@@ -10,7 +10,7 @@ import { IActionCallback } from "./IActionCallback";
 import { IScope, IScopeCatcher } from "./IScope";
 import { StandardScope } from "./Scopes/StandardScope";
 import { ConstScope } from "./Scopes/ConstScope";
-import { SuspendException, RuntimeException } from "./Exceptions";
+import { RuntimeException } from "./Exceptions";
 import { ThisValue } from "./ThisValue";
 import { Value } from "./Value";
 import * as CorePromises from "../Async/CorePromises";
@@ -84,7 +84,16 @@ export class Runtime {
 		}
 
 		while (this._operandStack.length > 0)
-			console.log("LEFTOVER", this.popOperand());
+			console.log("LEFTOVER OP", this.popOperand());
+
+		while (this._baseStack.length > 0)
+			console.log("LEFTOVER BP", this._baseStack.pop());
+
+		while (this._programStack.length > 0)
+			console.log("LEFTOVER PG", this._programStack.pop());
+
+		while (this._scopeStack.length > 0)
+			console.log("LEFTOVER SC", this._scopeStack.pop());
 	}
 
 	public pushPC(address?: Address): void {
