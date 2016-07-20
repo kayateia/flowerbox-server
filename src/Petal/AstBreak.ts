@@ -7,6 +7,7 @@
 import { AstNode } from "./AstNode";
 import { AstFor } from "./AstFor";
 import { AstForIn } from "./AstForIn";
+import { AstSwitch } from "./AstSwitch";
 import { Runtime } from "./Runtime";
 import { Loops } from "./Loops";
 import { Compiler } from "./Compiler";
@@ -28,6 +29,14 @@ export class AstBreak extends AstNode {
 				runtime.popBase();
 
 				runtime.gotoPC((<AstFor>topLoop).postLoopLabel);
+			});
+		} else if (topLoop instanceof AstSwitch) {
+			compiler.emit("Break statement", this, (runtime: Runtime) => {
+				// The break statement's bp pop is going to be missed when we skip over it, so we'll
+				// just do it here. This is probably not a good idea. FIXME
+				runtime.popBase();
+
+				runtime.gotoPC((<AstSwitch>topLoop).switchEnd);
 			});
 		} /*else if (topLoop instanceof AstWhile) {
 		}*/ else {
