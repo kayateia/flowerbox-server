@@ -19,6 +19,7 @@ import { AstObject } from "./AstObject";
 import { Runtime } from "./Runtime";
 import { RuntimeException } from "./Exceptions";
 import * as Strings from "../Utils/Strings";
+import { Address } from "./Address";
 
 // Simple interface for getting an LValue for a given index/name out of the wrapped object.
 // This may also return a ThisValue or a Promise.
@@ -79,7 +80,7 @@ export class ObjectWrapper {
 				if (typeof(name) === "string" && Strings.stringIn(name, names))
 					return new LValue("Member access", () => {
 						if (typeof(item[name]) === "function")
-							return function() { return ObjectWrapper.Call(item, name, arguments); };
+							return Address.Function(function() { return ObjectWrapper.Call(item, name, arguments); });
 						else
 							return item[name];
 					}, () => {

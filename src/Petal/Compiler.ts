@@ -11,17 +11,28 @@ import { Module } from "./Module";
 import * as Strings from "../Utils/Strings";
 import { Address } from "./Address";
 import { CompileException } from "./Exceptions";
+import { IActionCallback } from "./IActionCallback";
+
+export class NodeStackEntry {
+	constructor(name: string, node: AstNode, cleanup: IActionCallback) {
+		this.name = name;
+		this.node = node;
+		this.cleanup = cleanup;
+	}
+
+	public name: string;
+	public node: AstNode;
+	public cleanup: IActionCallback;
+}
 
 export class Compiler {
 	public program: Step[];
 	public node: AstNode;
-	private _loopStack: AstNode[];
-	private _funcStack: AstFunction[];
+	private _nodeStack: NodeStackEntry[];
 
 	constructor() {
 		this.program = [];
-		this._loopStack = [];
-		this._funcStack = [];
+		this._nodeStack = [];
 	}
 
 	public emit(name: string, node: AstNode, callback: any): number {
@@ -51,39 +62,37 @@ export class Compiler {
 		return new Module(this.program, this.node);
 	}
 
-	public pushLoop(loop: AstNode): void {
-		this._loopStack.push(loop);
+	// This pushes a node on the node stack, which keeps track of where we are within
+	// the AST. This is important in case a goto is required (continue, break, return).
+	// This lets any pending node cleanup actions happen before jumping out.
+	//
+	// Note that this only needs to happen for things that might be interruptible,
+	// like statements with enclosing bp push/pop, loops, functions, etc. For counter
+	// example, it's not necessary in a binary expression because you can't abort one
+	// in any way short of short-circuiting (which it handles in its own way).
+	public pushNode(name: string, node: AstNode, cleanup: IActionCallback): void {
+		this._nodeStack.push(new NodeStackEntry(name, node, cleanup));
 	}
 
-	public popLoop(): void {
-		if (!this._loopStack.length)
-			throw new CompileException("Loop stack underrun");
+	// Pops the top node off the stack and emits its cleanup code.
+	public popNode(): void {
+		if (!this._nodeStack.length)
+			throw new CompileException("Node stack underrun");
 
-		this._loopStack.pop();
+		let entry = this._nodeStack.pop();
+		this.emitNode(entry);
 	}
 
-	public get topLoop(): AstNode {
-		if (!this._loopStack.length)
-			throw new CompileException("Loop stack underrun");
-
-		return this._loopStack[this._loopStack.length - 1];
+	// Emits an entry from the node stack.
+	public emitNode(entry: NodeStackEntry): void {
+		this.emit(entry.name, entry.node, entry.cleanup);
 	}
 
-	public pushFunc(func: AstFunction): void {
-		this._funcStack.push(func);
-	}
+	// Returns the Nth value back from the top of the stack.
+	public getNode(index: number): NodeStackEntry {
+		if (this._nodeStack.length <= index)
+			throw new CompileException("Node stack underrun");
 
-	public popFunc(): void {
-		if (!this._funcStack.length)
-			throw new CompileException("Function stack underrun");
-
-		this._funcStack.pop();
-	}
-
-	public get topFunc(): AstFunction {
-		if (!this._funcStack.length)
-			throw new CompileException("Function stack underrun");
-
-		return this._funcStack[this._funcStack.length - 1];
+		return this._nodeStack[this._nodeStack.length - (1 + index)];
 	}
 }

@@ -8,7 +8,6 @@ import { AstNode } from "./AstNode";
 import { AstFor } from "./AstFor";
 import { AstForIn } from "./AstForIn";
 import { Runtime } from "./Runtime";
-import { Loops } from "./Loops";
 import { Compiler } from "./Compiler";
 import { CompileException } from "./Exceptions";
 
@@ -18,20 +17,19 @@ export class AstContinue extends AstNode {
 	}
 
 	public compile(compiler: Compiler): void {
-		let topLoop = compiler.topLoop;
+		for (let i=0; ; ++i) {
+			let stackTop = compiler.getNode(i);
 
-		// AstFor and AstForIn have the same shape.
-		if (topLoop instanceof AstFor || topLoop instanceof AstForIn) {
-			compiler.emit("Continue statement", this, (runtime: Runtime) => {
-				// The continue statement's bp pop is going to be missed when we skip over it, so we'll
-				// just do it here. This is probably not a good idea. FIXME
-				runtime.popBase();
-
-				runtime.gotoPC((<AstFor>topLoop).nextLabel);
-			});
-		} /*else if (topLoop instanceof AstWhile) {
-		}*/ else {
-			throw new CompileException("Can't place a continue statement outside of a loop", this);
+			// AstFor and AstForIn have the same shape.
+			if (stackTop.node instanceof AstFor || stackTop.node instanceof AstForIn) {
+				compiler.emit("Continue statement", this, (runtime: Runtime) => {
+					runtime.gotoPC((<AstFor>stackTop.node).nextLabel);
+				});
+				break;
+			} /*else if (topLoop instanceof AstWhile) {
+			}*/ else {
+				compiler.emitNode(stackTop);
+			}
 		}
 	}
 

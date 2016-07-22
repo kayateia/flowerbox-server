@@ -36,8 +36,10 @@ export class AstSwitch extends AstNode {
 		if (!this.cases.length)
 			return;
 
-		// We'll count this as a weird loop for the purposes of break processing.
-		compiler.pushLoop(this);
+		compiler.pushNode("Switch end", this, (runtime: Runtime) => {
+			// Pop off the test value.
+			runtime.popOperand();
+		});
 
 		// First thing, calculate the test value. This pushes a value on the operand stack.
 		this.discriminant.compile(compiler);
@@ -73,12 +75,7 @@ export class AstSwitch extends AstNode {
 		});
 
 		this.switchEnd.pc = compiler.pc;
-		compiler.emit("Switch end", this, (runtime: Runtime) => {
-			// Pop off the test value.
-			runtime.popOperand();
-		});
-
-		compiler.popLoop();
+		compiler.popNode();
 	}
 
 	public what: string = "Switch";

@@ -12,7 +12,6 @@ import { StandardScope } from "./Scopes/StandardScope";
 import { Value } from "./Value";
 import { Utils } from "./Utils";
 import { RuntimeException } from "./Exceptions";
-import { Loops } from "./Loops";
 import { Compiler } from "./Compiler";
 import { Address } from "./Address";
 
@@ -28,7 +27,11 @@ export class AstForIn extends AstNode {
 	}
 
 	public compile(compiler: Compiler): void {
-		compiler.pushLoop(this);
+		compiler.pushNode("For-in post-body", this, (runtime: Runtime) => {
+			console.log("POST-LOOP");
+			runtime.popOperand();
+			runtime.popScope();
+		});
 
 		compiler.emit("For-in init scope", this, (runtime: Runtime) => {
 			// Push on a scope to handle what drops out of the init vars.
@@ -57,6 +60,7 @@ export class AstForIn extends AstNode {
 			}
 
 			// Put it back on the stack for our use as the loop goes on.
+			console.log("PRE-LOOP: source is", source);
 			runtime.pushOperand(source);
 		});
 
@@ -64,6 +68,7 @@ export class AstForIn extends AstNode {
 		this.nextLabel = compiler.newLabel(this);
 		compiler.emit("For-in pre-body", this, (runtime: Runtime) => {
 			let right = runtime.getOperand(0);
+			console.log("RIGHT is",right);
 			if (right.length === 0) {
 				runtime.gotoPC(this.postLoopLabel);
 				return;
@@ -80,10 +85,7 @@ export class AstForIn extends AstNode {
 		});
 
 		this.postLoopLabel = compiler.newLabel(this);
-		compiler.emit("For-in post-body", this, (runtime: Runtime) => {
-			runtime.popOperand();
-			runtime.popScope();
-		});
+		compiler.popNode();
 	}
 
 	public what: string = "ForIn";

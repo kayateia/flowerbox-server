@@ -18,11 +18,11 @@ import { Step } from "./Step";
 import { Module } from "./Module";
 import { Address } from "./Address";
 
-/*import * as LibFunctional from "./Lib/Functional";
+import * as LibFunctional from "./Lib/Functional";
 import * as LibMath from "./Lib/Math";
 
 let runtimeLib = new ConstScope(null, new Map<string, any>());
-let runtimeRegistered = false; */
+let runtimeRegistered = false;
 
 export class ExecuteResult {
 	constructor(outOfSteps: boolean, stepsUsed: number, returnValue: any) {
@@ -38,14 +38,13 @@ export class ExecuteResult {
 
 export class Runtime {
 	public address: Address;
+	public returnValue: any;
+
 	private _programStack: Address[];
 	private _scopeStack: IScope[];
 	private _operandStack: any[];
 	private _baseStack: number[];
 	private _setPC: boolean;
-
-	// We'll just make these raw values for now.
-	public returnValue: any;
 
 	private _verbose: boolean;
 
@@ -60,21 +59,23 @@ export class Runtime {
 		this._verbose = verbose;
 
 		this._scopeCatcher = scopeCatcher;
-		this._rootScope = new StandardScope();
-		// this._rootScope = new StandardScope(runtimeLib);
+		// this._rootScope = new StandardScope();
+		this._rootScope = new StandardScope(runtimeLib);
 
-		/*if (!runtimeRegistered) {
+		if (!runtimeRegistered) {
 			runtimeRegistered = true;
 			LibFunctional.registerAll(runtimeLib);
 			LibMath.registerAll(runtimeLib);
-		} */
+		}
 	}
 
-	public execute(): any {
+	public execute(steps?: number): ExecuteResult {
+		let stepsUsed = 0, stepsTotal = steps;
+
 		while (this.address.pc < this.address.module.program.length) {
 			if (this.verbose) {
 				let step = this.address.module.program[this.address.pc];
-				console.log("STEP:", step.name, ",", (<any>step.node).what, ",", step.callback.toString());
+				console.log("STEP AT PC", this.address.pc, ":", step.name, ",", (<any>step.node).what, ",", step.callback.toString());
 			}
 			this.address.module.program[this.address.pc].execute(this);
 			if (!this._setPC)
@@ -82,9 +83,17 @@ export class Runtime {
 			else
 				this._setPC = false;
 
+			if (stepsTotal && !steps--) {
+				return new ExecuteResult(true, stepsUsed, null);
+			} else
+				++stepsUsed;
 			/*if (!(this.address instanceof Address))
 				throw new RuntimeException("this.address isn't a valid Address", this.address); */
 		}
+
+		let returnValue = null;
+		if (this._operandStack.length)
+			returnValue = this.popOperand();
 
 		while (this._operandStack.length > 0)
 			console.log("LEFTOVER OP", this.popOperand());
@@ -97,9 +106,13 @@ export class Runtime {
 
 		while (this._scopeStack.length > 0)
 			console.log("LEFTOVER SC", this._scopeStack.pop());
+
+		return new ExecuteResult(false, stepsUsed, returnValue);
 	}
 
 	public pushPC(address?: Address): void {
+		if (this.verbose)
+			console.log("PUSHPC", address);
 		if (!address)
 			address = this.address;
 		this._programStack.push(address);
@@ -110,9 +123,15 @@ export class Runtime {
 		let address = this._programStack.pop();
 		this.address = new Address(address.pc, address.module, address.node);
 		this._setPC = true;
+
+		if (this.verbose)
+			console.log("POPPC", address);
 	}
 
 	public gotoPC(address: Address): void {
+		if (this.verbose)
+			console.log("GOTOPC", address);
+
 		// See above in popPC().
 		this.address = new Address(address.pc, address.module, address.node);
 		this._setPC = true;
@@ -127,11 +146,16 @@ export class Runtime {
 	}
 
 	public pushScope(scope: IScope): void {
+		if (this.verbose)
+			console.log("PUSHSCOPE", scope);
 		this._scopeStack.push(scope);
 	}
 
 	public popScope(): IScope {
-		return this._scopeStack.pop();
+		let value = this._scopeStack.pop();
+		if (this.verbose)
+			console.log("POPSCOPE", value);
+		return value;
 	}
 
 	public get currentScope(): IScope {
@@ -142,14 +166,14 @@ export class Runtime {
 
 	public pushOperand(val: any): void {
 		if (this._verbose)
-			console.log("OPPUSH:", val);
+			console.log("PUSHOP:", val);
 		this._operandStack.push(val);
 	}
 
 	public popOperand(): any {
 		let val = this._operandStack.pop();
 		if (this._verbose)
-			console.log("OPPOP:", val);
+			console.log("POPOP:", val);
 		return val;
 	}
 
@@ -176,6 +200,9 @@ export class Runtime {
 	}
 
 	public pushBase(): void {
+		if (this.verbose)
+			console.log("PUSHBP", this._operandStack.length);
+
 		this._baseStack.push(this._operandStack.length);
 	}
 
@@ -183,6 +210,9 @@ export class Runtime {
 		let count = this._baseStack.pop();
 		if (count > this._operandStack.length)
 			throw new RuntimeException("Base pointer is higher than the operand stack's top");
+
+		if (this.verbose)
+			console.log("POPBP down", count);
 
 		this._operandStack = this._operandStack.slice(0, count);
 	}

@@ -9,7 +9,6 @@ import { AstFor } from "./AstFor";
 import { AstForIn } from "./AstForIn";
 import { AstSwitch } from "./AstSwitch";
 import { Runtime } from "./Runtime";
-import { Loops } from "./Loops";
 import { Compiler } from "./Compiler";
 import { CompileException } from "./Exceptions";
 
@@ -19,28 +18,24 @@ export class AstBreak extends AstNode {
 	}
 
 	public compile(compiler: Compiler): void {
-		let topLoop = compiler.topLoop;
+		for (let i=0; ; ++i) {
+			let stackTop = compiler.getNode(i);
 
-		// AstFor and AstForIn have the same shape.
-		if (topLoop instanceof AstFor || topLoop instanceof AstForIn) {
-			compiler.emit("Break statement", this, (runtime: Runtime) => {
-				// The break statement's bp pop is going to be missed when we skip over it, so we'll
-				// just do it here. This is probably not a good idea. FIXME
-				runtime.popBase();
-
-				runtime.gotoPC((<AstFor>topLoop).postLoopLabel);
-			});
-		} else if (topLoop instanceof AstSwitch) {
-			compiler.emit("Break statement", this, (runtime: Runtime) => {
-				// The break statement's bp pop is going to be missed when we skip over it, so we'll
-				// just do it here. This is probably not a good idea. FIXME
-				runtime.popBase();
-
-				runtime.gotoPC((<AstSwitch>topLoop).switchEnd);
-			});
-		} /*else if (topLoop instanceof AstWhile) {
-		}*/ else {
-			throw new CompileException("Can't place a break statement outside of a loop", this);
+			// AstFor and AstForIn have the same shape.
+			if (stackTop.node instanceof AstFor || stackTop.node instanceof AstForIn) {
+				compiler.emit("Break for statement", this, (runtime: Runtime) => {
+					runtime.gotoPC((<AstFor>stackTop.node).postLoopLabel);
+				});
+				break;
+			} else if (stackTop.node instanceof AstSwitch) {
+				compiler.emit("Break switch statement", this, (runtime: Runtime) => {
+					runtime.gotoPC((<AstSwitch>stackTop.node).switchEnd);
+				});
+				break;
+			} /*else if (stackTop instanceof AstWhile) {
+			}*/ else {
+				compiler.emitNode(stackTop);
+			}
 		}
 	}
 

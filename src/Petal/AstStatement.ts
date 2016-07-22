@@ -20,12 +20,13 @@ export class AstStatement extends AstNode {
 		compiler.emit("Pre-statement bp save", this, (runtime: Runtime) => {
 			runtime.pushBase();
 		});
+		compiler.pushNode("Post-statement bp restore", this, (runtime: Runtime) => {
+			runtime.popBase();
+		});
 
 		this.statement.compile(compiler);
 
-		compiler.emit("Post-statement bp restore", this, (runtime: Runtime) => {
-			runtime.popBase();
-		});
+		compiler.popNode();
 	}
 
 	public what: string = "Statement";

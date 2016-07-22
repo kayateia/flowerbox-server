@@ -9,7 +9,7 @@ import { AstFunction } from "./AstFunction";
 import { parse } from "./Parser";
 import { Runtime } from "./Runtime";
 import { Value } from "./Value";
-import { Compiler } from "./Compiler";
+import { Compiler, NodeStackEntry } from "./Compiler";
 
 export class AstReturn extends AstNode {
 	constructor(parseTree: any) {
@@ -19,22 +19,32 @@ export class AstReturn extends AstNode {
 	}
 
 	public compile(compiler: Compiler): void {
-		let topFunc = compiler.topFunc;
-
 		if (this.argument)
 			this.argument.compile(compiler);
 
 		compiler.emit("Return statement", this, (runtime: Runtime) => {
+			let value;
 			if (this.argument)
-				runtime.returnValue = Value.PopAndDeref(runtime);
+				value = Value.PopAndDeref(runtime);
 			else
-				runtime.returnValue = null;
+				value = null;
+			runtime.returnValue = value;
+		});
 
-			// The return statement's bp pop is going to be missed when we skip over it, so we'll
-			// just do it here. This is probably not a good idea. FIXME
-			runtime.popBase();
+		// We have to unwind the node stack and emit cleanups as well.
+		let endNode;
+		for (let i=0; ; ++i) {
+			let stackTop = compiler.getNode(i);
+			if (stackTop.node instanceof AstFunction) {
+				let node = <AstFunction>stackTop.node;
+				endNode = node;
+				break;
+			} else
+				compiler.emitNode(stackTop);
+		}
 
-			runtime.gotoPC((<AstFunction>topFunc).endLabel);
+		compiler.emit("Return goto", this, (runtime: Runtime) => {
+			runtime.gotoPC(endNode.endLabel);
 		});
 	}
 

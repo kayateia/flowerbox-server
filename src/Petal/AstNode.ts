@@ -18,7 +18,7 @@ export class Location {
 
 export class AstNode {
 	constructor(parseTree: any) {
-		if (parseTree.loc) {
+		if (parseTree && parseTree.loc) {
 			this.loc = new Location(parseTree.loc.start.line, parseTree.loc.start.column);
 		}
 		// this.originalTree = parseTree;

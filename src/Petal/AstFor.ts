@@ -9,7 +9,6 @@ import { parse } from "./Parser";
 import { Runtime } from "./Runtime";
 import { StandardScope } from "./Scopes/StandardScope";
 import { Value } from "./Value";
-import { Loops } from "./Loops";
 import { Compiler } from "./Compiler";
 import { Address } from "./Address";
 
@@ -23,11 +22,13 @@ export class AstFor extends AstNode {
 	}
 
 	public compile(compiler: Compiler): void {
-		compiler.pushLoop(this);
-
 		compiler.emit("For init scope", this, (runtime: Runtime) => {
 			// Push on a scope to handle what drops out of the init vars.
 			runtime.pushScope(new StandardScope(runtime.currentScope));
+		});
+
+		compiler.pushNode("Drop for scope", this, (runtime: Runtime) => {
+			runtime.popScope();
 		});
 
 		this.init.compile(compiler);
@@ -53,11 +54,7 @@ export class AstFor extends AstNode {
 		});
 
 		this.postLoopLabel.pc = compiler.pc;
-		compiler.emit("Drop for scope", this, (runtime: Runtime) => {
-			runtime.popScope();
-		});
-
-		compiler.popLoop();
+		compiler.popNode();
 	}
 
 	public what: string = "For";

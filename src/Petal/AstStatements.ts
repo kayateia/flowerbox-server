@@ -31,25 +31,26 @@ export class AstStatements extends AstNode {
 				// If we're in a block statement, also push on a new scope.
 				runtime.pushScope(new StandardScope(runtime.currentScope));
 			});
+			compiler.pushNode("Post-block scope cleanup", this, (runtime: Runtime) => {
+				runtime.popScope();
+			});
 		}
 
 		this.body.forEach(n => {
 			compiler.emit("Pre-statement bp save", this, (runtime: Runtime) => {
 				runtime.pushBase();
 			});
+			compiler.pushNode("Post-statement bp restore", this, (runtime: Runtime) => {
+				runtime.popBase();
+			});
 
 			n.compile(compiler);
 
-			compiler.emit("Post-statement bp restore", this, (runtime: Runtime) => {
-				runtime.popBase();
-			});
+			compiler.popNode();
 		});
 
-		if (this.blockStatement) {
-			compiler.emit("Post-block scope pop", this, (runtime: Runtime) => {
-				runtime.popScope();
-			});
-		}
+		if (this.blockStatement)
+			compiler.popNode();
 	}
 
 	public what: string = "Statements";
