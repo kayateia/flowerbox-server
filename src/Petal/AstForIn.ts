@@ -28,7 +28,6 @@ export class AstForIn extends AstNode {
 
 	public compile(compiler: Compiler): void {
 		compiler.pushNode("For-in post-body", this, (runtime: Runtime) => {
-			console.log("POST-LOOP");
 			runtime.popOperand();
 			runtime.popScope();
 		});
@@ -60,7 +59,6 @@ export class AstForIn extends AstNode {
 			}
 
 			// Put it back on the stack for our use as the loop goes on.
-			console.log("PRE-LOOP: source is", source);
 			runtime.pushOperand(source);
 		});
 
@@ -68,7 +66,6 @@ export class AstForIn extends AstNode {
 		this.nextLabel = compiler.newLabel(this);
 		compiler.emit("For-in pre-body", this, (runtime: Runtime) => {
 			let right = runtime.getOperand(0);
-			console.log("RIGHT is",right);
 			if (right.length === 0) {
 				runtime.gotoPC(this.postLoopLabel);
 				return;
