@@ -45,7 +45,10 @@ export class Runtime {
 
 	private _operandStack: any[];
 	private _opptr: number;
+
 	private _baseStack: number[];
+	private _baseptr: number;
+
 	private _setPC: boolean;
 
 	private _verbose: boolean;
@@ -58,6 +61,8 @@ export class Runtime {
 		this._opptr = 0;
 
 		this._baseStack = [];
+		this._baseptr = 0;
+
 		this._programStack = [];
 		this._scopeStack = [];
 		this._verbose = verbose;
@@ -102,8 +107,8 @@ export class Runtime {
 		while (this._opptr > 0)
 			console.log("LEFTOVER OP", this.popOperand());
 
-		while (this._baseStack.length > 0)
-			console.log("LEFTOVER BP", this._baseStack.pop());
+		for (let i=this._baseptr - 1; i >= 0; --i)
+			console.log("LEFTOVER BP", this._baseStack[i]);
 
 		while (this._programStack.length > 0)
 			console.log("LEFTOVER PG", this._programStack.pop());
@@ -216,11 +221,16 @@ export class Runtime {
 		if (this.verbose)
 			console.log("PUSHBP", this._opptr);
 
-		this._baseStack.push(this._opptr);
+		if (this._baseStack.length === this._baseptr) {
+			for (let i=0; i<10000; ++i)
+				this._baseStack.push(null);
+		}
+
+		this._baseStack[this._baseptr++] = this._opptr;
 	}
 
 	public popBase(): void {
-		let opptr = this._baseStack.pop();
+		let opptr = this._baseStack[--this._baseptr];
 		if (opptr > this._opptr)
 			throw new RuntimeException("Base pointer is higher than the operand stack's top");
 
