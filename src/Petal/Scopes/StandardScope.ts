@@ -9,24 +9,24 @@ import { Utils } from "../Utils";
 
 export class StandardScope implements IScope {
 	constructor(parent?: IScope) {
-		this._vars = {}
+		this._vars = new Map<string, any>();
 		this._parent = parent;
 	}
 
 	// Set the value of this specified variable within this scope.
 	public set(name: string, value: any): void {
-		if (this._vars.hasOwnProperty(name))
-			this._vars[name] = value;
+		if (this._vars.has(name))
+			this._vars.set(name, value);
 		else if (this._parent && this._parent.has(name))
 			this._parent.set(name, value);
 		else
-			this._vars[name] = value;
+			this._vars.set(name, value);
 	}
 
 	// Get the value of the specified variable if we have it; undefined otherwise.
 	public get(name: string): any {
-		if (this._vars.hasOwnProperty(name))
-			return this._vars[name];
+		if (this._vars.has(name))
+			return this._vars.get(name);
 		else {
 			if (this._parent)
 				return this._parent.get(name);
@@ -36,7 +36,7 @@ export class StandardScope implements IScope {
 	}
 
 	public has(name: string): boolean {
-		if (this._vars.hasOwnProperty(name))
+		if (this._vars.has(name))
 			return true;
 
 		if (this._parent)
@@ -46,8 +46,8 @@ export class StandardScope implements IScope {
 	}
 
 	public del(name: string): void {
-		if (this._vars.hasOwnProperty(name))
-			delete this._vars[name];
+		if (this._vars.has(name))
+			this._vars.delete(name);
 		else {
 			if (this._parent)
 				this._parent.del(name);
@@ -55,7 +55,7 @@ export class StandardScope implements IScope {
 	}
 
 	public names(): string[] {
-		var ours: string[] = Utils.GetPropertyNames(this._vars);
+		var ours: string[] = [...this._vars.keys()];
 
 		if (this._parent)
 			ours = Utils.CombineArraysUniquely(ours, this._parent.names());
@@ -64,7 +64,7 @@ export class StandardScope implements IScope {
 	}
 
 	// This is just a simple dictionary from name to value.
-	private _vars: any;
+	private _vars: Map<string, any>;
 
 	// If we are a child scope, point to our parent.
 	private _parent: IScope;
