@@ -33,19 +33,25 @@ export class TestSetup {
 	}
 
 	public runProgram() {
-		let compiler = new Petal.Compiler();
-		compiler.compile(this.programParsed);
-		let mod = compiler.module;
+		this.compile();
 		this.runtime.setInitialPC(new Petal.Address(0, this.module, this.programParsed));
 		this.runtime.execute();
 	}
 
 	public async runProgramAsync() {
-		/*this.runtime.pushAction(Petal.Step.Node("Main program", this.programParsed));
-		await this.runtime.executeAsync(1000); */
+		this.compile();
+		this.runtime.setInitialPC(new Petal.Address(0, this.module, this.programParsed));
+		await this.runtime.executeAsync(1000);
+	}
+
+	public compile() {
+		let compiler = new Petal.Compiler();
+		compiler.compile(this.programParsed);
+		this.module = compiler.module;
 	}
 
 	public runtime: Petal.Runtime;
+	public module: Petal.Module;
 	public output: string;
 	public programParsed: Petal.AstNode;
 }

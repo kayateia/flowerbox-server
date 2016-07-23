@@ -89,7 +89,12 @@ export class AstCallExpression extends AstNode {
 				for (let i=this.arguments.length-1; i>=0; --i)
 					args.push(runtime.getOperand(i));
 				let result = address.func(...args);
-				runtime.returnValue = result;
+				if (result instanceof Promise) {
+					return result.then((val: any) => {
+						runtime.returnValue = val;
+					});
+				} else
+					runtime.returnValue = result;
 			} else {
 				// Push our current location on the stack (the return address) and set the new location.
 				runtime.callPC(address);

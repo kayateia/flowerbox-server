@@ -70,7 +70,6 @@ export class Runtime {
 		this._verbose = verbose;
 
 		this._scopeCatcher = scopeCatcher;
-		// this._rootScope = new StandardScope();
 		this._rootScope = new StandardScope(runtimeLib);
 
 		if (!runtimeRegistered) {
@@ -88,11 +87,15 @@ export class Runtime {
 				let step = this.address.module.program[this.address.pc];
 				console.log("STEP AT PC", this.address.pc, ":", step.name, ",", (<any>step.node).what, ",", step.callback.toString());
 			}
-			this.address.module.program[this.address.pc].execute(this);
+			let stepReturn = this.address.module.program[this.address.pc].execute(this);
 			if (!this._setPC)
 				++this.address.pc;
 			else
 				this._setPC = false;
+
+			if (stepReturn instanceof Promise) {
+				return new ExecuteResult(false, stepsUsed, stepReturn);
+			}
 
 			if (stepsTotal && !steps--) {
 				return new ExecuteResult(true, stepsUsed, null);
@@ -119,6 +122,43 @@ export class Runtime {
 			console.log("LEFTOVER SC", this._scopeStack.pop());
 
 		return new ExecuteResult(false, stepsUsed, returnValue);
+	}
+
+	public async executeAsync(steps?: number): Promise<ExecuteResult> {
+		let stepsUsed = 0;
+		while (true) {
+			// Start out executing code.
+			let thisSteps = !steps ? null : Math.min(steps - stepsUsed, 10000);
+			let er = this.execute(thisSteps);
+			stepsUsed += er.stepsUsed;
+
+			// Did we run out of total steps? If so, either yield or bail.
+			if (er.outOfSteps) {
+				if (stepsUsed < steps) {
+					await CorePromises.delay(1);
+					continue;
+				} else
+					return new ExecuteResult(true, stepsUsed, null);
+			}
+
+			// Is the return value a Promise object?
+			if (er.returnValue instanceof Promise) {
+				// Wait on it.
+				let promiseRv = await er.returnValue;
+
+				// Push it value on the operand stack and continue.
+				this.pushOperand(promiseRv);
+
+				continue;
+			}
+
+			// Make sure it's not a wrapped value.
+			er.returnValue = Value.Deref(this, er.returnValue);
+
+			// If we get here, execution halted and we neither ran out of steps nor
+			// got a Promise back, which means... we're done!
+			return new ExecuteResult(false, stepsUsed, er.returnValue);
+		}
 	}
 
 	public pushPC(address?: Address): void {
@@ -252,77 +292,7 @@ export class Runtime {
 		this._opptr = opptr;
 	}
 
-	/* public pushAction(step: Step): void {
-		if (this._verbose)
-			console.log("STEPPUSH", step.name(), ":", step.node(), ":", step.scope());
-		this._pipeline.push(step);
-	}
-
-	public execute(steps?: number): ExecuteResult {
-		let stepsUsed = 0, stepsTotal = steps;
-		let stopEarlyValue = null;
-		while (this._pipeline.length && (steps === undefined || steps === null || steps--)) {
-			let step = this._pipeline.pop();
-			++stepsUsed;
-			if (this._verbose)
-				console.log("STEPPOP:", step);
-			try {
-				stopEarlyValue = step.execute(this);
-				if (stopEarlyValue)
-					return new ExecuteResult(false, stepsUsed, stopEarlyValue);
-			} catch (exc) {
-				if (this._verbose)
-					console.log("EXCEPTION:", exc);
-				throw exc;
-			}
-		}
-
-		// Did we stop early due to running out of steps?
-		if (steps < 0) {
-			return new ExecuteResult(true, stepsUsed, null);
-		} else {
-			// If there was any final return value, return it.
-			return new ExecuteResult(false, stepsUsed, this.popOperand());
-		}
-	}
-
-	public async executeAsync(steps?: number): Promise<ExecuteResult> {
-		let stepsUsed = 0;
-		while (true) {
-			// Start out executing code.
-			let thisSteps = !steps ? null : Math.min(steps - stepsUsed, 10000);
-			let er = this.execute(thisSteps);
-			stepsUsed += er.stepsUsed;
-
-			// Did we run out of total steps? If so, either yield or bail.
-			if (er.outOfSteps) {
-				if (stepsUsed < steps) {
-					await CorePromises.delay(1);
-					continue;
-				} else
-					return new ExecuteResult(true, stepsUsed, null);
-			}
-
-			// Is the return value a Promise object?
-			if (er.returnValue instanceof Promise) {
-				// Wait on it.
-				let promiseRv = await er.returnValue;
-
-				// Push it value on the operand stack and continue.
-				this.pushOperand(promiseRv);
-
-				continue;
-			}
-
-			// Make sure it's not a wrapped value.
-			er.returnValue = Value.Deref(this, er.returnValue);
-
-			// If we get here, execution halted and we neither ran out of steps nor
-			// got a Promise back, which means... we're done!
-			return new ExecuteResult(false, stepsUsed, er.returnValue);
-		}
-	}
-
+	/*
 	// This executes an arbitrary (pre-parsed) function.
 	public executeFunction(func: AstNode | ThisValue, param: any[], maxSteps: number): ExecuteResult {
 		this.pushAction(Step.Node("Call function", AstCallExpression.Create(func, [])));
