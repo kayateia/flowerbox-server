@@ -14,6 +14,7 @@ import { SuspendException, RuntimeException } from "./Exceptions";
 import { ThisValue } from "./ThisValue";
 import { Value } from "./Value";
 import * as CorePromises from "../Async/CorePromises";
+import { FixedStack } from "./FixedStack";
 
 import * as LibFunctional from "./Lib/Functional";
 import * as LibMath from "./Lib/Math";
@@ -111,8 +112,8 @@ export class ExecuteResult {
 
 export class Runtime {
 	constructor(verbose?: boolean, scopeCatcher?: IScopeCatcher) {
-		this._pipeline = [];
-		this._operandStack = [];
+		this._pipeline = new FixedStack<Step>();
+		this._operandStack = new FixedStack<any>();
 		this._verbose = verbose;
 
 		this._scopeCatcher = scopeCatcher;
@@ -134,7 +135,7 @@ export class Runtime {
 	public execute(steps?: number): ExecuteResult {
 		let stepsUsed = 0, stepsTotal = steps;
 		let stopEarlyValue = null;
-		while (this._pipeline.length && (steps === undefined || steps === null || steps--)) {
+		while (!this._pipeline.empty && (steps === undefined || steps === null || steps--)) {
 			let step = this._pipeline.pop();
 			++stepsUsed;
 			if (this._verbose)
@@ -155,7 +156,7 @@ export class Runtime {
 			return new ExecuteResult(true, stepsUsed, null);
 		} else {
 			// If there was any final return value, return it.
-			return new ExecuteResult(false, stepsUsed, this.popOperand());
+			return new ExecuteResult(false, stepsUsed, this._operandStack.empty ? null : this.popOperand());
 		}
 	}
 
@@ -232,13 +233,13 @@ export class Runtime {
 
 	public popAction(): Step {
 		if (this._verbose)
-			console.log("STEPPOPONE:", this._pipeline[this._pipeline.length - 1]);
+			console.log("STEPPOPONE:", this._pipeline.get(0));
 		return this._pipeline.pop();
 	}
 
 	// Pops actions until the function returns false.
 	public popActionWhile(unwinder: (Step) => boolean): void {
-		while (this._pipeline.length && unwinder(this._pipeline[this._pipeline.length - 1])) {
+		while (!this._pipeline.empty && unwinder(this._pipeline.get(0))) {
 			let popped = this._pipeline.pop();
 			if (this._verbose)
 				console.log("STEPPOPPING:", popped);
@@ -246,9 +247,10 @@ export class Runtime {
 	}
 
 	public findAction(tester: (Step) => boolean): Step {
-		for (let i=this._pipeline.length - 1; i>=0; --i)
-			if (tester(this._pipeline[i]))
-				return this._pipeline[i];
+		let count = this._pipeline.count;
+		for (let i=0; i<count; ++i)
+			if (tester(this._pipeline.get(i)))
+				return this._pipeline.get(i);
 
 		return null;
 	}
@@ -256,8 +258,8 @@ export class Runtime {
 	public printActionStack(): void {
 		console.log("");
 		console.log("BEGIN ACTION STACK DUMP");
-		for (let i=0; i<this._pipeline.length; ++i)
-			console.log(this._pipeline[i]);
+		for (let i=0; i<this._pipeline.count; ++i)
+			console.log(this._pipeline.get(i));
 		console.log("END ACTION STACK DUMP");
 		console.log("");
 	}
@@ -278,13 +280,14 @@ export class Runtime {
 	public clearOperand(): void {
 		if (this._verbose)
 			console.log("OPCLEAR");
-		this._operandStack = [];
+		this._operandStack.clear();
 	}
 
 	public currentScope(): IScope {
-		for (let i=this._pipeline.length - 1; i>=0; --i) {
-			if (this._pipeline[i].scope())
-				return this._pipeline[i].scope();
+		let count = this._pipeline.count;
+		for (let i=0; i<count; ++i) {
+			if (this._pipeline.get(i).scope())
+				return this._pipeline.get(i).scope();
 		}
 		return this._rootScope;
 	}
@@ -297,8 +300,8 @@ export class Runtime {
 		return this._scopeCatcher;
 	}
 
-	private _pipeline: Step[];
-	private _operandStack: any[];
+	private _pipeline: FixedStack<Step>;
+	private _operandStack: FixedStack<any>;
 	private _verbose: boolean;
 
 	private _rootScope: IScope;
