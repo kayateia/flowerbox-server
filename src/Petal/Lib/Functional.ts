@@ -39,7 +39,7 @@ export function registerAll(scope: ConstScope): void {
 	let rt = new Runtime();
 	let tempScope = new StandardScope(rt.currentScope);
 	rt.pushScope(tempScope);
-	rt.gotoPC(new Address(0, compiler.module, ast));
+	rt.setInitialPC(new Address(0, compiler.module, ast));
 	let result = rt.execute();
 	if (result.outOfSteps)
 		throw new RuntimeException("Ran out of steps while executing library code setup", null);

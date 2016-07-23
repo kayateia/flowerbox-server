@@ -19,7 +19,7 @@ try {
 	console.log(e);
 }
 
-var runtime = new Petal.Runtime(true);
+var runtime = new Petal.Runtime(false);
 
 var log = function() {
 	let args = [];
@@ -39,7 +39,7 @@ compiler.compile(output);
 compilems = Date.now() - compilems;
 
 let runms: number = Date.now();
-runtime.gotoPC(new Petal.Address(0, compiler.module, output));
+runtime.setInitialPC(new Petal.Address(0, compiler.module, output));
 let results = runtime.execute();
 runms = Date.now() - runms;
 console.log("Command took", results.stepsUsed, "steps,", parsems, "ms to parse,", compilems, "ms to compile, and", runms, "ms to run.");

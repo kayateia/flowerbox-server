@@ -57,6 +57,8 @@ export class Runtime {
 	private _scopeCatcher: IScopeCatcher;
 
 	constructor(verbose?: boolean, scopeCatcher?: IScopeCatcher) {
+		this._setPC = false;
+
 		this._operandStack = [];
 		this._opptr = 0;
 
@@ -137,13 +139,23 @@ export class Runtime {
 			console.log("POPPC", address);
 	}
 
-	public gotoPC(address: Address): void {
+	// Sets a new program counter; if allowPCAdvance is true, then the PC will
+	// be incremented before executing the next step as normal; otherwise this
+	// behavior is inhibited. This is to work properly with things like function
+	// calls, where the normal behavior will skip over the function's first
+	// instruction.
+	public gotoPC(address: Address, allowPCAdvance?: boolean): void {
 		if (this.verbose)
-			console.log("GOTOPC", address);
+			console.log("GOTOPC", address, allowPCAdvance);
 
 		// See above in popPC().
 		this.address = new Address(address.pc, address.module, address.node);
-		this._setPC = true;
+		this._setPC = !allowPCAdvance;
+	}
+
+	// Alias for gotoPC(address, true)
+	public setInitialPC(address: Address): void {
+		this.gotoPC(address, true);
 	}
 
 	// This is like a combo push/goto, but it also makes sure that the pushed

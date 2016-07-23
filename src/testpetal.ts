@@ -63,8 +63,10 @@ runtime.execute(1000); */
 let compiler = new Petal.Compiler();
 compiler.compile(output);
 let mod = compiler.module;
-console.log(mod);
-runtime.gotoPC(new Petal.Address(0, compiler.module, output));
+let i = 0;
+for (let step of mod.program)
+	console.log(i++, step);
+runtime.setInitialPC(new Petal.Address(0, compiler.module, output));
 runtime.execute();
 
 // console.log("Output scope:", runtime.currentScope());

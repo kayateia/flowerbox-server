@@ -36,7 +36,7 @@ export class TestSetup {
 		let compiler = new Petal.Compiler();
 		compiler.compile(this.programParsed);
 		let mod = compiler.module;
-		this.runtime.gotoPC(new Petal.Address(0, mod, this.programParsed));
+		this.runtime.setInitialPC(new Petal.Address(0, this.module, this.programParsed));
 		this.runtime.execute();
 	}
 
