@@ -14,8 +14,7 @@ export class FixedStack<T> {
 
 	public push(value: T): void {
 		if (this._stack.length <= this._sp) {
-			for (let i=0; i<10000; ++i)
-				this._stack.push(null);
+			this._stack[this._stack.length + 10000] = null;
 		}
 
 		this._stack[this._sp++] = value;
