@@ -17,6 +17,7 @@ import * as CorePromises from "../Async/CorePromises";
 import { Step } from "./Step";
 import { Module } from "./Module";
 import { Address } from "./Address";
+import { FixedStack } from "./FixedStack";
 
 import * as LibFunctional from "./Lib/Functional";
 import * as LibMath from "./Lib/Math";
@@ -40,14 +41,12 @@ export class Runtime {
 	public address: Address;
 	public returnValue: any;
 
-	private _programStack: Address[];
-	private _scopeStack: IScope[];
+	private _programStack: FixedStack<Address>;
+	private _scopeStack: FixedStack<IScope>;
 
-	private _operandStack: any[];
-	private _opptr: number;
+	private _operandStack: FixedStack<any>;
 
-	private _baseStack: number[];
-	private _baseptr: number;
+	private _baseStack: FixedStack<number>;
 
 	private _setPC: boolean;
 
@@ -59,14 +58,12 @@ export class Runtime {
 	constructor(verbose?: boolean, scopeCatcher?: IScopeCatcher) {
 		this._setPC = false;
 
-		this._operandStack = [];
-		this._opptr = 0;
+		this._operandStack = new FixedStack<any>();
 
-		this._baseStack = [];
-		this._baseptr = 0;
+		this._baseStack = new FixedStack<number>();
 
-		this._programStack = [];
-		this._scopeStack = [];
+		this._programStack = new FixedStack<Address>();
+		this._scopeStack = new FixedStack<IScope>();
 		this._verbose = verbose;
 
 		this._scopeCatcher = scopeCatcher;
@@ -106,19 +103,19 @@ export class Runtime {
 		}
 
 		let returnValue = null;
-		if (this._opptr > 0)
+		if (!this._operandStack.empty)
 			returnValue = this.popOperand();
 
-		while (this._opptr > 0)
+		while (!this._operandStack.empty)
 			console.log("LEFTOVER OP", this.popOperand());
 
-		for (let i=this._baseptr - 1; i >= 0; --i)
-			console.log("LEFTOVER BP", this._baseStack[i]);
+		for (let i=0; i<this._baseStack.count; ++i)
+			console.log("LEFTOVER BP", this._baseStack.get(i));
 
-		while (this._programStack.length > 0)
+		while (!this._programStack.empty)
 			console.log("LEFTOVER PG", this._programStack.pop());
 
-		while (this._scopeStack.length > 0)
+		while (!this._scopeStack.empty)
 			console.log("LEFTOVER SC", this._scopeStack.pop());
 
 		return new ExecuteResult(false, stepsUsed, returnValue);
@@ -220,76 +217,57 @@ export class Runtime {
 	}
 
 	public get currentScope(): IScope {
-		if (this._scopeStack.length)
-			return this._scopeStack[this._scopeStack.length-1];
+		if (!this._scopeStack.empty)
+			return this._scopeStack.get(0);
 		return this._rootScope;
 	}
 
 	public pushOperand(val: any): void {
 		if (this._verbose)
 			console.log("PUSHOP:", val);
-		if (this._operandStack.length === this._opptr) {
-			for (let i=0; i<10000; ++i)
-				this._operandStack.push(null);
-		}
-		this._operandStack[this._opptr++] = val;
-		if (this._verbose)
-			console.log("OPSTACK IS", this._operandStack.slice(0, this._opptr));
+
+		this._operandStack.push(val);
+		/*if (this._verbose)
+			console.log("OPSTACK IS", this._operandStack);*/
 	}
 
 	public popOperand(): any {
-		if (this._opptr <= 0)
-			throw new RuntimeException("Operand stack underflow");
-		let val = this._operandStack[--this._opptr];
+		let val = this._operandStack.pop();
 		if (this._verbose) {
 			console.log("POPOP:", val);
-			console.log("OPSTACK IS", this._operandStack.slice(0, this._opptr));
+			// console.log("OPSTACK IS", this._operandStack);
 		}
 		return val;
 	}
 
 	public getOperand(index: number): any {
-		if (index >= this._opptr)
-			throw new RuntimeException("Operand stack underflow");
-
-		return this._operandStack[this._opptr - (1+index)];
+		return this._operandStack.get(index);
 	}
 
 	public setOperand(index: number, value: any): void {
-		if (index >= this._opptr)
-			throw new RuntimeException("Operand stack underflow");
-
-		this._operandStack[this._opptr - (1+index)] = value;
+		this._operandStack.set(index, value);
 	}
 
 	public discardOperands(count: number): void {
-		if (count > this._opptr)
-			throw new RuntimeException("Operand stack underflow");
-
-		this._opptr -= count;
+		this._operandStack.popMany(count);
 	}
 
 	public pushBase(): void {
 		if (this.verbose)
-			console.log("PUSHBP", this._opptr);
+			console.log("PUSHBP", this._operandStack.count);
 
-		if (this._baseStack.length === this._baseptr) {
-			for (let i=0; i<10000; ++i)
-				this._baseStack.push(null);
-		}
-
-		this._baseStack[this._baseptr++] = this._opptr;
+		this._baseStack.push(this._operandStack.count);
 	}
 
 	public popBase(): void {
-		let opptr = this._baseStack[--this._baseptr];
-		if (opptr > this._opptr)
+		let opptr = this._baseStack.pop();
+		if (opptr > this._operandStack.count)
 			throw new RuntimeException("Base pointer is higher than the operand stack's top");
 
 		if (this.verbose)
 			console.log("POPBP down", opptr);
 
-		this._opptr = opptr;
+		this._operandStack.popMany(this._operandStack.count - opptr);
 	}
 
 	/*

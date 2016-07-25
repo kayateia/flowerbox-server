@@ -50,6 +50,13 @@ export class FixedStack<T> {
 		return this._stack[this._sp - (1+index)];
 	}
 
+	public set(index: number, value: T): void {
+		if (this._sp < (1+index))
+			throw new RuntimeException("Stack underflow");
+
+		this._stack[this._sp - (1+index)] = value;
+	}
+
 	public get count(): number {
 		return this._sp;
 	}
