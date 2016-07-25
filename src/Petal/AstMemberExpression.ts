@@ -51,7 +51,23 @@ export class AstMemberExpression extends AstNode {
 			else
 				value = iobj.getAccessor(this.member);
 
-			runtime.pushOperand(value);
+			// Unwrap what's there on read, and if it's a Promise, do the read and make
+			// a new LValue that has the raw (succeeded) value as well as the old writer.
+			//
+			// Note: This is kind of a hack. But it limits the damage to one small area (here)
+			// instead of having async and Promise code scattered all over the runtime.
+			// It's also a good bet that most accesses will be reads, anyway, and if they
+			// are writes, a read is likely to have preceeded it.
+			let derefed = Value.Deref(runtime, value);
+			if (derefed instanceof Promise) {
+				return derefed.then((val) => {
+					return new LValue(value.name, () => val, value.write);
+				})
+				.catch((err) => {
+					throw err;
+				});
+			} else
+				runtime.pushOperand(value);
 		});
 	}
 

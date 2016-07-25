@@ -197,6 +197,24 @@ describe("Functional test", function() {
 			});
 	});
 
+	it("should successfully resume after an async method read", function(done) {
+		let program = "log(test.foo);";
+		let test = new TestSetup(program);
+		test.runtime.currentScope.set("test", Petal.ObjectWrapper.WrapGeneric({
+			foo: new Promise(s => setTimeout(s, 1)).then(() => "fooz!")
+		}, ["foo"]));
+		test.runProgramAsync()
+			.then(() => {
+				expect(test.output).toEqual("fooz!\n");
+				done();
+			})
+			.catch(e => {
+				console.log(e);
+				expect(1).toEqual(2);
+				done();
+			});
+	});
+
 	it("should have a working map", function() {
 		basicTest("log(map([1,2,3], function(x) { return x + 1; }))",
 			"[2,3,4]\n");
