@@ -13,7 +13,6 @@ import { RuntimeException } from "./Exceptions";
 import { Value } from "./Value";
 import { Utils } from "./Utils";
 import { ObjectWrapper, IObject } from "./Objects";
-import { ThisValue } from "./ThisValue";
 import { LValue } from "./LValue";
 import { Compiler } from "./Compiler";
 

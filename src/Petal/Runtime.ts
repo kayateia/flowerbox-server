@@ -11,7 +11,6 @@ import { IScope, IScopeCatcher } from "./IScope";
 import { StandardScope } from "./Scopes/StandardScope";
 import { ConstScope } from "./Scopes/ConstScope";
 import { RuntimeException } from "./Exceptions";
-import { ThisValue } from "./ThisValue";
 import { Value } from "./Value";
 import * as CorePromises from "../Async/CorePromises";
 import { Step } from "./Step";

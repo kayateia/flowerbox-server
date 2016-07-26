@@ -34,6 +34,7 @@ export * from "./AstVarStatement";
 export * from "./Check";
 export * from "./Compiler";
 export * from "./Exceptions";
+export * from "./FixedStack";
 export * from "./IActionCallback";
 export * from "./IScope";
 export * from "./LValue";
@@ -41,7 +42,7 @@ export * from "./Module";
 export * from "./Objects";
 export * from "./Parser";
 export * from "./Runtime";
-export * from "./ThisValue";
+export * from "./Step";
 export * from "./Utils";
 export * from "./Value";
 
