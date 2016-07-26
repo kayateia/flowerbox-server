@@ -34,7 +34,7 @@ export class AstMemberExpression extends AstNode {
 		if (this.property)
 			this.property.compile(compiler);
 
-		compiler.emit("Member lookup", this, (runtime: Runtime) => {
+		compiler.emit("Member lookup part 1", this, (runtime: Runtime) => {
 			let property;
 			if (this.property)
 				property = Value.PopAndDeref(runtime);
@@ -52,6 +52,15 @@ export class AstMemberExpression extends AstNode {
 				value = iobj.getAccessor(property);
 			else
 				value = iobj.getAccessor(this.member);
+
+			if (value instanceof Promise)
+				return value;
+			else
+				runtime.pushOperand(value);
+		});
+
+		compiler.emit("Member lookup part 2", this, (runtime: Runtime) => {
+			let value = runtime.popOperand();
 
 			// Unwrap what's there on read, and if it's a Promise, do the read and make
 			// a new LValue that has the raw (succeeded) value as well as the old writer.
