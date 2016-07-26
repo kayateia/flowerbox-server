@@ -41,6 +41,9 @@ export class AstMemberExpression extends AstNode {
 				property = Value.PopAndDeref(runtime);
 			let obj = Value.PopAndDeref(runtime);
 
+			if (!obj)
+				throw new RuntimeException("Null reference", this.member);
+
 			let iobj: IObject = ObjectWrapper.Wrap(obj);
 			if (!iobj)
 				throw new RuntimeException("Can't wrap object for lookup", obj);
