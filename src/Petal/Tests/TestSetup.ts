@@ -32,15 +32,31 @@ export class TestSetup {
 		};
 	}
 
-	public runProgram() {
+	public runProgram(address?: Petal.Address) {
 		this.compile();
-		this.runtime.setInitialPC(new Petal.Address(0, this.module, this.programParsed));
+
+		if (!address)
+			address = new Petal.Address(0, this.module, this.programParsed);
+		else {
+			address.module = this.module;
+			address.node = this.programParsed;
+		}
+
+		this.runtime.setInitialPC(address);
 		this.runtime.execute();
 	}
 
-	public async runProgramAsync() {
+	public async runProgramAsync(address?: Petal.Address) {
 		this.compile();
-		this.runtime.setInitialPC(new Petal.Address(0, this.module, this.programParsed));
+
+		if (!address)
+			address = new Petal.Address(0, this.module, this.programParsed);
+		else {
+			address.module = this.module;
+			address.node = this.programParsed;
+		}
+
+		this.runtime.setInitialPC(address);
 		await this.runtime.executeAsync(1000);
 	}
 

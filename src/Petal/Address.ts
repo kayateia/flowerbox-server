@@ -20,6 +20,7 @@ export class Address {
 		this.node = node;
 		this.func = null;
 		this.thisValue = null;
+		this.injections = {};
 	}
 
 	// Call to make an Address that points to a native function.
@@ -33,6 +34,7 @@ export class Address {
 		let addr = new Address(this.pc, this.module, this.node);
 		addr.func = this.func;
 		addr.thisValue = this.thisValue;
+		addr.injections = this.injections;
 		return addr;
 	}
 
@@ -41,4 +43,5 @@ export class Address {
 	public node: AstNode;
 	public func: any;
 	public thisValue: any;
+	public injections: any;
 }

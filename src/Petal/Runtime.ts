@@ -17,6 +17,7 @@ import { Step } from "./Step";
 import { Module } from "./Module";
 import { Address } from "./Address";
 import { FixedStack } from "./FixedStack";
+import { Compiler } from "./Compiler";
 
 import * as LibFunctional from "./Lib/Functional";
 import * as LibMath from "./Lib/Math";
@@ -157,6 +158,42 @@ export class Runtime {
 		}
 	}
 
+	public executeCode(code: AstNode, injections: any, maxSteps?: number): ExecuteResult {
+		if (injections) {
+			this.pushScope(ConstScope.FromObject(this.currentScope, injections));
+			this.pushScope(new StandardScope(this.currentScope));
+		}
+		var compiler = new Compiler();
+		compiler.compile(code);
+		this.setInitialPC(new Address(0, compiler.module, code));
+		return this.execute(maxSteps);
+	}
+
+	public async executeCodeAsync(code: AstNode, injections: any, maxSteps?: number): Promise<ExecuteResult> {
+		if (injections) {
+			this.pushScope(ConstScope.FromObject(this.currentScope, injections));
+			this.pushScope(new StandardScope(this.currentScope));
+		}
+		var compiler = new Compiler();
+		compiler.compile(code);
+		this.setInitialPC(new Address(0, compiler.module, code));
+		return await this.executeAsync(maxSteps);
+	}
+
+	// This executes an arbitrary (pre-parsed) function.
+	public executeFunction(func: Address, param: any[], maxSteps?: number): ExecuteResult {
+		let address = AstCallExpression.Create(func, param);
+		this.setInitialPC(address);
+		return this.execute(maxSteps);
+	}
+
+	// Same as executeFunction(), but allows for async callbacks to happen down in code execution.
+	public async executeFunctionAsync(func: Address, param: any[], maxSteps?: number): Promise<ExecuteResult> {
+		let address = AstCallExpression.Create(func, param);
+		this.setInitialPC(address);
+		return await this.executeAsync(maxSteps);
+	}
+
 	public pushPC(address?: Address): void {
 		if (this.verbose)
 			console.log("PUSHPC", address);
@@ -285,35 +322,6 @@ export class Runtime {
 	}
 
 	/*
-	// This executes an arbitrary (pre-parsed) function.
-	public executeFunction(func: AstNode | ThisValue, param: any[], maxSteps: number): ExecuteResult {
-		this.pushAction(Step.Node("Call function", AstCallExpression.Create(func, [])));
-		return this.execute(maxSteps);
-	}
-
-	// Same as executeFunction(), but allows for async callbacks to happen down in code execution.
-	public async executeFunctionAsync(func: AstNode | ThisValue, param: any[], maxSteps: number): Promise<ExecuteResult> {
-		this.pushAction(Step.Node("Call function", AstCallExpression.Create(func, [])));
-		return await this.executeAsync(maxSteps);
-	}
-
-	public executeCode(code: AstNode, injections: any, maxSteps: number): ExecuteResult {
-		if (injections) {
-			this.pushAction(Step.Scope("Injections scope", ConstScope.FromObject(this.currentScope(), injections)));
-			this.pushAction(Step.Scope("Replacement root scope", new StandardScope(this.currentScope())));
-		}
-		this.pushAction(Step.Node("Supplied code", code));
-		return this.execute(maxSteps);
-	}
-
-	public async executeCodeAsync(code: AstNode, injections: any, maxSteps: number): Promise<ExecuteResult> {
-		if (injections) {
-			this.pushAction(Step.Scope("Injections scope", ConstScope.FromObject(this.currentScope(), injections)));
-			this.pushAction(Step.Scope("Replacement root scope", new StandardScope(this.currentScope())));
-		}
-		this.pushAction(Step.Node("Supplied code", code));
-		return await this.executeAsync(maxSteps);
-	}
 
 	public pushCallerValue(value: any): void {
 		AstCallExpression.PushPreviousThisValue(this, value);

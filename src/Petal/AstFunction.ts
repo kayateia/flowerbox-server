@@ -15,6 +15,7 @@ import { Address } from "./Address";
 import { ParameterScope } from "./Scopes/ParameterScope";
 import { Step } from "./Step";
 import { LValue } from "./LValue";
+import { Utils } from "./Utils";
 
 export class AstFunction extends AstNode {
 	constructor(parseTree: any) {
@@ -71,8 +72,12 @@ export class AstFunction extends AstNode {
 		// This is relevant because we want to build up the "arguments" parameter,
 		// as well as divining the "this" value.
 		compiler.emit("Function parameters and closure", this, (runtime: Runtime) => {
+			let callee: Address = runtime.getPC(0);
+			let injections: string[] = Utils.GetPropertyNames(callee.injections);
+
 			let argCount = runtime.getOperand(0);
-			let paramScope = new ParameterScope(closureScope, [...this.params, "this", "arguments", "caller"]);
+			let paramScope = new ParameterScope(closureScope,
+				[...this.params, "this", "arguments", "caller", ...injections]);
 			let args = [];
 			for (let i=0; i<argCount; ++i) {
 				let val = runtime.getOperand(1 + argCount - (1+i));
@@ -82,7 +87,9 @@ export class AstFunction extends AstNode {
 			}
 			paramScope.set("arguments", args);
 
-			let callee: Address = runtime.getPC(0);
+			for (let i of injections)
+				paramScope.set(i, callee.injections[i]);
+
 			paramScope.set("this", callee.thisValue);
 
 			if (runtime.countPC > 1) {

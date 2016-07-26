@@ -234,4 +234,17 @@ describe("Functional test", function() {
 		basicTest("var a = 5; switch(a) { case 1: log(1); break; case 5: log(5); case 6: log(6); break; }",
 			"5\n6\n");
 	});
+
+	it("should allow injected values into function calls", function() {
+		// Run once to get the function defined.
+		let test = new TestSetup("function a() { log($, $foo); }");
+		test.runProgram();
+
+		// Run again to call the function. This simulates a function call from elsewhere.
+		let func = test.runtime.currentScope.get("a");
+		func.injections = { $: "test", $foo: "foo" };
+		test.runtime.executeFunction(func, []);
+
+		expect(test.output).toEqual("test foo\n");
+	});
 });
