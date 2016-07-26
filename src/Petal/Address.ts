@@ -15,6 +15,7 @@ export class Address {
 		this.pc = pc;
 		this.module = module;
 		this.node = node;
+		this.func = null;
 	}
 
 	// Call to make an Address that points to a native function.

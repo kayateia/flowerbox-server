@@ -156,8 +156,8 @@ describe("Functional test", function() {
 	});
 
 	it("should allow array creation and access", function() {
-		basicTest("var a = [1,2,3]; log(a[1], a.indexOf, a['indexOf']);",
-			"2 <function> <function>\n");
+		basicTest("var a = [1,2,3]; log(a[1]); log(a.indexOf(2));",
+			"2\n1\n");
 	});
 
 	it("shouldn't leak block scope", function() {
