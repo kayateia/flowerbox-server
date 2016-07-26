@@ -14,6 +14,7 @@ import { Compiler } from "./Compiler";
 import { Address } from "./Address";
 import { ParameterScope } from "./Scopes/ParameterScope";
 import { Step } from "./Step";
+import { LValue } from "./LValue";
 
 export class AstFunction extends AstNode {
 	constructor(parseTree: any) {
@@ -65,15 +66,27 @@ export class AstFunction extends AstNode {
 			runtime.popPC();
 		});
 
-		// Pull in the parameter values.
+		// Pull in the parameter values. Our stack will look like this:
+		// <number of args> <argN> <argN-1> <argN-2> ... <arg0> <callee>
+		// This is relevant because we want to build up the "arguments" parameter,
+		// as well as divining the "this" value.
 		compiler.emit("Function parameters and closure", this, (runtime: Runtime) => {
-			let paramScope = new ParameterScope(closureScope, this.params);
-			for (let i=0; i<this.params.length; ++i) {
-				let val = runtime.getOperand(i);
-				/*if (val instanceof Address)
-					break; */
-				paramScope.set(this.params[this.params.length - (1+i)], val);
+			let argCount = runtime.getOperand(0);
+			let paramScope = new ParameterScope(closureScope, [...this.params, "this", "arguments", "caller"]);
+			let args = [];
+			for (let i=0; i<argCount; ++i) {
+				let val = runtime.getOperand(1 + argCount - (1+i));
+				if (i < this.params.length)
+					paramScope.set(this.params[i], val);
+				args.push(val);
 			}
+			paramScope.set("arguments", args);
+			let callee: LValue = runtime.getOperand(1 + argCount);
+			if (LValue.IsLValue(callee))
+				paramScope.set("this", callee.thisValue);
+			else
+				paramScope.set("this", null);
+			paramScope.set("caller", null);
 
 			let funcScope = new StandardScope(paramScope);
 			runtime.pushScope(funcScope);

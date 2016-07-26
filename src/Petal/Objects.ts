@@ -53,7 +53,7 @@ export class ObjectWrapper {
 
 				return {
 					getAccessor: function(name: string): LValue {
-						return LValue.MakeReadOnly(item[name]);
+						return LValue.MakeReadOnly(item[name], item);
 					}
 				};
 			case "function":
@@ -85,15 +85,17 @@ export class ObjectWrapper {
 							return item[name];
 					}, () => {
 						throw new RuntimeException("Can't write to read-only value");
-					});
+					},
+					item);
 				else if (allowNumeric && typeof(name) === "number") {
 					return new LValue("Array access", (runtime: Runtime): any => {
 						return item[name];
 					}, (runtime: Runtime, value: any): void => {
 						item[name] = value;
-					});
+					},
+					item);
 				} else
-					return LValue.MakeReadOnly(null);
+					return LValue.MakeReadOnly(null, item);
 			}
 		};
 	}
@@ -111,7 +113,8 @@ export class ObjectWrapper {
 					return item[name];
 				}, (runtime: Runtime, value: any) => {
 					item[name] = value;
-				});
+				},
+				item);
 			}
 		};
 	}
