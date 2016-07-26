@@ -81,12 +81,16 @@ export class AstFunction extends AstNode {
 				args.push(val);
 			}
 			paramScope.set("arguments", args);
-			let callee: LValue = runtime.getOperand(1 + argCount);
-			if (LValue.IsLValue(callee))
-				paramScope.set("this", callee.thisValue);
-			else
-				paramScope.set("this", null);
-			paramScope.set("caller", null);
+
+			let callee: Address = runtime.getPC(0);
+			paramScope.set("this", callee.thisValue);
+
+			if (runtime.countPC > 1) {
+				let calleeCaller: Address = runtime.getPC(1);
+				paramScope.set("caller", calleeCaller.thisValue);
+			} else {
+				paramScope.set("caller", null);
+			}
 
 			let funcScope = new StandardScope(paramScope);
 			runtime.pushScope(funcScope);

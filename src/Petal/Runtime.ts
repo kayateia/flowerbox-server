@@ -163,13 +163,13 @@ export class Runtime {
 			console.log("PUSHPC", address);
 		if (!address)
 			address = this.address;
-		this._programStack.push(address);
+		this._programStack.push(address.copy());
 	}
 
 	public popPC(): void {
 		// We have to create a new Address here to avoid mucking up the source Address.
 		let address = this._programStack.pop();
-		this.address = new Address(address.pc, address.module, address.node);
+		this.address = address.copy();
 		this._setPC = true;
 
 		if (this.verbose)
@@ -186,7 +186,7 @@ export class Runtime {
 			console.log("GOTOPC", address, allowPCAdvance);
 
 		// See above in popPC().
-		this.address = new Address(address.pc, address.module, address.node);
+		this.address = address.copy();
 		this._setPC = !allowPCAdvance;
 	}
 
@@ -199,8 +199,23 @@ export class Runtime {
 	// address is the next one after the current one, so we don't get an infinite
 	// call loop.
 	public callPC(address: Address): void {
-		this.pushPC(new Address(this.address.pc + 1, this.address.module, this.address.node));
+		let newAddr = this.address.copy();
+		newAddr.pc++;
+		this.pushPC(newAddr);
 		this.gotoPC(address);
+	}
+
+	// Returns the Nth stack frame from the program stack. Note that the 0th frame
+	// is actually the currently executing function.
+	public getPC(index: number): Address {
+		if (index === 0)
+			return this.address;
+		return this._programStack.get(index - 1);
+	}
+
+	// Returns the number of stack frames on the program stack.
+	public get countPC(): number {
+		return this._programStack.count + 1;
 	}
 
 	public pushScope(scope: IScope): void {

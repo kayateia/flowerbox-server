@@ -71,6 +71,15 @@ export class AstCallExpression extends AstNode {
 				} else
 					runtime.returnValue = result;
 			} else {
+				// See if we got an l-value as the callee. If we did, look for a "this" value
+				// and include it with the address for the program stack.
+				let addressL: LValue = runtime.getOperand(this.arguments.length);
+				let thisValue: any = null;
+				if (LValue.IsLValue(addressL))
+					thisValue = addressL.thisValue;
+				address = address.copy();
+				address.thisValue = thisValue;
+
 				// Push our argument count on the stack so we know how many things are available
 				// on the other end.
 				runtime.pushOperand(this.arguments.length);
