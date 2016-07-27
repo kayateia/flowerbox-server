@@ -27,7 +27,10 @@ export class AstIdentifier extends AstNode {
 				let catcher = runtime.scopeCatcher;
 				if (catcher) {
 					let val = catcher.get(this.name);
-					runtime.pushOperand(val);
+					if (val instanceof Promise)
+						return val;
+					else
+						runtime.pushOperand(val);
 				} else {
 					runtime.pushOperand(null);
 				}
