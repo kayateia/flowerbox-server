@@ -71,8 +71,8 @@ export class AstMemberExpression extends AstNode {
 			// are writes, a read is likely to have preceeded it.
 			let derefed = Value.Deref(runtime, value);
 			if (derefed instanceof Promise) {
-				return derefed.then((val) => {
-					return new LValue(value.name, () => val, value.write);
+				return derefed.then(val => {
+					return new LValue(value.name, () => val, value.write, value.thisValue);
 				})
 				.catch((err) => {
 					throw err;
