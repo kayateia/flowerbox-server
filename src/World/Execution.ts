@@ -47,73 +47,62 @@ class WobWrapper implements Petal.IObject {
 				return this._wob.id;
 			}, () => {
 				throw new WobOperationException("Can't set the id of objects", []);
-			});
+			}, this);
 		}
-
-		let that = this;
 
 		if (index === "location") {
-			return (async function() {
-				let wob = await that._world.getWob(that._wob.container);
-
-				return new Petal.LValue("Wob.location", () => {
-					return new WobWrapper(wob, that._world, that._injections);
-				}, () => {
-					throw new WobOperationException("Can't set the location of objects (use $.move)", []);
-				});
-			})();
+			return new Petal.LValue("Wob.location", async () => {
+				let wob = await this._world.getWob(this._wob.container);
+				return new WobWrapper(wob, this._world, this._injections);
+			}, () => {
+				throw new WobOperationException("Can't set the location of objects (use $.move)", []);
+			}, this);
 		}
 		if (index === "base") {
-			return (async function() {
-				let wob = await that._world.getWob(that._wob.base);
+			return new Petal.LValue("Wob.base", async () => {
+				let wob = await this._world.getWob(this._wob.base);
+				return new WobWrapper(wob, this._world, this._injections);
+			}, (rt, value: any) => {
+				if (value instanceof WobWrapper)
+					value = value.wob.id;
+				if (typeof(value) !== "number" || value < 1)
+					throw new WobReferenceException("Invalid value for base wob ID", value);
 
-				return new Petal.LValue("Wob.base", () => {
-					return new WobWrapper(wob, that._world, that._injections);
-				}, (rt, value: any) => {
-					if (value instanceof WobWrapper)
-						value = value.wob.id;
-					if (typeof(value) !== "number" || value < 1)
-						throw new WobReferenceException("Invalid value for base wob ID", value);
-
-					this._wob.base = value;
-				});
-			})();
+				this._wob.base = value;
+			}, this);
 		}
 		if (index === "contents") {
-			return (async function() {
-				let contents = await that._world.getWobs(that._wob.contents);
-				return new Petal.LValue("Wob.contents", () => {
-					return contents.map(w => new WobWrapper(w, that._world, that._injections));
-				}, () => {
-					throw new WobOperationException("Can't set the contents of objects (use $.move)", []);
-				});
-			})();
+			return new Petal.LValue("Wob.contents", async () => {
+				let contents = await this._world.getWobs(this._wob.contents);
+				return contents.map(w => new WobWrapper(w, this._world, this._injections));
+			}, () => {
+				throw new WobOperationException("Can't set the contents of objects (use $.move)", []);
+			}, this);
 		}
 
-		return (async function() {
+		return (async () => {
 			let member: string = index;
-			let props: string[] = await that._wob.getPropertyNamesI(that._world);
-			let verbs: string[] = await that._wob.getVerbNamesI(that._world);
+			let props: string[] = await this._wob.getPropertyNamesI(this._world);
+			let verbs: string[] = await this._wob.getVerbNamesI(this._world);
 
 			// Check verbs first, but if it's not there, assume it's a property so that new properties can be written.
 			if (Strings.caseIn(member, verbs)) {
-				return (async function() {
-					let verb = await that._wob.getVerbI(member, that._world);
-					return new Petal.LValue("Wob." + member, (runtime: Petal.Runtime) => {
-						return new Petal.ThisValue(that, verb.compiled, that._injections);
-					}, (runtime: Petal.Runtime, value: any) => {
-						throw new WobOperationException("Can't set new verbs right now", []);
-					});
-				})();
+				let verb = await this._wob.getVerbI(member, this._world);
+				return new Petal.LValue("Wob." + member, (runtime: Petal.Runtime) => {
+					let addr = verb.address.copy();
+					addr.thisValue = this;
+					addr.injections = this._injections;
+					return addr;
+				}, (runtime: Petal.Runtime, value: any) => {
+					throw new WobOperationException("Can't set new verbs right now", []);
+				}, this);
 			} else /*if (Strings.caseIn(member, props))*/ {
-				return (async function() {
-					let prop = await that._wob.getPropertyI(member, that._world);
-					return new Petal.LValue("Wob." + member, (runtime: Petal.Runtime) => {
-						return prop;
-					}, (runtime: Petal.Runtime, value: any) => {
-						that._wob.setProperty(member, value);
-					});
-				})();
+				let prop = await this._wob.getPropertyI(member, this._world);
+				return new Petal.LValue("Wob." + member, (runtime: Petal.Runtime) => {
+					return prop;
+				}, (runtime: Petal.Runtime, value: any) => {
+					this._wob.setProperty(member, value);
+				}, this);
 			}
 		})();
 	}
@@ -370,9 +359,10 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 	let root = await world.getWob(1);
 	let parserVerb = root.getVerb("$command");
 	if (parserVerb) {
-		let verbThis = new Petal.ThisValue(new WobWrapper(root, world, injections), parserVerb.compiled, injections);
-		rt.pushCallerValue(dollarParseObj.player);
-		let result: Petal.ExecuteResult = await rt.executeFunctionAsync(verbThis, [], 100000);
+		let addr = parserVerb.address.copy();
+		addr.thisValue = new WobWrapper(root, world, injections);
+		addr.injections = injections;
+		let result: Petal.ExecuteResult = await rt.executeFunctionAsync(addr, [], dollarParseObj.player, 100000);
 		console.log("$command took", result.stepsUsed, "steps");
 		if (result.outOfSteps) {
 			console.log("ERROR: Ran out of steps while running $command");
@@ -390,10 +380,11 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 	// We'll only continue here if we actually found a verb.
 	if (parse.verb) {
 		// Set up a runtime. We'll install our runtime values from above, then call the verb code.
-		// The verb code should create a function named after the verb.
-		let verbThis = new Petal.ThisValue(new WobWrapper(parse.verbObject, world, injections), parse.verb.compiled, injections);
-		rt.pushCallerValue(dollarParseObj.player);
-		let result: Petal.ExecuteResult = await rt.executeFunctionAsync(verbThis, [], 100000);
+		let addr = parse.verb.address.copy();
+		addr.thisValue = new WobWrapper(parse.verbObject, world, injections);
+		addr.injections = injections;
+		let result: Petal.ExecuteResult = await rt.executeFunctionAsync(addr, [], dollarParseObj.player, 100000);
+
 		console.log(parse.verbName, "took", result.stepsUsed, "steps");
 		if (result.outOfSteps) {
 			console.log("ERROR: Ran out of steps while running", parse.verbName);

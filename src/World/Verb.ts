@@ -9,13 +9,15 @@ import { World } from "./World";
 import { LanguageParseException } from "./Exceptions";
 
 export class VerbCode {
-	constructor(sigs: string[], code: Petal.AstNode) {
+	constructor(sigs: string[], parsed: Petal.AstNode, address: Petal.Address) {
 		this.signatures = sigs;
-		this.code = code;
+		this.parsed = parsed;
+		this.address = address;
 	}
 
 	public signatures: string[];
-	public code: Petal.AstNode;
+	public parsed: Petal.AstNode;
+	public address: Petal.Address;
 }
 
 export class Verb {
@@ -33,8 +35,12 @@ export class Verb {
 		return this._signatures;
 	}
 
-	public get compiled(): Petal.AstNode {
-		return this._code.code;
+	public get parsed(): Petal.AstNode {
+		return this._code.parsed;
+	}
+
+	public get address(): Petal.Address {
+		return this._code.address;
 	}
 
 	private parseForSignatures(): void {
