@@ -14,6 +14,7 @@ import { Utils } from "./Utils";
 import { RuntimeException } from "./Exceptions";
 import { Compiler } from "./Compiler";
 import { Address } from "./Address";
+import { ObjectWrapper } from "./Objects";
 
 export class AstForIn extends AstNode {
 	constructor(parseTree: any) {
@@ -49,7 +50,7 @@ export class AstForIn extends AstNode {
 			if (!(source instanceof Array)) {
 				if (typeof(source) !== "object")
 					throw new RuntimeException("Can't enumerate object", source);
-				if (!AstObject.IsPetalObject(source))
+				if (!ObjectWrapper.IsPetalObject(source))
 					throw new RuntimeException("Can't enumerate object", source);
 
 				source = Utils.GetPropertyNames(source)

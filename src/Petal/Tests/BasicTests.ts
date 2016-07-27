@@ -142,7 +142,7 @@ describe("Functional test", function() {
 
 	it("should allow JSON style object construction", function() {
 		basicTest("log({ a:5, 'b':'c', d:{ e:1 }, f:[1,2,3] });",
-			'{"a":5,"b":"c","d":{"e":1,"___petalObject":true},"f":[1,2,3],"___petalObject":true}\n');
+			'{"___petalObject":true,"a":5,"b":"c","d":{"___petalObject":true,"e":1},"f":[1,2,3]}\n');
 	});
 
 	it("should have working member access on JSON style objects", function() {

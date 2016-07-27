@@ -12,6 +12,7 @@ import { Runtime } from "./Runtime";
 import { Value } from "./Value";
 import { Utils } from "./Utils";
 import { Compiler } from "./Compiler";
+import { ObjectWrapper } from "./Objects";
 
 export class AstObject extends AstNode {
 	constructor(parseTree: any) {
@@ -36,24 +37,17 @@ export class AstObject extends AstNode {
 		});
 	}
 
-	public static IsPetalObject(object: any): boolean {
-		if (object === undefined || object === null)
-			return false;
-		return object.___petalObject;
-	}
-
 	public compile(compiler: Compiler): void {
 		Utils.GetPropertyNames(this.properties).reverse().forEach(i =>
 			this.properties[i].compile(compiler));
 
 		compiler.emit("Object collection", this, (runtime: Runtime) => {
 			// This prevents superclass properties from mixing in.
-			let result = new Object(null);
+			let result = ObjectWrapper.NewPetalObject();
 			Utils.GetPropertyNames(this.properties).forEach((p) => {
 				let value = Value.PopAndDeref(runtime);
 				result[p] = value;
 			});
-			result["___petalObject"] = true;
 			runtime.pushOperand(result);
 		});
 	}
