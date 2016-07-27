@@ -34,18 +34,23 @@ export class AstCallExpression extends AstNode {
 	// Generates a synthetic module containing the code needed to make a function
 	// call into some other code. Assumes that "address" refers to a Petal function
 	// and not an external function.
-	public static Create(address: Address, param: any[]): Address {
+	public static Create(address: Address, param: any[], caller: any): Address {
 		let compiler = new Compiler();
 		let newNode = new AstNode({});
 		compiler.emit("Synthetic call", newNode, (runtime: Runtime) => {
+			runtime.pushPC(new Address(0, null, null));
+			runtime.getPC(0).thisValue = caller;
+
 			runtime.pushBase();
 			runtime.pushOperand(address);
 			param.forEach(p => runtime.pushOperand(p));
 			runtime.pushOperand(param.length);
+
 			runtime.callPC(address);
 		});
 		compiler.emit("Synthetic call cleanup", newNode, (runtime: Runtime) => {
 			runtime.popBase();
+			runtime.discardPC();
 		});
 
 		return new Address(0, compiler.module, newNode);

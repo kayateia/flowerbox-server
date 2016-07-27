@@ -181,15 +181,15 @@ export class Runtime {
 	}
 
 	// This executes an arbitrary (pre-parsed) function.
-	public executeFunction(func: Address, param: any[], maxSteps?: number): ExecuteResult {
-		let address = AstCallExpression.Create(func, param);
+	public executeFunction(func: Address, param: any[], caller: any, maxSteps?: number): ExecuteResult {
+		let address = AstCallExpression.Create(func, param, caller);
 		this.setInitialPC(address);
 		return this.execute(maxSteps);
 	}
 
 	// Same as executeFunction(), but allows for async callbacks to happen down in code execution.
-	public async executeFunctionAsync(func: Address, param: any[], maxSteps?: number): Promise<ExecuteResult> {
-		let address = AstCallExpression.Create(func, param);
+	public async executeFunctionAsync(func: Address, param: any[], caller: any, maxSteps?: number): Promise<ExecuteResult> {
+		let address = AstCallExpression.Create(func, param, caller);
 		this.setInitialPC(address);
 		return await this.executeAsync(maxSteps);
 	}
@@ -252,6 +252,13 @@ export class Runtime {
 	// Returns the number of stack frames on the program stack.
 	public get countPC(): number {
 		return this._programStack.count + 1;
+	}
+
+	// Pops the top value off the program stack and discards it.
+	public discardPC(): void {
+		let val = this._programStack.pop();
+		if (this.verbose)
+			console.log("DISCARD PC", val);
 	}
 
 	public pushScope(scope: IScope): void {
