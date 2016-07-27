@@ -118,7 +118,7 @@ export class Wob {
 
 		if (this.base) {
 			let baseWob = await world.getWob(this.base);
-			return baseWob.getPropertyI(name, world);
+			return await baseWob.getPropertyI(name, world);
 		} else
 			return null;
 	}
@@ -156,7 +156,7 @@ export class Wob {
 
 		if (this.base) {
 			let baseWob = await world.getWob(this.base);
-			return baseWob.getVerbI(name, world);
+			return await baseWob.getVerbI(name, world);
 		} else
 			return null;
 	}
@@ -206,21 +206,21 @@ export class Wob {
 		let runresult = rt.executeCode(parsed, null, 1000);
 
 		// Look for the variable that was set in the scope.
-		let scope = rt.currentScope();
+		let scope = rt.currentScope;
 		let varnames = scope.names();
 
 		// This should be a dictionary of verb name -> verb object, where each verb object
 		// contains "sigs" (an array) and "code" (a function object). The code may mutate this scope
 		// later, but we split it up for verbs here.
-		let verbsObj: any = scope.get(varnames[0]);
+		let verbsObj: any = Petal.ObjectWrapper.Unwrap(scope.get(varnames[0]));
 		let verbNames = Petal.Utils.GetPropertyNames(verbsObj);
 		for (let vn of verbNames) {
 			let verbObj = verbsObj[vn];
 			let sigs: string[] = verbObj.sigs;
 			if (sigs === undefined || sigs === null)
 				sigs = [];
-			let code: Petal.AstNode = verbObj.code;
-			this.setVerb(vn, new Verb(vn, new VerbCode(sigs, code)));
+			let code: Petal.Address = verbObj.code;
+			this.setVerb(vn, new Verb(vn, new VerbCode(sigs, code.node, code)));
 		}
 
 		// And set the original data for later.
