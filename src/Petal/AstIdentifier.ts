@@ -7,6 +7,8 @@
 import { AstNode } from "./AstNode";
 import { Runtime } from "./Runtime";
 import { LValue } from "./LValue";
+import { Compiler } from "./Compiler";
+import { RuntimeException } from "./Exceptions";
 
 export class AstIdentifier extends AstNode {
 	constructor(parseTree: any) {
@@ -17,30 +19,31 @@ export class AstIdentifier extends AstNode {
 			this.name = parseTree.name;
 	}
 
-	public execute(runtime: Runtime): any {
-		let scope = runtime.currentScope();
-
-		if (!scope.has(this.name)) {
-			// Try the scope catcher.
-			let catcher = runtime.scopeCatcher;
-			if (catcher) {
-				let val = catcher.get(this.name);
-				if (val instanceof Promise)
-					return val;
-				else
-					runtime.pushOperand(val);
+	public compile(compiler: Compiler): void {
+		compiler.emit("Identifier '" + this.name + "' lookup", this, (runtime: Runtime) => {
+			let scope = runtime.currentScope;
+			if (!scope.has(this.name)) {
+				// Try the scope catcher.
+				let catcher = runtime.scopeCatcher;
+				if (catcher) {
+					let val = catcher.get(this.name);
+					if (val instanceof Promise)
+						return val;
+					else
+						runtime.pushOperand(val);
+				} else {
+					runtime.pushOperand(null);
+				}
 			} else {
-				return runtime.pushOperand(null);
+				// We don't actually push the value itself on, but rather a reference to it that
+				// may be used as a left-hand (assignable) expression.
+				runtime.pushOperand(new LValue(this.name, (rt) => {
+					return scope.get(this.name);
+				}, (rt, value) => {
+					scope.set(this.name, value);
+				}));
 			}
-		}
-
-		// We don't actually push the value itself on, but rather a reference to it that
-		// may be used as a left-hand (assignable) expression.
-		runtime.pushOperand(new LValue(this.name, (rt) => {
-			return scope.get(this.name);
-		}, (rt, value) => {
-			scope.set(this.name, value);
-		}));
+		});
 	}
 
 	public what: string = "Identifier";

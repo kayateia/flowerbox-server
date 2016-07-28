@@ -97,9 +97,9 @@ describe("Functional test", function() {
 	it("can decl multiple variables, call external functions", function() {
 		let program = "var a=2, b=10, c='foo'; log(c); log(test()); log('after');";
 		let test = new TestSetup(program);
-		test.runtime.currentScope().set("test", function() {
+		test.runtime.currentScope.set("test", Petal.Address.Function(function() {
 			return 5;
-		});
+		}));
 		test.runProgram();
 
 		expect(test.output).toEqual("foo\n5\nafter\n");
@@ -142,7 +142,7 @@ describe("Functional test", function() {
 
 	it("should allow JSON style object construction", function() {
 		basicTest("log({ a:5, 'b':'c', d:{ e:1 }, f:[1,2,3] });",
-			'{"a":5,"b":"c","d":{"e":1,"___petalObject":true},"f":[1,2,3],"___petalObject":true}\n');
+			'{"___petalObject":true,"a":5,"b":"c","d":{"___petalObject":true,"e":1},"f":[1,2,3]}\n');
 	});
 
 	it("should have working member access on JSON style objects", function() {
@@ -156,8 +156,8 @@ describe("Functional test", function() {
 	});
 
 	it("should allow array creation and access", function() {
-		basicTest("var a = [1,2,3]; log(a[1], a.indexOf, a['indexOf']);",
-			"2 <function> <function>\n");
+		basicTest("var a = [1,2,3]; log(a[1]); log(a.indexOf(2));",
+			"2\n1\n");
 	});
 
 	it("shouldn't leak block scope", function() {
@@ -183,16 +183,54 @@ describe("Functional test", function() {
 	it("should successfully resume after an async function call", function(done) {
 		let program = "var rv = test(); log('returned', rv);";
 		let test = new TestSetup(program);
-		test.runtime.currentScope().set("test", function() {
+		test.runtime.currentScope.set("test", Petal.Address.Function(function() {
 			return new Promise(complete => {
 				setTimeout(() => {
 					complete(5);
 				}, 1);
 			});
-		});
+		}));
 		test.runProgramAsync()
 			.then(() => {
 				expect(test.output).toEqual("returned 5\n");
+				done();
+			});
+	});
+
+	it("should successfully resume after an async method read", function(done) {
+		let program = "log(test.foo);";
+		let test = new TestSetup(program);
+		test.runtime.currentScope.set("test", Petal.ObjectWrapper.WrapGeneric({
+			foo: new Promise(s => setTimeout(s, 1)).then(() => "fooz!")
+		}, ["foo"]));
+		test.runProgramAsync()
+			.then(() => {
+				expect(test.output).toEqual("fooz!\n");
+				done();
+			})
+			.catch(e => {
+				console.log(e);
+				expect(1).toEqual(2);
+				done();
+			});
+	});
+
+	it("should successfully resume after an async method read returns a promise as an l-value", function(done) {
+		let program = "log(test.foo);";
+		let test = new TestSetup(program);
+		test.runtime.currentScope.set("test", {
+			getAccessor: async function(index: any) {
+				return new Petal.LValue("test.foo", r => "fooz!", () => {});
+			}
+		});
+		test.runProgramAsync()
+			.then(() => {
+				expect(test.output).toEqual("fooz!\n");
+				done();
+			})
+			.catch(e => {
+				console.log(e);
+				expect(1).toEqual(2);
 				done();
 			});
 	});
@@ -215,5 +253,19 @@ describe("Functional test", function() {
 	it("should have fall-through switch statements", function() {
 		basicTest("var a = 5; switch(a) { case 1: log(1); break; case 5: log(5); case 6: log(6); break; }",
 			"5\n6\n");
+	});
+
+	it("should allow injected values into function calls", function() {
+		// Run once to get the function defined.
+		let test = new TestSetup("function a() { log($, $foo); log(this); log(caller); }");
+		test.runProgram();
+
+		// Run again to call the function. This simulates a function call from elsewhere.
+		let func = test.runtime.currentScope.get("a");
+		func.thisValue = "testing this";
+		func.injections = { $: "test", $foo: "foo" };
+		test.runtime.executeFunction(func, [], "testing caller");
+
+		expect(test.output).toEqual("test foo\ntesting this\ntesting caller\n");
 	});
 });

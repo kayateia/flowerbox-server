@@ -10,7 +10,7 @@ export class TestSetup {
 	constructor(program: string, verbose?: boolean) {
 		this.runtime = new Petal.Runtime(verbose);
 		this.output = "";
-		this.runtime.currentScope().set("log", this.getLogger());
+		this.runtime.currentScope.set("log", Petal.Address.Function(this.getLogger()));
 		this.programParsed = Petal.parseFromSource(program);
 	}
 
@@ -32,17 +32,42 @@ export class TestSetup {
 		};
 	}
 
-	public runProgram() {
-		this.runtime.pushAction(Petal.Step.Node("Main program", this.programParsed));
-		this.runtime.execute(1000);
+	public runProgram(address?: Petal.Address) {
+		this.compile();
+
+		if (!address)
+			address = new Petal.Address(0, this.module, this.programParsed);
+		else {
+			address.module = this.module;
+			address.node = this.programParsed;
+		}
+
+		this.runtime.setInitialPC(address);
+		this.runtime.execute();
 	}
 
-	public async runProgramAsync() {
-		this.runtime.pushAction(Petal.Step.Node("Main program", this.programParsed));
+	public async runProgramAsync(address?: Petal.Address) {
+		this.compile();
+
+		if (!address)
+			address = new Petal.Address(0, this.module, this.programParsed);
+		else {
+			address.module = this.module;
+			address.node = this.programParsed;
+		}
+
+		this.runtime.setInitialPC(address);
 		await this.runtime.executeAsync(1000);
 	}
 
+	public compile() {
+		let compiler = new Petal.Compiler();
+		compiler.compile(this.programParsed);
+		this.module = compiler.module;
+	}
+
 	public runtime: Petal.Runtime;
+	public module: Petal.Module;
 	public output: string;
 	public programParsed: Petal.AstNode;
 }

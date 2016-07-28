@@ -142,7 +142,7 @@ acorn.isIdentifierChar = function(code, astral) {
 
 // This is exported primarily for testing.
 export function parseToTree(src: string) {
-	var ast = acorn.parse(src, {
+	let ast = acorn.parse(src, {
 		locations: true
 	});
 	return ast;

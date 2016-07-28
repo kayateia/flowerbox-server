@@ -10,22 +10,12 @@ import { AstReturn } from "./AstReturn";
 import { Runtime } from "./Runtime";
 import { IScope } from "./IScope";
 import { StandardScope } from "./Scopes/StandardScope";
-
-// This is what's actually pushed on the stack when we execute, to guarantee a unique scope.
-export class AstFunctionInstance extends AstNode {
-	constructor(orig: AstFunction, parentScope: IScope) {
-		super({});
-		this.name = orig.name;
-		this.params = orig.params;
-		this.body = orig.body;
-		this.scope = new StandardScope(parentScope);
-	}
-	public what: string = "FunctionInstance";
-	public name: string;
-	public params: string[];
-	public body: AstStatements;
-	public scope: IScope;
-}
+import { Compiler } from "./Compiler";
+import { Address } from "./Address";
+import { ParameterScope } from "./Scopes/ParameterScope";
+import { Step } from "./Step";
+import { LValue } from "./LValue";
+import { Utils } from "./Utils";
 
 export class AstFunction extends AstNode {
 	constructor(parseTree: any) {
@@ -45,22 +35,92 @@ export class AstFunction extends AstNode {
 		return value.what === "Function" || value.what === "FunctionInstance";
 	}
 
-	// We basically just "execute" like an R-Value, to be set in variables or called directly.
-	public execute(runtime: Runtime): void {
-		// Make an instance with an inner scope linked to the current outer scope.
-		let instance: AstFunctionInstance = new AstFunctionInstance(this, runtime.currentScope());
+	public compile(compiler: Compiler): void {
+		let funcStart = compiler.newLabel(this);
+		let closureScope;
 
-		// Set a variable with our name if requested.
-		let curScope = runtime.currentScope();
-		if (this.name)
-			curScope.set(this.name, instance);
+		// Add to the current scope, and capture it for use in the function.
+		compiler.emit("Function call symbol", this, (runtime: Runtime) => {
+			let scope = runtime.currentScope;
+			closureScope = scope;
+			if (this.name)
+				scope.set(this.name, funcStart);
 
-		// And push our value on the operand stack.
-		runtime.pushOperand(instance);
+			// Even if it has no name, we push it on the operand stack as a value in case
+			// someone was trying to call it or assign it to a variable.
+			runtime.pushOperand(funcStart);
+		});
+
+		// We don't actually want to execute the function code here, just define it. So
+		// we'll start by skipping over the function code.
+		let skipOver = compiler.newLabel(this);
+		let afterLabel = compiler.newLabel(this);
+		compiler.replace(skipOver.pc, new Step("Skip over function body", this, (runtime: Runtime) => {
+			runtime.gotoPC(afterLabel);
+		}));
+
+		// Now we'll compile the function contents.
+		funcStart.pc = compiler.pc;
+
+		compiler.pushNode("Function return", this, (runtime: Runtime) => {
+			runtime.popScope();
+			runtime.popPC();
+		});
+
+		// Pull in the parameter values. Our stack will look like this:
+		// <number of args> <argN> <argN-1> <argN-2> ... <arg0> <callee>
+		// This is relevant because we want to build up the "arguments" parameter,
+		// as well as divining the "this" value.
+		compiler.emit("Function parameters and closure", this, (runtime: Runtime) => {
+			let callee: Address = runtime.getPC(0);
+			let injections: string[] = Utils.GetPropertyNames(callee.injections);
+
+			let argCount = runtime.getOperand(0);
+			let paramScope = new ParameterScope(closureScope,
+				[...this.params, "this", "arguments", "caller", ...injections]);
+			let args = [];
+			for (let i=0; i<argCount; ++i) {
+				let val = runtime.getOperand(1 + argCount - (1+i));
+				if (i < this.params.length)
+					paramScope.set(this.params[i], val);
+				args.push(val);
+			}
+			paramScope.set("arguments", args);
+
+			for (let i of injections)
+				paramScope.set(i, callee.injections[i]);
+
+			paramScope.set("this", callee.thisValue);
+
+			if (runtime.countPC > 1) {
+				let calleeCaller: Address = runtime.getPC(1);
+				paramScope.set("caller", calleeCaller.thisValue);
+			} else {
+				paramScope.set("caller", null);
+			}
+
+			let funcScope = new StandardScope(paramScope);
+			runtime.pushScope(funcScope);
+		});
+
+		// And the function body.
+		this.body.compile(compiler);
+
+		// Compile a "just in case" default return.
+		compiler.emit("Function default return", this, (runtime: Runtime) => {
+			runtime.pushOperand(null);
+		});
+
+		this.endLabel = compiler.newLabel(this);
+		compiler.popNode();
+
+		// Now replace the instruction above to properly skip over the function.
+		afterLabel.pc = compiler.pc;
 	}
 
 	public what: string = "Function";
 	public name: string;
 	public params: string[];
 	public body: AstStatements;
+	public endLabel: Address;
 }

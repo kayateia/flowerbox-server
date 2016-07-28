@@ -6,8 +6,9 @@
 
 import { AstNode } from "./AstNode";
 import { parse } from "./Parser";
-import { Step, Runtime } from "./Runtime";
+import { Runtime } from "./Runtime";
 import { Value } from "./Value";
+import { Compiler } from "./Compiler";
 
 export class AstVarDecl extends AstNode {
 	constructor(parseTree: any) {
@@ -17,17 +18,16 @@ export class AstVarDecl extends AstNode {
 			this.init = parse(parseTree.init);
 	}
 
-	public execute(runtime: Runtime): void {
-		runtime.pushAction(new Step(null, "Var assignment for " + this.name, (val) => {
-			let opval: any;
-			if (this.init) {
-				opval = Value.PopAndDeref(runtime);
-			}
-
-			runtime.currentScope().set(this.name, opval);
-		}));
+	public compile(compiler: Compiler): void {
 		if (this.init)
-			runtime.pushAction(new Step(this.init, "Var decl init value"));
+			this.init.compile(compiler);
+
+		compiler.emit("Vardecl init", this, (runtime: Runtime) => {
+			let value;
+			if (this.init)
+				value = Value.PopAndDeref(runtime);
+			runtime.currentScope.set(this.name, value);
+		});
 	}
 
 	public what: string = "VarDecl";

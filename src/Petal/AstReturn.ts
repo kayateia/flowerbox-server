@@ -5,10 +5,11 @@
 */
 
 import { AstNode } from "./AstNode";
-import { AstCallExpression } from "./AstCallExpression";
+import { AstFunction } from "./AstFunction";
 import { parse } from "./Parser";
-import { Step, Runtime } from "./Runtime";
+import { Runtime } from "./Runtime";
 import { Value } from "./Value";
+import { Compiler, NodeStackEntry } from "./Compiler";
 
 export class AstReturn extends AstNode {
 	constructor(parseTree: any) {
@@ -17,7 +18,37 @@ export class AstReturn extends AstNode {
 			this.argument = parse(parseTree.argument);
 	}
 
-	public execute(runtime: Runtime): void {
+	public compile(compiler: Compiler): void {
+		if (this.argument)
+			this.argument.compile(compiler);
+
+		compiler.emit("Return statement", this, (runtime: Runtime) => {
+			let value;
+			if (this.argument)
+				value = Value.PopAndDeref(runtime);
+			else
+				value = null;
+			runtime.returnValue = value;
+		});
+
+		// We have to unwind the node stack and emit cleanups as well.
+		let endNode;
+		for (let i=0; ; ++i) {
+			let stackTop = compiler.getNode(i);
+			if (stackTop.node instanceof AstFunction) {
+				let node = <AstFunction>stackTop.node;
+				endNode = node;
+				break;
+			} else
+				compiler.emitNode(stackTop);
+		}
+
+		compiler.emit("Return goto", this, (runtime: Runtime) => {
+			runtime.gotoPC(endNode.endLabel);
+		});
+	}
+
+	/*public execute(runtime: Runtime): void {
 		runtime.pushAction(Step.Callback("Return unwinder", (s) => {
 			let rv = undefined;
 			if (this.argument)
@@ -29,7 +60,7 @@ export class AstReturn extends AstNode {
 		}));
 		if (this.argument)
 			runtime.pushAction(new Step(this.argument));
-	}
+	} */
 
 	public what: string = "Return";
 	public argument: AstNode;

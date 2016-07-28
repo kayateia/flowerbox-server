@@ -14,11 +14,19 @@ export interface ILValueWriter {
 	(runtime: Runtime, value: any): void
 }
 
+/*
+	An l-value, or "left-hand value" is something that might appear on the left
+	side of an equals sign (or similar update/assignment operator). Because we have
+	to allow for both reading and writing these values, we wrap them in an LValue
+	object. Because we also have to track where member values came from for "this"
+	support (and they are l-values as well), we also throw in a "this" value here.
+*/
 export class LValue {
-	constructor(name: string, reader: ILValueReader, writer: ILValueWriter) {
+	constructor(name: string, reader: ILValueReader, writer: ILValueWriter, thisValue?: any) {
 		this._name = name;
 		this._reader = reader;
 		this._writer = writer;
+		this._this = thisValue;
 	}
 
 	// Reads the value behind the l-value. This should never have any side effects.
@@ -31,9 +39,17 @@ export class LValue {
 		this._writer(runtime, value);
 	}
 
+	// Return the "this" value associated with this l-value, if there is one.
+	public get thisValue(): any {
+		return this._this;
+	}
+
 	// Makes a simple LValue that is read-only for a constant value.
-	public static MakeReadOnly(value: any): LValue {
-		return new LValue("Read-only Value", (rt) => value, (rt) => { throw new RuntimeException("Can't write to read-only value"); });
+	public static MakeReadOnly(value: any, thisValue?: any): LValue {
+		return new LValue("Read-only Value",
+			(rt) => value,
+			(rt) => { throw new RuntimeException("Can't write to read-only value"); },
+			thisValue);
 	}
 
 	// Returns true if the specified object is an LValue.
@@ -59,4 +75,5 @@ export class LValue {
 	private _name: string;
 	private _reader: ILValueReader;
 	private _writer: ILValueWriter;
+	private _this: any;
 }

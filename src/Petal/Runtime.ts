@@ -10,92 +10,20 @@ import { IActionCallback } from "./IActionCallback";
 import { IScope, IScopeCatcher } from "./IScope";
 import { StandardScope } from "./Scopes/StandardScope";
 import { ConstScope } from "./Scopes/ConstScope";
-import { SuspendException, RuntimeException } from "./Exceptions";
-import { ThisValue } from "./ThisValue";
+import { RuntimeException } from "./Exceptions";
 import { Value } from "./Value";
 import * as CorePromises from "../Async/CorePromises";
+import { Step } from "./Step";
+import { Module } from "./Module";
+import { Address } from "./Address";
+import { FixedStack } from "./FixedStack";
+import { Compiler } from "./Compiler";
 
 import * as LibFunctional from "./Lib/Functional";
 import * as LibMath from "./Lib/Math";
 
 let runtimeLib = new ConstScope(null, new Map<string, any>());
 let runtimeRegistered = false;
-
-export class Step {
-	constructor(node: AstNode, name?: string, callback?: IActionCallback, scope?: IScope, extra?: any) {
-		this._node = node;
-		this._name = name;
-		this._callback = callback;
-		this._scope = scope;
-		this._extra = extra;
-	}
-
-	public static ClearOperands(runtime: Runtime): Step {
-		return new Step(null, "Clear Operand Stack", (v) => {
-			runtime.clearOperand();
-		});
-	}
-
-	public static Callback(name: string, callback: IActionCallback): Step {
-		return new Step(null, name, callback);
-	}
-
-	public static Scope(name: string, scope: IScope): Step {
-		return new Step(null, name, null, scope);
-	}
-
-	public static Node(name: string, node: AstNode): Step {
-		return new Step(node, name);
-	}
-
-	public static Nonce(name: string): Step {
-		return new Step(null, name);
-	}
-
-	public static Extra(name: string, extra: any): Step {
-		return new Step(null, name, null, null, extra);
-	}
-
-	public execute(runtime: Runtime): any {
-		// console.log("EXECUTING", this._name, ":", this._node);
-		if (this._node && this._callback)
-			throw new RuntimeException("Can't have both a node and a callback on one step");
-		let result;
-		if (this._node)
-			result = this._node.execute(runtime);
-
-		if (this._callback)
-			result = this._callback(this);
-
-		return result;
-	}
-
-	public node(): AstNode {
-		return this._node;
-	}
-
-	public name(): string {
-		return this._name;
-	}
-
-	public callback(): IActionCallback {
-		return this._callback;
-	}
-
-	public scope(): IScope {
-		return this._scope;
-	}
-
-	public extra(): any {
-		return this._extra;
-	}
-
-	private _node: AstNode;
-	private _name: string;
-	private _callback: IActionCallback;
-	private _scope: IScope;
-	private _extra: any;
-}
 
 export class ExecuteResult {
 	constructor(outOfSteps: boolean, stepsUsed: number, returnValue: any) {
@@ -110,9 +38,32 @@ export class ExecuteResult {
 }
 
 export class Runtime {
+	public address: Address;
+	public returnValue: any;
+
+	private _programStack: FixedStack<Address>;
+	private _scopeStack: FixedStack<IScope>;
+
+	private _operandStack: FixedStack<any>;
+
+	private _baseStack: FixedStack<number>;
+
+	private _setPC: boolean;
+
+	private _verbose: boolean;
+
+	private _rootScope: IScope;
+	private _scopeCatcher: IScopeCatcher;
+
 	constructor(verbose?: boolean, scopeCatcher?: IScopeCatcher) {
-		this._pipeline = [];
-		this._operandStack = [];
+		this._setPC = false;
+
+		this._operandStack = new FixedStack<any>();
+
+		this._baseStack = new FixedStack<number>();
+
+		this._programStack = new FixedStack<Address>();
+		this._scopeStack = new FixedStack<IScope>();
 		this._verbose = verbose;
 
 		this._scopeCatcher = scopeCatcher;
@@ -125,38 +76,49 @@ export class Runtime {
 		}
 	}
 
-	public pushAction(step: Step): void {
-		if (this._verbose)
-			console.log("STEPPUSH", step.name(), ":", step.node(), ":", step.scope());
-		this._pipeline.push(step);
-	}
-
 	public execute(steps?: number): ExecuteResult {
 		let stepsUsed = 0, stepsTotal = steps;
-		let stopEarlyValue = null;
-		while (this._pipeline.length && (steps === undefined || steps === null || steps--)) {
-			let step = this._pipeline.pop();
-			++stepsUsed;
-			if (this._verbose)
-				console.log("STEPPOP:", step);
-			try {
-				stopEarlyValue = step.execute(this);
-				if (stopEarlyValue)
-					return new ExecuteResult(false, stepsUsed, stopEarlyValue);
-			} catch (exc) {
-				if (this._verbose)
-					console.log("EXCEPTION:", exc);
-				throw exc;
+
+		while (this.address.pc < this.address.module.program.length) {
+			if (this.verbose) {
+				let step = this.address.module.program[this.address.pc];
+				console.log("STEP AT PC", this.address.pc, ":", step.name, ",", (<any>step.node).what, ",", step.callback.toString());
 			}
+			let stepReturn = this.address.module.program[this.address.pc].execute(this);
+			if (!this._setPC)
+				++this.address.pc;
+			else
+				this._setPC = false;
+
+			if (stepReturn instanceof Promise) {
+				return new ExecuteResult(false, stepsUsed, stepReturn);
+			}
+
+			if (stepsTotal && !steps--) {
+				return new ExecuteResult(true, stepsUsed, null);
+			} else
+				++stepsUsed;
+			/*if (!(this.address instanceof Address))
+				throw new RuntimeException("this.address isn't a valid Address", this.address); */
 		}
 
-		// Did we stop early due to running out of steps?
-		if (steps < 0) {
-			return new ExecuteResult(true, stepsUsed, null);
-		} else {
-			// If there was any final return value, return it.
-			return new ExecuteResult(false, stepsUsed, this.popOperand());
-		}
+		let returnValue = null;
+		if (!this._operandStack.empty)
+			returnValue = this.popOperand();
+
+		while (!this._operandStack.empty)
+			console.log("LEFTOVER OP", this.popOperand());
+
+		for (let i=0; i<this._baseStack.count; ++i)
+			console.log("LEFTOVER BP", this._baseStack.get(i));
+
+		while (!this._programStack.empty)
+			console.log("LEFTOVER PG", this._programStack.pop());
+
+		while (!this._scopeStack.empty)
+			console.log("LEFTOVER SC", this._scopeStack.pop());
+
+		return new ExecuteResult(false, stepsUsed, returnValue);
 	}
 
 	public async executeAsync(steps?: number): Promise<ExecuteResult> {
@@ -196,35 +158,177 @@ export class Runtime {
 		}
 	}
 
+	public executeCode(code: AstNode, injections: any, maxSteps?: number): ExecuteResult {
+		if (injections) {
+			this.pushScope(ConstScope.FromObject(this.currentScope, injections));
+			this.pushScope(new StandardScope(this.currentScope));
+		}
+		var compiler = new Compiler();
+		compiler.compile(code);
+		this.setInitialPC(new Address(0, compiler.module, code));
+		return this.execute(maxSteps);
+	}
+
+	public async executeCodeAsync(code: AstNode, injections: any, maxSteps?: number): Promise<ExecuteResult> {
+		if (injections) {
+			this.pushScope(ConstScope.FromObject(this.currentScope, injections));
+			this.pushScope(new StandardScope(this.currentScope));
+		}
+		var compiler = new Compiler();
+		compiler.compile(code);
+		this.setInitialPC(new Address(0, compiler.module, code));
+		return await this.executeAsync(maxSteps);
+	}
+
 	// This executes an arbitrary (pre-parsed) function.
-	public executeFunction(func: AstNode | ThisValue, param: any[], maxSteps: number): ExecuteResult {
-		this.pushAction(Step.Node("Call function", AstCallExpression.Create(func, [])));
+	public executeFunction(func: Address, param: any[], caller: any, maxSteps?: number): ExecuteResult {
+		let address = AstCallExpression.Create(func, param, caller);
+		this.setInitialPC(address);
 		return this.execute(maxSteps);
 	}
 
 	// Same as executeFunction(), but allows for async callbacks to happen down in code execution.
-	public async executeFunctionAsync(func: AstNode | ThisValue, param: any[], maxSteps: number): Promise<ExecuteResult> {
-		this.pushAction(Step.Node("Call function", AstCallExpression.Create(func, [])));
+	public async executeFunctionAsync(func: Address, param: any[], caller: any, maxSteps?: number): Promise<ExecuteResult> {
+		let address = AstCallExpression.Create(func, param, caller);
+		this.setInitialPC(address);
 		return await this.executeAsync(maxSteps);
 	}
 
-	public executeCode(code: AstNode, injections: any, maxSteps: number): ExecuteResult {
-		if (injections) {
-			this.pushAction(Step.Scope("Injections scope", ConstScope.FromObject(this.currentScope(), injections)));
-			this.pushAction(Step.Scope("Replacement root scope", new StandardScope(this.currentScope())));
-		}
-		this.pushAction(Step.Node("Supplied code", code));
-		return this.execute(maxSteps);
+	public pushPC(address?: Address): void {
+		if (this.verbose)
+			console.log("PUSHPC", address);
+		if (!address)
+			address = this.address;
+		this._programStack.push(address.copy());
 	}
 
-	public async executeCodeAsync(code: AstNode, injections: any, maxSteps: number): Promise<ExecuteResult> {
-		if (injections) {
-			this.pushAction(Step.Scope("Injections scope", ConstScope.FromObject(this.currentScope(), injections)));
-			this.pushAction(Step.Scope("Replacement root scope", new StandardScope(this.currentScope())));
-		}
-		this.pushAction(Step.Node("Supplied code", code));
-		return await this.executeAsync(maxSteps);
+	public popPC(): void {
+		// We have to create a new Address here to avoid mucking up the source Address.
+		let address = this._programStack.pop();
+		this.address = address.copy();
+		this._setPC = true;
+
+		if (this.verbose)
+			console.log("POPPC", address);
 	}
+
+	// Sets a new program counter; if allowPCAdvance is true, then the PC will
+	// be incremented before executing the next step as normal; otherwise this
+	// behavior is inhibited. This is to work properly with things like function
+	// calls, where the normal behavior will skip over the function's first
+	// instruction.
+	public gotoPC(address: Address, allowPCAdvance?: boolean): void {
+		if (this.verbose)
+			console.log("GOTOPC", address, allowPCAdvance);
+
+		// See above in popPC().
+		this.address = address.copy();
+		this._setPC = !allowPCAdvance;
+	}
+
+	// Alias for gotoPC(address, true)
+	public setInitialPC(address: Address): void {
+		this.gotoPC(address, true);
+	}
+
+	// This is like a combo push/goto, but it also makes sure that the pushed
+	// address is the next one after the current one, so we don't get an infinite
+	// call loop.
+	public callPC(address: Address): void {
+		let newAddr = this.address.copy();
+		newAddr.pc++;
+		this.pushPC(newAddr);
+		this.gotoPC(address);
+	}
+
+	// Returns the Nth stack frame from the program stack. Note that the 0th frame
+	// is actually the currently executing function.
+	public getPC(index: number): Address {
+		if (index === 0)
+			return this.address;
+		return this._programStack.get(index - 1);
+	}
+
+	// Returns the number of stack frames on the program stack.
+	public get countPC(): number {
+		return this._programStack.count + 1;
+	}
+
+	// Pops the top value off the program stack and discards it.
+	public discardPC(): void {
+		let val = this._programStack.pop();
+		if (this.verbose)
+			console.log("DISCARD PC", val);
+	}
+
+	public pushScope(scope: IScope): void {
+		if (this.verbose)
+			console.log("PUSHSCOPE", scope);
+		this._scopeStack.push(scope);
+	}
+
+	public popScope(): IScope {
+		let value = this._scopeStack.pop();
+		if (this.verbose)
+			console.log("POPSCOPE", value);
+		return value;
+	}
+
+	public get currentScope(): IScope {
+		if (!this._scopeStack.empty)
+			return this._scopeStack.get(0);
+		return this._rootScope;
+	}
+
+	public pushOperand(val: any): void {
+		if (this._verbose)
+			console.log("PUSHOP:", val);
+
+		this._operandStack.push(val);
+		/*if (this._verbose)
+			console.log("OPSTACK IS", this._operandStack);*/
+	}
+
+	public popOperand(): any {
+		let val = this._operandStack.pop();
+		if (this._verbose) {
+			console.log("POPOP:", val);
+			// console.log("OPSTACK IS", this._operandStack);
+		}
+		return val;
+	}
+
+	public getOperand(index: number): any {
+		return this._operandStack.get(index);
+	}
+
+	public setOperand(index: number, value: any): void {
+		this._operandStack.set(index, value);
+	}
+
+	public discardOperands(count: number): void {
+		this._operandStack.popMany(count);
+	}
+
+	public pushBase(): void {
+		if (this.verbose)
+			console.log("PUSHBP", this._operandStack.count);
+
+		this._baseStack.push(this._operandStack.count);
+	}
+
+	public popBase(): void {
+		let opptr = this._baseStack.pop();
+		if (opptr > this._operandStack.count)
+			throw new RuntimeException("Base pointer is higher than the operand stack's top");
+
+		if (this.verbose)
+			console.log("POPBP down", opptr);
+
+		this._operandStack.popMany(this._operandStack.count - opptr);
+	}
+
+	/*
 
 	public pushCallerValue(value: any): void {
 		AstCallExpression.PushPreviousThisValue(this, value);
@@ -260,34 +364,7 @@ export class Runtime {
 			console.log(this._pipeline[i]);
 		console.log("END ACTION STACK DUMP");
 		console.log("");
-	}
-
-	public pushOperand(val: any): void {
-		if (this._verbose)
-			console.log("OPPUSH:", val);
-		this._operandStack.push(val);
-	}
-
-	public popOperand(): any {
-		let val = this._operandStack.pop();
-		if (this._verbose)
-			console.log("OPPOP:", val);
-		return val;
-	}
-
-	public clearOperand(): void {
-		if (this._verbose)
-			console.log("OPCLEAR");
-		this._operandStack = [];
-	}
-
-	public currentScope(): IScope {
-		for (let i=this._pipeline.length - 1; i>=0; --i) {
-			if (this._pipeline[i].scope())
-				return this._pipeline[i].scope();
-		}
-		return this._rootScope;
-	}
+	} */
 
 	public get verbose(): boolean {
 		return this._verbose;
@@ -296,11 +373,4 @@ export class Runtime {
 	public get scopeCatcher(): IScopeCatcher {
 		return this._scopeCatcher;
 	}
-
-	private _pipeline: Step[];
-	private _operandStack: any[];
-	private _verbose: boolean;
-
-	private _rootScope: IScope;
-	private _scopeCatcher: IScopeCatcher;
 }

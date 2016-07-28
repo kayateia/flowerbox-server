@@ -4,14 +4,17 @@ import * as Petal from "./Petal/Petal";
 import * as fs from "fs";
 
 //var output = Parser.compileToTree(
-var output;
+let output;
 
 /*let acorn = require("acorn");
 console.log(acorn); */
 
 try {
 	output = Petal.parseFromSource(
-		"log(map([1,2,3], a => a+1));"
+		// "function test(a) { a += 'woot'; log('test!', a, (1+2) < (5*2)); } log('this is a test!');\nlog('this too!');\ntest('woot');\n"
+		"(function(a) { a += 'woot'; log(a); })('bar');"
+
+		// "log(map([1,2,3], a => a+1));"
 		// "var a = 5; if (a == 5 || log('no1')) log('yes1'); if (!(a != 5 && log('no2'))) log('yes2');"
 		// "var a = [1,2,3]; for (var @i in a) { if (@i == 2) continue; log(@i); } log(a);"
 		// "var a = ''; for (var i=0; i<5; ++i) a += 'a'; log(a);"
@@ -34,7 +37,7 @@ try {
 		// "for (var i=0; i < (function () { log('inner i=', i); return i >= 5 ? 5 : i += 1 })(); i++) { log('i=', i); }"
 		// "function testblob(#a, b, c) { return #a.baz+@cool.bar()+c; } testblob(1,2,'fooz'); (function() { console.log('boo!'); })();"
 	);
-	console.log(JSON.stringify(output, null, 4));
+	// console.log(JSON.stringify(output, null, 4));
 } catch (e) {
 	console.log(e);
 }
@@ -49,12 +52,21 @@ var log = function() {
 		args.push(arguments[i]);
 	console.log("LOG OUTPUT:", ...args);
 };
-runtime.currentScope().set("log", log);
+runtime.currentScope.set("log", Petal.Address.Function(log));
 
-let petalConsole: any = Object.create(null);
+/*let petalConsole: any = Object.create(null);
 petalConsole.log = log;
-runtime.currentScope().set("console", Petal.ObjectWrapper.WrapGeneric(petalConsole, ["log"]));
+runtime.currentScope().set("console", Petal.ObjectWrapper.WrapGeneric(petalConsole, ["log"])); */
 
-runtime.pushAction(Petal.Step.Node("Main program", output));
-runtime.execute(1000);
-console.log("Output scope:", runtime.currentScope());
+/*runtime.pushAction(Petal.Step.Node("Main program", output));
+runtime.execute(1000); */
+let compiler = new Petal.Compiler();
+compiler.compile(output);
+let mod = compiler.module;
+let i = 0;
+for (let step of mod.program)
+	console.log(i++, step);
+runtime.setInitialPC(new Petal.Address(0, compiler.module, output));
+runtime.execute();
+
+// console.log("Output scope:", runtime.currentScope());

@@ -7,6 +7,7 @@
 // This is just a catch-all wrapper that other consumers can import instead of
 // having to manually import individual files.
 
+export * from "./Address";
 export * from "./AstArray";
 export * from "./AstAssignment";
 export * from "./AstBinaryExpression";
@@ -31,14 +32,17 @@ export * from "./AstUpdate";
 export * from "./AstVarDecl";
 export * from "./AstVarStatement";
 export * from "./Check";
+export * from "./Compiler";
 export * from "./Exceptions";
+export * from "./FixedStack";
 export * from "./IActionCallback";
 export * from "./IScope";
 export * from "./LValue";
+export * from "./Module";
 export * from "./Objects";
 export * from "./Parser";
 export * from "./Runtime";
-export * from "./ThisValue";
+export * from "./Step";
 export * from "./Utils";
 export * from "./Value";
 

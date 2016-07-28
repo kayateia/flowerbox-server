@@ -8,9 +8,11 @@ import { AstNode } from "./AstNode";
 import { AstIdentifier } from "./AstIdentifier";
 import { parse } from "./Parser";
 import { ParseException } from "./Exceptions";
-import { Step, Runtime } from "./Runtime";
+import { Runtime } from "./Runtime";
 import { Value } from "./Value";
 import { Utils } from "./Utils";
+import { Compiler } from "./Compiler";
+import { ObjectWrapper } from "./Objects";
 
 export class AstObject extends AstNode {
 	constructor(parseTree: any) {
@@ -35,25 +37,19 @@ export class AstObject extends AstNode {
 		});
 	}
 
-	public static IsPetalObject(object: any): boolean {
-		if (object === undefined || object === null)
-			return false;
-		return object.___petalObject;
-	}
+	public compile(compiler: Compiler): void {
+		Utils.GetPropertyNames(this.properties).reverse().forEach(i =>
+			this.properties[i].compile(compiler));
 
-	public execute(runtime: Runtime): any {
-		runtime.pushAction(Step.Callback("Object constructor", () => {
+		compiler.emit("Object collection", this, (runtime: Runtime) => {
 			// This prevents superclass properties from mixing in.
-			let result = new Object(null);
+			let result = ObjectWrapper.NewPetalObject();
 			Utils.GetPropertyNames(this.properties).forEach((p) => {
 				let value = Value.PopAndDeref(runtime);
 				result[p] = value;
 			});
-			result["___petalObject"] = true;
 			runtime.pushOperand(result);
-		}));
-		Utils.GetPropertyNames(this.properties).forEach((i) =>
-			runtime.pushAction(new Step(this.properties[i], "Object member")));
+		});
 	}
 
 	public what: string = "ObjectExpression";

@@ -6,9 +6,10 @@
 
 import { AstNode } from "./AstNode";
 import { parse } from "./Parser";
-import { Step, Runtime } from "./Runtime";
+import { Runtime } from "./Runtime";
 import { Value } from "./Value";
-import { Loops } from "./Loops";
+import { Compiler } from "./Compiler";
+import { Address } from "./Address";
 
 class SwitchCase {
 	constructor(test: AstNode, body: AstNode[]) {
@@ -31,53 +32,56 @@ export class AstSwitch extends AstNode {
 		}
 	}
 
-	public execute(runtime: Runtime): void {
-		if (this.cases.length < 1)
+	public compile(compiler: Compiler): void {
+		if (!this.cases.length)
 			return;
 
-		// Stack marker in case we want to break.
-		Loops.PushMarker(runtime, Loops.Outside);
+		compiler.pushNode("Switch end", this, (runtime: Runtime) => {
+			// Pop off the test value.
+			runtime.popOperand();
+		});
 
-		let that = this;
-		let discriminant;
-		let curTestIdx = 0;
+		// First thing, calculate the test value. This pushes a value on the operand stack.
+		this.discriminant.compile(compiler);
 
-		function doIteration() {
-			// Grab the condition value.
+		// Deref the value.
+		compiler.emit("Switch test deref", this, (runtime: Runtime) => {
 			let value = Value.PopAndDeref(runtime);
-			if (discriminant === value) {
-				// Yay, we found it. Push on the code for the rest of the cases. Either one
-				// will have a break statement or we'll execute it all.
-				for (let i=that.cases.length-1; i>=curTestIdx; --i) {
-					for (let j=that.cases[i].body.length-1; j>=0; --j) {
-						runtime.pushAction(Step.Node("Case code", that.cases[i].body[j]));
-					}
+			runtime.pushOperand(value);
+		});
+
+		// Evaulate each test case...
+		let caseLabels = [];
+		this.cases.forEach((c,idx) => {
+			c.test.compile(compiler);
+			compiler.emit("Switch case test", this, (runtime: Runtime) => {
+				let result = Value.PopAndDeref(runtime);
+				if (result === runtime.getOperand(0)) {
+					// Whee, we found it. Jump to the appropriate case label.
+					runtime.gotoPC(caseLabels[idx]);
 				}
-				return;
-			} else {
-				// Nope. Push on the next test and callback.
-				if (++curTestIdx >= that.cases.length)
-					return;
+			});
+		});
 
-				runtime.pushAction(Step.Callback("Switch test case callback", doIteration));
-				runtime.pushAction(Step.Node("Switch first case", that.cases[curTestIdx].test));
-			}
-		};
+		this.switchEnd = compiler.newLabel(this);
+		compiler.emit("Switch bail", this, (runtime: Runtime) => {
+			runtime.gotoPC(this.switchEnd);
+		});
 
-		// Grab the discriminant.
-		runtime.pushAction(Step.Callback("Switch get discriminant", () => {
-			discriminant = Value.PopAndDeref(runtime);
+		// Now all the body code.
+		this.cases.forEach(c => {
+			caseLabels.push(compiler.newLabel(this));
+			c.body.forEach(b => b.compile(compiler));
+		});
 
-			// And push on the first test value execution.
-			runtime.pushAction(Step.Callback("Switch test case callback", doIteration));
-			runtime.pushAction(Step.Node("Switch first case", this.cases[0].test));
-		}));
-
-		// First thing, calculate the test value.
-		runtime.pushAction(Step.Node("Switch test value", this.discriminant));
+		this.switchEnd.pc = compiler.pc;
+		compiler.popNode();
 	}
 
 	public what: string = "Switch";
 	public discriminant: AstNode;
 	public cases: SwitchCase[];
+
+	// For break support.
+	public switchEnd: Address;
 }

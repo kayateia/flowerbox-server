@@ -5,15 +5,13 @@
 */
 
 import { LValue } from "./LValue";
-import { ThisValue } from "./ThisValue";
 import { Runtime } from "./Runtime";
 import { RuntimeException } from "./Exceptions";
 
 export class Value {
-	// Handles derefing both ThisValue and LValue.
+	// Handles derefing LValue if needed.
 	public static Deref(runtime: Runtime, value: any): any {
-		let lval = ThisValue.Deref(value);
-		return LValue.Deref(runtime, lval);
+		return LValue.Deref(runtime, value);
 	}
 
 	// Pops from the operand stack and returns the deref'd value.
@@ -21,16 +19,7 @@ export class Value {
 		return Value.Deref(runtime, runtime.popOperand());
 	}
 
-	public static GetThisValue(value: any): ThisValue {
-		if (ThisValue.IsThisValue(value))
-			return value;
-		else
-			throw new RuntimeException("Can't convert value to ThisValue", value);
-	}
-
 	public static GetLValue(value: any): LValue {
-		if (ThisValue.IsThisValue(value))
-			value = ThisValue.Deref(value);
 		if (LValue.IsLValue(value))
 			return value;
 		else

@@ -8,13 +8,13 @@ import { AstNode } from "./AstNode";
 import { AstIdentifier } from "./AstIdentifier";
 import { AstFunction } from "./AstFunction";
 import { parse } from "./Parser";
-import { Step, Runtime } from "./Runtime";
+import { Runtime } from "./Runtime";
 import { RuntimeException } from "./Exceptions";
 import { Value } from "./Value";
 import { Utils } from "./Utils";
 import { ObjectWrapper, IObject } from "./Objects";
-import { ThisValue } from "./ThisValue";
 import { LValue } from "./LValue";
+import { Compiler } from "./Compiler";
 
 // This unfortunately covers both a.b and a["b"] (non-computed and computed).
 export class AstMemberExpression extends AstNode {
@@ -28,7 +28,61 @@ export class AstMemberExpression extends AstNode {
 		}
 	}
 
-	public execute(runtime: Runtime): void {
+	// FIXME: Doesn't handle ThisValues.
+	public compile(compiler: Compiler): void {
+		this.obj.compile(compiler);
+		if (this.property)
+			this.property.compile(compiler);
+
+		compiler.emit("Member lookup part 1", this, (runtime: Runtime) => {
+			let property;
+			if (this.property)
+				property = Value.PopAndDeref(runtime);
+			let obj = Value.PopAndDeref(runtime);
+
+			if (!obj)
+				throw new RuntimeException("Null reference", this.member);
+
+			let iobj: IObject = ObjectWrapper.Wrap(obj);
+			if (!iobj)
+				throw new RuntimeException("Can't wrap object for lookup", obj);
+
+			let value;
+			if (this.property)
+				value = iobj.getAccessor(property);
+			else
+				value = iobj.getAccessor(this.member);
+
+			if (value instanceof Promise)
+				return value;
+			else
+				runtime.pushOperand(value);
+		});
+
+		compiler.emit("Member lookup part 2", this, (runtime: Runtime) => {
+			let value = runtime.popOperand();
+
+			// Unwrap what's there on read, and if it's a Promise, do the read and make
+			// a new LValue that has the raw (succeeded) value as well as the old writer.
+			//
+			// Note: This is kind of a hack. But it limits the damage to one small area (here)
+			// instead of having async and Promise code scattered all over the runtime.
+			// It's also a good bet that most accesses will be reads, anyway, and if they
+			// are writes, a read is likely to have preceeded it.
+			let derefed = Value.Deref(runtime, value);
+			if (derefed instanceof Promise) {
+				return derefed.then(val => {
+					return new LValue(value.name, () => val, value.write, value.thisValue);
+				})
+				.catch((err) => {
+					throw err;
+				});
+			} else
+				runtime.pushOperand(value);
+		});
+	}
+
+	/*public execute(runtime: Runtime): void {
 		// See IObject.ts for more info about what's going on in here.
 		runtime.pushAction(Step.Callback("Member lookup", () => {
 			let obj = Value.PopAndDeref(runtime);
@@ -77,7 +131,7 @@ export class AstMemberExpression extends AstNode {
 		runtime.pushAction(Step.Node("Member object", this.obj));
 		if (this.property)
 			runtime.pushAction(Step.Node("Member index", this.property));
-	}
+	} */
 
 	public what: string = "MemberExpression";
 	public obj: AstNode;

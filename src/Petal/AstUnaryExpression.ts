@@ -5,9 +5,10 @@
 */
 
 import { AstNode } from "./AstNode";
-import { Step, Runtime } from "./Runtime";
+import { Runtime } from "./Runtime";
 import { parse } from "./Parser";
 import { Value } from "./Value";
+import { Compiler } from "./Compiler";
 
 export class AstUnaryExpression extends AstNode {
 	constructor(parseTree: any) {
@@ -16,8 +17,9 @@ export class AstUnaryExpression extends AstNode {
 		this.argument = parse(parseTree.argument);
 	}
 
-	public execute(runtime: Runtime): void {
-		runtime.pushAction(Step.Callback("Binary comparison", () => {
+	public compile(compiler: Compiler): void {
+		this.argument.compile(compiler);
+		compiler.emit("Unary '" + this.operator + "'", this, (runtime: Runtime) => {
 			let v1 = Value.PopAndDeref(runtime);
 			let result = v1;
 			switch (this.operator) {
@@ -30,8 +32,7 @@ export class AstUnaryExpression extends AstNode {
 			}
 
 			runtime.pushOperand(result);
-		}));
-		runtime.pushAction(new Step(this.argument, "UE argument"));
+		});
 	}
 
 	public what: string = "UnaryExpression";

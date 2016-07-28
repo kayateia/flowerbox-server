@@ -15,10 +15,11 @@
 //
 
 import { LValue } from "./LValue";
-import { AstObject } from "./AstObject";
 import { Runtime } from "./Runtime";
 import { RuntimeException } from "./Exceptions";
 import * as Strings from "../Utils/Strings";
+import { Address } from "./Address";
+import { Utils } from "./Utils";
 
 // Simple interface for getting an LValue for a given index/name out of the wrapped object.
 // This may also return a ThisValue or a Promise.
@@ -27,6 +28,32 @@ export interface IObject {
 }
 
 export class ObjectWrapper {
+	// Takes a Petal object and unwraps it into a form suitable for use outside of Petal.
+	public static Unwrap(obj: any): any {
+		let out = {};
+		for (let i of Utils.GetPropertyNames(obj)) {
+			if (!i.startsWith("___"))
+				out[i] = obj[i];
+		}
+
+		return out;
+	}
+
+	// Returns true if this is a Petal object.
+	public static IsPetalObject(object: any): boolean {
+		if (object === undefined || object === null)
+			return false;
+		return object.___petalObject;
+	}
+
+	// Returns a new Petal object.
+	public static NewPetalObject(): any {
+		let obj = new Object(null);
+		obj["___petalObject"] = true;
+		return obj;
+	}
+
+	// Takes an item and turns it into an IObject suitable for use in AstMemberExpression.
 	public static Wrap(item: any): IObject {
 		switch (typeof(item)) {
 			case "number":
@@ -36,7 +63,7 @@ export class ObjectWrapper {
 					"lastIndexOf", "repeat", "replace", "slice", "split", "startsWith", "substr", "substring",
 					"toLowerCase", "toUpperCase", "trim", "trimLeft", "trimRight", "length"]);
 			case "object":
-				if (AstObject.IsPetalObject(item))
+				if (ObjectWrapper.IsPetalObject(item))
 					return ObjectWrapper.WrapPetalObject(item);
 				if (item.getAccessor)
 					return item;
@@ -52,7 +79,7 @@ export class ObjectWrapper {
 
 				return {
 					getAccessor: function(name: string): LValue {
-						return LValue.MakeReadOnly(item[name]);
+						return LValue.MakeReadOnly(item[name], item);
 					}
 				};
 			case "function":
@@ -79,20 +106,22 @@ export class ObjectWrapper {
 				if (typeof(name) === "string" && Strings.stringIn(name, names))
 					return new LValue("Member access", () => {
 						if (typeof(item[name]) === "function")
-							return function() { return ObjectWrapper.Call(item, name, arguments); };
+							return Address.Function(function() { return ObjectWrapper.Call(item, name, arguments); });
 						else
 							return item[name];
 					}, () => {
 						throw new RuntimeException("Can't write to read-only value");
-					});
+					},
+					item);
 				else if (allowNumeric && typeof(name) === "number") {
 					return new LValue("Array access", (runtime: Runtime): any => {
 						return item[name];
 					}, (runtime: Runtime, value: any): void => {
 						item[name] = value;
-					});
+					},
+					item);
 				} else
-					return LValue.MakeReadOnly(null);
+					return LValue.MakeReadOnly(null, item);
 			}
 		};
 	}
@@ -110,7 +139,8 @@ export class ObjectWrapper {
 					return item[name];
 				}, (runtime: Runtime, value: any) => {
 					item[name] = value;
-				});
+				},
+				item);
 			}
 		};
 	}

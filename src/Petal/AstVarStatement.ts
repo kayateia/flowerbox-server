@@ -7,6 +7,7 @@
 import { AstNode } from "./AstNode";
 import { AstVarDecl } from "./AstVarDecl";
 import { parse } from "./Parser";
+import { Compiler } from "./Compiler";
 
 export class AstVarStatement extends AstNode {
 	constructor(parseTree: any) {
@@ -15,9 +16,8 @@ export class AstVarStatement extends AstNode {
 		this.decls = declsAny;
 	}
 
-	public execute(runtime: any): void {
-		for (let i=this.decls.length - 1; i>=0; --i)
-			this.decls[i].execute(runtime);
+	public compile(compiler: Compiler): void {
+		this.decls.forEach(d => d.compile(compiler));
 	}
 
 	public what: string = "Var";

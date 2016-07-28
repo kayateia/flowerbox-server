@@ -5,11 +5,8 @@
 */
 
 // Base class for exceptions that captures the stack.
-export class Exception {
+export class Exception extends Error {
 	constructor() {
-		let err = new Error();
-		this.stack = err.stack;
+		super();
 	}
-
-	public stack: string;
 }

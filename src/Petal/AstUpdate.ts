@@ -5,11 +5,12 @@
 */
 
 import { AstNode } from "./AstNode";
-import { Step, Runtime } from "./Runtime";
+import { Runtime } from "./Runtime";
 import { RuntimeException } from "./Exceptions";
 import { parse } from "./Parser";
 import { LValue } from "./LValue";
 import { Value } from "./Value";
+import { Compiler } from "./Compiler";
 
 export class AstUpdate extends AstNode {
 	constructor(parseTree: any) {
@@ -19,9 +20,12 @@ export class AstUpdate extends AstNode {
 		this.prefix = parseTree.prefix;
 	}
 
-	public execute(runtime: Runtime): void {
-		runtime.pushAction(Step.Callback("Update callback", () => {
+	public compile(compiler: Compiler): void {
+		this.argument.compile(compiler);
+
+		compiler.emit("Update l-value", this, (runtime: Runtime) => {
 			let lval: LValue = Value.GetLValue(runtime.popOperand());
+
 			let oldValue = LValue.Deref(runtime, lval);
 			let newValue;
 			switch (this.operator) {
@@ -38,8 +42,7 @@ export class AstUpdate extends AstNode {
 				runtime.pushOperand(newValue);
 			else
 				runtime.pushOperand(oldValue);
-		}));
-		runtime.pushAction(new Step(this.argument, "Update l-value"));
+		});
 	}
 
 	public what: string = "Update";

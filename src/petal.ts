@@ -27,15 +27,20 @@ var log = function() {
 		args.push(arguments[i]);
 	(<any>console.log)(...args);
 };
-runtime.currentScope().set("log", log);
+runtime.currentScope.set("log", Petal.Address.Function(log));
 
 let petalConsole: any = Object.create(null);
 petalConsole.log = log;
-runtime.currentScope().set("console", Petal.ObjectWrapper.WrapGeneric(petalConsole, ["log"]));
+runtime.currentScope.set("console", Petal.ObjectWrapper.WrapGeneric(petalConsole, ["log"]));
+
+let compiler = new Petal.Compiler();
+let compilems: number = Date.now();
+compiler.compile(output);
+compilems = Date.now() - compilems;
 
 let runms: number = Date.now();
-runtime.pushAction(Petal.Step.Node("Main program", output));
+runtime.setInitialPC(new Petal.Address(0, compiler.module, output));
 let results = runtime.execute();
 runms = Date.now() - runms;
-console.log("Command took", results.stepsUsed, "steps,", parsems, "ms to parse, and", runms, "ms to run.");
+console.log("Command took", results.stepsUsed, "steps,", parsems, "ms to parse,", compilems, "ms to compile, and", runms, "ms to run.");
 // console.log("Output scope:", runtime.currentScope());
