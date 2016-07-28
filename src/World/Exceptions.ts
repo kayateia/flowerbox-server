@@ -49,3 +49,14 @@ export class LanguageParseException extends Exception {
 	public cause: string;
 	public value: string;
 }
+
+export class DuplicationException extends Exception {
+	constructor(cause: string, value: string) {
+		super();
+		this.cause = cause;
+		this.value = value;
+	}
+
+	public cause: string;
+	public value: string;
+}

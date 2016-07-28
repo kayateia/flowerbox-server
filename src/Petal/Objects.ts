@@ -72,6 +72,7 @@ export class PetalArray implements IObject {
 		this._items.unshift(item);
 	}
 
+	// Makes a shallow copy of the object.
 	public copy(): PetalArray {
 		return this.slice(0);
 	}
@@ -125,6 +126,14 @@ export class PetalObject {
 
 	public get keys(): string[] {
 		return [...this._items.keys()];
+	}
+
+	// Makes a shallow copy of the object.
+	public copy(): PetalObject {
+		let map = new Map<string, any>();
+		for (let k of this._items.keys())
+			map[k] = this._items.get(k);
+		return new PetalObject(map);
 	}
 
 	public getAccessor(name: any): any {

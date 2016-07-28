@@ -9,6 +9,7 @@ import { Verb, VerbCode } from "./Verb";
 import { CaseMap } from "../Utils/Strings";
 import { World } from "./World";
 import * as Petal from "../Petal/Petal";
+import { Utils } from "./Utils";
 
 // When a wob wants to reference another wob in its properties, one of these should be used.
 export class WobRef {
@@ -118,7 +119,7 @@ export class Wob {
 
 		if (this.base) {
 			let baseWob = await world.getWob(this.base);
-			return await baseWob.getPropertyI(name, world);
+			return Utils.Duplicate(await baseWob.getPropertyI(name, world));
 		} else
 			return null;
 	}
