@@ -53,7 +53,7 @@ async function tester() {
 									});
 									(<any>console.log)(...arr);
 								});
-								player.setProperty("hearlog", []);
+								player.setProperty("hearlog", new Petal.PetalArray());
 							}
 							nextLine();
 						})

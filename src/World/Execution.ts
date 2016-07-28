@@ -74,7 +74,7 @@ class WobWrapper implements Petal.IObject {
 		if (index === "contents") {
 			return new Petal.LValue("Wob.contents", async () => {
 				let contents = await this._world.getWobs(this._wob.contents);
-				return contents.map(w => new WobWrapper(w, this._world, this._injections));
+				return new Petal.PetalArray(contents.map(w => new WobWrapper(w, this._world, this._injections)));
 			}, () => {
 				throw new WobOperationException("Can't set the contents of objects (use $.move)", []);
 			}, this);
