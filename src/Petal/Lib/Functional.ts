@@ -44,6 +44,6 @@ export function registerAll(scope: ConstScope): void {
 	if (result.outOfSteps)
 		throw new RuntimeException("Ran out of steps while executing library code setup", null);
 	let parsedFuncs = tempScope.get("a");
-	for (let name of Utils.GetPropertyNames(parsedFuncs))
-		scope.setConst(name, parsedFuncs[name]);
+	for (let name of parsedFuncs.keys)
+		scope.setConst(name, parsedFuncs.get(name));
 }

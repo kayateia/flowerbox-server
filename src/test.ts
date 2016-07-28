@@ -12,6 +12,7 @@ import { World } from "./World/World";
 import * as Execution from "./World/Execution";
 import * as InputParser from "./World/InputParser";
 import * as readline from "readline";
+import * as Petal from "./Petal/Petal";
 
 let InitWorld = require("../notes/init/InitWorld");
 
@@ -35,6 +36,9 @@ async function tester() {
 						.then(() => {
 							// Look for new output on the player.
 							let output = player.getProperty("hearlog");
+							if (output)
+								output = Petal.ObjectWrapper.Unwrap(output);
+							console.log("HEARLOG IS", output);
 							if (output && output.length) {
 								output.forEach(l => {
 									let arr = [];
