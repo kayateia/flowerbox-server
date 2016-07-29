@@ -83,7 +83,7 @@ async function parseVerbLines(world: World, obj: Wob, roomObjects: Wob[], extras
 		selfRef = obj.getProperty(WobProperties.Name);
 	let allVerbs = await obj.getVerbsI(world);
 	allVerbs.forEach((v) => {
-		v.signatures.forEach((parsed) => {
+		v.value.signatures.forEach((parsed) => {
 			let re = "^(" + parsed.verb + ")";
 			if (parsed.dobj) {
 				if (Strings.caseEqual(parsed.dobj, "any"))
@@ -106,7 +106,7 @@ async function parseVerbLines(world: World, obj: Wob, roomObjects: Wob[], extras
 					re += "()";
 			}
 
-			parsedLines.push(new ReMatch(re + "$", obj, v));
+			parsedLines.push(new ReMatch(re + "$", obj, v.value));
 		});
 	});
 

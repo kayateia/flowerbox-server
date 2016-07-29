@@ -43,7 +43,7 @@ export class AstMemberExpression extends AstNode {
 			if (!obj)
 				throw new RuntimeException("Null reference", this.member);
 
-			let iobj: IObject = ObjectWrapper.Wrap(obj);
+			let iobj: IObject = ObjectWrapper.WrapForMemberAccess(obj);
 			if (!iobj)
 				throw new RuntimeException("Can't wrap object for lookup", obj);
 

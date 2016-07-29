@@ -22,11 +22,11 @@ export class TestSetup {
 				if (arguments[i] === undefined || arguments[i] === null)
 					args.push("undefined");
 				else if (typeof(arguments[i]) === "object")
-					args.push(JSON.stringify(arguments[i]));
+					args.push(JSON.stringify(Petal.ObjectWrapper.Unwrap(arguments[i])));
 				else if (typeof(arguments[i]) === "function")
 					args.push("<function>");
 				else
-					args.push(arguments[i]);
+					args.push(Petal.ObjectWrapper.Unwrap(arguments[i]));
 			}
 			that.output += args.join(" ") + "\n";
 		};

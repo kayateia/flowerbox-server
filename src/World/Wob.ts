@@ -9,6 +9,7 @@ import { Verb, VerbCode } from "./Verb";
 import { CaseMap } from "../Utils/Strings";
 import { World } from "./World";
 import * as Petal from "../Petal/Petal";
+import { Utils } from "./Utils";
 
 // When a wob wants to reference another wob in its properties, one of these should be used.
 export class WobRef {
@@ -28,6 +29,17 @@ export class WobProperties {
 	public static HearLog = "hearlog";			// string[]
 	public static PasswordHash = "pwhash";		// string
 	public static LastActive = "lastactive";	// int (unix timestamp)
+}
+
+// Tags a value with what specific wob it came from.
+export class WobValue<T> {
+	public wob: number;
+	public value: T;
+
+	constructor(wob: number, value: T) {
+		this.wob = wob;
+		this.value = value;
+	}
 }
 
 export class Wob {
@@ -94,8 +106,8 @@ export class Wob {
 	}
 
 	// This version searches up the inheritance chain for answers.
-	public async getPropertyNamesI(world: World): Promise<string[]> {
-		let ourProps = this.getPropertyNames();
+	public async getPropertyNamesI(world: World): Promise<WobValue<string>[]> {
+		let ourProps = this.getPropertyNames().map(p => new WobValue<string>(this.id, p));
 		if (this.base) {
 			let baseWob = await world.getWob(this.base);
 			let baseProps = await baseWob.getPropertyNamesI(world);
@@ -111,10 +123,10 @@ export class Wob {
 	}
 
 	// This version searches up the inheritance chain for answers.
-	public async getPropertyI(name: string, world: World): Promise<any> {
+	public async getPropertyI(name: string, world: World): Promise<WobValue<any>> {
 		let ours = this._properties.get(name);
 		if (ours)
-			return ours;
+			return new WobValue<any>(this.id, ours);
 
 		if (this.base) {
 			let baseWob = await world.getWob(this.base);
@@ -135,9 +147,9 @@ export class Wob {
 	}
 
 	// This version searches up the inheritance chain for answers.
-	public async getVerbNamesI(world: World): Promise<string[]> {
+	public async getVerbNamesI(world: World): Promise<WobValue<string>[]> {
 		let allVerbs = await this.getVerbsI(world);
-		return allVerbs.map(v => v.verb);
+		return allVerbs.map(v => new WobValue<string>(v.wob, v.value.verb));
 	}
 
 	// IMPORTANT NOTE: Don't just getVerb() and modify the Verb object. This will
@@ -149,10 +161,10 @@ export class Wob {
 	}
 
 	// This version searches up the inheritance chain for answers.
-	public async getVerbI(name: string, world: World): Promise<Verb> {
+	public async getVerbI(name: string, world: World): Promise<WobValue<Verb>> {
 		let ours = this._verbs.get(name);
 		if (ours)
-			return ours;
+			return new WobValue<Verb>(this.id, ours);
 
 		if (this.base) {
 			let baseWob = await world.getWob(this.base);
@@ -167,8 +179,8 @@ export class Wob {
 	}
 
 	// This version searches up the inheritance chain for answers.
-	public async getVerbsI(world: World): Promise<Verb[]> {
-		let ourVerbs = this.getVerbs();
+	public async getVerbsI(world: World): Promise<WobValue<Verb>[]> {
+		let ourVerbs = this.getVerbs().map(v => new WobValue<Verb>(this.id, v));
 		if (this.base) {
 			let baseWob = await world.getWob(this.base);
 			let baseVerbs = await baseWob.getVerbsI(world);

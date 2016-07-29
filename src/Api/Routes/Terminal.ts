@@ -11,6 +11,7 @@ import { ModelBase } from "../Model/ModelBase";
 import { HearLog, HearLogItem, WobRef } from "../Model/HearLog";
 import * as World from "../../World/All";
 import * as CorePromises from "../../Async/CorePromises";
+import * as Petal from "../../Petal/Petal";
 
 export class TerminalRouter extends RouterBase {
 	constructor() {
@@ -50,11 +51,11 @@ export class TerminalRouter extends RouterBase {
 		let player: World.Wob = playerAny;
 
 		// If we don't have new output immediately available, then turn it into a long-wait push request.
-		let output: any[][] = this.newerThan(player.getProperty(World.WobProperties.HearLog), since);
+		let output: any[][] = this.newerThan(Petal.ObjectWrapper.Unwrap(player.getProperty(World.WobProperties.HearLog)), since);
 		let count = 10000 / 500;
 		while (count-- && !output.length) {
 			await CorePromises.delay(500);
-			output = this.newerThan(player.getProperty(World.WobProperties.HearLog), since);
+			output = this.newerThan(Petal.ObjectWrapper.Unwrap(player.getProperty(World.WobProperties.HearLog)), since);
 			if (output.length)
 				break;
 		}

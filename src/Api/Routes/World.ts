@@ -9,6 +9,7 @@
 import { RouterBase } from "./RouterBase";
 import { ModelBase } from "../Model/ModelBase";
 import * as Wob from "../Model/Wob";
+import * as Petal from "../../Petal/Petal";
 
 export class WorldRouter extends RouterBase {
 	constructor() {
@@ -26,7 +27,7 @@ export class WorldRouter extends RouterBase {
 				return res.json(new Wob.Property(
 					req.params.id,
 					req.params.name,
-					pv
+					Petal.ObjectWrapper.Unwrap(pv)
 				));
 			})
 			.catch(err => {

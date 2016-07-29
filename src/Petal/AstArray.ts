@@ -10,6 +10,7 @@ import { parse } from "./Parser";
 import { Runtime } from "./Runtime";
 import { Value } from "./Value";
 import { Compiler } from "./Compiler";
+import { PetalArray } from "./Objects";
 
 export class AstArray extends AstNode {
 	constructor(parseTree: any) {
@@ -22,7 +23,7 @@ export class AstArray extends AstNode {
 
 		compiler.emit("Array constructor", this, (runtime: Runtime) => {
 			let result = this.elements.map(() => Value.PopAndDeref(runtime)).reverse();
-			runtime.pushOperand(result);
+			runtime.pushOperand(new PetalArray(runtime, result));
 		});
 	}
 

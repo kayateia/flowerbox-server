@@ -14,7 +14,7 @@ import { Utils } from "./Utils";
 import { RuntimeException } from "./Exceptions";
 import { Compiler } from "./Compiler";
 import { Address } from "./Address";
-import { ObjectWrapper } from "./Objects";
+import { ObjectWrapper, PetalObject, PetalArray } from "./Objects";
 
 export class AstForIn extends AstNode {
 	constructor(parseTree: any) {
@@ -47,16 +47,13 @@ export class AstForIn extends AstNode {
 			// For arrays, we just enumerate the contents. For objects, we enumerate their keys.
 			// For everything else, there's M... exceptions. For now non-Petal objects are
 			// also included in that last one.
-			if (!(source instanceof Array)) {
-				if (typeof(source) !== "object")
-					throw new RuntimeException("Can't enumerate object", source);
-				if (!ObjectWrapper.IsPetalObject(source))
-					throw new RuntimeException("Can't enumerate object", source);
-
-				source = Utils.GetPropertyNames(source)
-					.filter(x => !x.startsWith("___"));
+			if (source instanceof PetalArray) {
+				// Just make a copy of the array and we'll dole out the contents one at a time.
+				source = source.array.slice(0);
+			} else if (source instanceof PetalObject) {
+				source = source.keys;
 			} else {
-				source = source.slice(0);
+				throw new RuntimeException("Can't enumerate object", source);
 			}
 
 			// Put it back on the stack for our use as the loop goes on.
