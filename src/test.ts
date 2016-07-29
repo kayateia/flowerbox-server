@@ -38,7 +38,6 @@ async function tester() {
 							let output = player.getProperty("hearlog");
 							if (output)
 								output = Petal.ObjectWrapper.Unwrap(output);
-							console.log("HEARLOG IS", output);
 							if (output && output.length) {
 								output.forEach(l => {
 									let arr = [];
