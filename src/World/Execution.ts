@@ -5,12 +5,13 @@
 */
 
 import { ParseResult, ParseError } from "./InputParser";
-import { Wob, WobProperties } from "./Wob";
+import { Wob, WobProperties, WobValue } from "./Wob";
 import { World } from "./World";
 import * as Petal from "../Petal/Petal";
 import * as Strings from "../Utils/Strings";
 import { WobReferenceException, WobOperationException } from "./Exceptions";
 import { Notation } from "./Notation";
+import { Utils } from "./Utils";
 
 // Wraps a notation for passing around in Petal scripts. These are opaque
 // objects and you can't do anything with them but pass them around.
@@ -28,6 +29,16 @@ export class NotationWrapper implements Petal.IObject {
 	}
 
 	public notation: Notation;
+}
+
+class WobPropertyTag {
+	constructor(ww: WobWrapper, property: string) {
+		this.wob = ww;
+		this.property = property;
+	}
+
+	public wob: WobWrapper;
+	public property: string;
 }
 
 // Wraps a Wob for use within Petal.
@@ -72,9 +83,9 @@ class WobWrapper implements Petal.IObject {
 			}, this);
 		}
 		if (index === "contents") {
-			return new Petal.LValue("Wob.contents", async () => {
+			return new Petal.LValue("Wob.contents", async (runtime: Petal.Runtime) => {
 				let contents = await this._world.getWobs(this._wob.contents);
-				return new Petal.PetalArray(contents.map(w => new WobWrapper(w, this._world, this._injections)));
+				return new Petal.PetalArray(runtime, contents.map(w => new WobWrapper(w, this._world, this._injections)));
 			}, () => {
 				throw new WobOperationException("Can't set the contents of objects (use $.move)", []);
 			}, this);
@@ -82,14 +93,14 @@ class WobWrapper implements Petal.IObject {
 
 		return (async () => {
 			let member: string = index;
-			let props: string[] = await this._wob.getPropertyNamesI(this._world);
-			let verbs: string[] = await this._wob.getVerbNamesI(this._world);
+			let props: string[] = (await this._wob.getPropertyNamesI(this._world)).map(wv => wv.value);
+			let verbs: string[] = (await this._wob.getVerbNamesI(this._world)).map(wv => wv.value);
 
 			// Check verbs first, but if it's not there, assume it's a property so that new properties can be written.
 			if (Strings.caseIn(member, verbs)) {
 				let verb = await this._wob.getVerbI(member, this._world);
 				return new Petal.LValue("Wob." + member, (runtime: Petal.Runtime) => {
-					let addr = verb.address.copy();
+					let addr = verb.value.address.copy();
 					addr.thisValue = this;
 					addr.injections = this._injections;
 					return addr;
@@ -99,12 +110,27 @@ class WobWrapper implements Petal.IObject {
 			} else /*if (Strings.caseIn(member, props))*/ {
 				let prop = await this._wob.getPropertyI(member, this._world);
 				return new Petal.LValue("Wob." + member, (runtime: Petal.Runtime) => {
-					return prop;
+					if (prop && prop.wob !== this._wob.id) {
+						let rv = Utils.Duplicate(prop.value);
+						Petal.ObjectWrapper.SetTag(rv, new WobPropertyTag(this, member));
+						return rv;
+					} else {
+						if (prop) {
+							Petal.ObjectWrapper.SetTag(prop.value, new WobPropertyTag(this, member));
+							return prop.value;
+						} else
+							return null;
+					}
 				}, (runtime: Petal.Runtime, value: any) => {
+					Petal.ObjectWrapper.SetTag(value, new WobPropertyTag(this, member));
 					this._wob.setProperty(member, value);
 				}, this);
 			}
 		})();
+	}
+
+	public changeNotification(item: Petal.IPetalWrapper): void {
+		this._wob.setProperty(item.tag.property, item);
 	}
 
 	public get wob(): Wob {
@@ -217,6 +243,8 @@ class DollarObject {
 		if (text instanceof WobWrapper) {
 			notation = text;
 			text = await notation.wob.getPropertyI(WobProperties.Name, this._world);
+			if (text)
+				text = text.value;
 		}
 
 		if (typeof(text) !== "string") {
@@ -330,10 +358,14 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 	injections.$parse = dollarParse;
 
 	// Check for a global command handler on #1. If it exists, we'll call that first.
-	// FIXME: The top level scope really need to be a const scope to avoid monkey-business with $, $env, etc.
-	// Same applies below.
 	let rootScope = new RootScope(world, injections);
-	let rt = new Petal.Runtime(false, rootScope);
+	let changeRouter = (item: Petal.IPetalWrapper) => {
+		if (item.tag && item.tag instanceof WobPropertyTag) {
+			let ww: WobPropertyTag = item.tag;
+			ww.wob.changeNotification(item);
+		}
+	};
+	let rt = new Petal.Runtime(false, rootScope, changeRouter);
 
 	// If it's a literal code line, skip the rest of this.
 	let trimmedLine = parse.text.trim();
@@ -373,7 +405,7 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 
 		if (parse.verb) {
 			// Reset the runtime.
-			rt = new Petal.Runtime(false, rootScope);
+			rt = new Petal.Runtime(false, rootScope, changeRouter);
 		}
 	}
 

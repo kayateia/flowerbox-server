@@ -27,13 +27,28 @@ export interface IObject {
 	getAccessor(index: any): any;
 }
 
+export interface IPetalWrapper {
+	tag: any;
+}
+
 // A Petal array; we wrap these to keep better control over them as well as to
 // allow for change callbacks.
-export class PetalArray implements IObject {
-	constructor(init?: any[]) {
+export class PetalArray implements IObject, IPetalWrapper {
+	private _items: any[];
+	private _runtime: Runtime;
+	public tag: any;
+
+	constructor(runtime: Runtime, init?: any[], tag?: any) {
 		if (!init)
 			init = [];
 		this._items = init;
+		this.tag = tag;
+		this._runtime = runtime;
+	}
+
+	public notify(): void {
+		if (this.tag)
+			this._runtime.notifyChange(this);
 	}
 
 	public get array(): any[] {
@@ -42,9 +57,11 @@ export class PetalArray implements IObject {
 
 	public push(item: any): void {
 		this._items.push(item);
+		this.notify();
 	}
 
 	public pop(): any {
+		this.notify();
 		return this._items.pop();
 	}
 
@@ -53,7 +70,13 @@ export class PetalArray implements IObject {
 	}
 
 	public set(index: number, value: any): void {
+		let old = this._items[index];
+		if (old && (old instanceof PetalArray || old instanceof PetalObject))
+			ObjectWrapper.SetTag(old, null);
+		if (value instanceof PetalArray || value instanceof PetalObject)
+			ObjectWrapper.SetTag(value, this.tag);
 		this._items[index] = value;
+		this.notify();
 	}
 
 	public get length(): number {
@@ -65,11 +88,12 @@ export class PetalArray implements IObject {
 	}
 
 	public slice(a: number, b?: number): PetalArray {
-		return new PetalArray(this._items.slice(a, b));
+		return new PetalArray(this._runtime, this._items.slice(a, b));
 	}
 
 	public unshift(item: any): void {
 		this._items.unshift(item);
+		this.notify();
 	}
 
 	// Makes a shallow copy of the object.
@@ -95,25 +119,34 @@ export class PetalArray implements IObject {
 			this);
 		else if (typeof(name) === "number") {
 			return new LValue("Array access", (runtime: Runtime): any => {
-				return this._items[name];
+				return this.get(name);
 			}, (runtime: Runtime, value: any): void => {
-				this._items[name] = value;
+				this.set(name, value);
 			},
 			this);
 		} else
 			return LValue.MakeReadOnly(null, this);
 	}
-
-	private _items: any[];
 }
 
 // A Petal object; we wrap these to keep better control over them as well as to
 // allow for change callbacks.
-export class PetalObject {
-	constructor(init?: Map<string, any>) {
+export class PetalObject implements IObject, IPetalWrapper {
+	private _items: Map<string, any>;
+	private _runtime: Runtime;
+	public tag: any;
+
+	constructor(runtime: Runtime, init?: Map<string, any>, tag?: any) {
 		if (!init)
 			init = new Map<string, any>();
+		this._runtime = runtime;
 		this._items = init;
+		this.tag = tag;
+	}
+
+	public notify(): void {
+		if (this.tag)
+			this._runtime.notifyChange(this);
 	}
 
 	public get(index: string): any {
@@ -121,7 +154,13 @@ export class PetalObject {
 	}
 
 	public set(index: string, value: any): void {
+		let old = this._items.get(index);
+		if (old && (old instanceof PetalArray || old instanceof PetalObject))
+			ObjectWrapper.SetTag(old, null);
+		if (value instanceof PetalArray || value instanceof PetalObject)
+			ObjectWrapper.SetTag(value, this.tag);
 		this._items.set(index, value);
+		this.notify();
 	}
 
 	public get keys(): string[] {
@@ -133,7 +172,7 @@ export class PetalObject {
 		let map = new Map<string, any>();
 		for (let k of this._items.keys())
 			map[k] = this._items.get(k);
-		return new PetalObject(map);
+		return new PetalObject(this._runtime, map);
 	}
 
 	public getAccessor(name: any): any {
@@ -147,8 +186,6 @@ export class PetalObject {
 		},
 		this);
 	}
-
-	private _items: Map<string, any>;
 }
 
 export class ObjectWrapper {
@@ -163,6 +200,19 @@ export class ObjectWrapper {
 			return rv;
 		} else
 			return obj;
+	}
+
+	// Recursively sets the tag on Petal objects and arrays.
+	public static SetTag(item: any, tag: any): void {
+		if (item instanceof PetalArray){
+			let arr: PetalArray = item;
+			arr.tag = tag;
+			arr.array.forEach(i => ObjectWrapper.SetTag(i, tag));
+		} else if (item instanceof PetalObject) {
+			let obj: PetalObject = item;
+			obj.tag = tag;
+			obj.keys.forEach(k => ObjectWrapper.SetTag(obj.get(k), tag));
+		}
 	}
 
 	// Takes an item and turns it into an IObject suitable for use in AstMemberExpression.

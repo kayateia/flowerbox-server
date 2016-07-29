@@ -18,6 +18,7 @@ import { Module } from "./Module";
 import { Address } from "./Address";
 import { FixedStack } from "./FixedStack";
 import { Compiler } from "./Compiler";
+import { IPetalWrapper } from "./Objects";
 
 import * as LibFunctional from "./Lib/Functional";
 import * as LibMath from "./Lib/Math";
@@ -35,6 +36,10 @@ export class ExecuteResult {
 	public outOfSteps: boolean;
 	public stepsUsed: number;
 	public returnValue: any;
+}
+
+export interface IChangeNotification {
+	(item: IPetalWrapper): void
 }
 
 export class Runtime {
@@ -55,7 +60,9 @@ export class Runtime {
 	private _rootScope: IScope;
 	private _scopeCatcher: IScopeCatcher;
 
-	constructor(verbose?: boolean, scopeCatcher?: IScopeCatcher) {
+	private _changeNotification: IChangeNotification;
+
+	constructor(verbose?: boolean, scopeCatcher?: IScopeCatcher, changeNotification?: IChangeNotification) {
 		this._setPC = false;
 
 		this._operandStack = new FixedStack<any>();
@@ -68,6 +75,8 @@ export class Runtime {
 
 		this._scopeCatcher = scopeCatcher;
 		this._rootScope = new StandardScope(runtimeLib);
+
+		this._changeNotification = changeNotification;
 
 		if (!runtimeRegistered) {
 			runtimeRegistered = true;
@@ -192,6 +201,14 @@ export class Runtime {
 		let address = AstCallExpression.Create(func, param, caller);
 		this.setInitialPC(address);
 		return await this.executeAsync(maxSteps);
+	}
+
+	// Called by IPetalWrappers when changes are made inside themselves.
+	public notifyChange(target: IPetalWrapper): void {
+		if (this.verbose)
+			console.log("CHANGED", target, "TAG", target.tag);
+		if (this._changeNotification)
+			this._changeNotification(target);
 	}
 
 	public pushPC(address?: Address): void {
