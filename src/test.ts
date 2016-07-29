@@ -6,17 +6,13 @@
 "use strict";
 ///<reference path="../typings/globals/node/index.d.ts" />
 
-import { Wob, WobProperties } from "./World/Wob";
-import { Verb } from "./World/Verb";
-import { World } from "./World/World";
-import * as Execution from "./World/Execution";
-import * as InputParser from "./World/InputParser";
+import * as World from "./World/All";
 import * as readline from "readline";
 import * as Petal from "./Petal/Petal";
 
 let InitWorld = require("../notes/init/InitWorld");
 
-let world = new World();
+let world = new World.World(new World.Database());
 
 const rl = readline.createInterface({
 	input: process.stdin,
@@ -30,9 +26,9 @@ async function tester() {
 	let player = (await world.getWobsByGlobalId(["kayateia"]))[0];
 	(function nextLine() {
 		rl.question('> ', (answer) => {
-			InputParser.parseInput(answer, player, world)
+			World.parseInput(answer, player, world)
 				.then((match) => {
-					Execution.executeResult(match, player, world)
+					World.executeResult(match, player, world)
 						.then(() => {
 							// Look for new output on the player.
 							let output = player.getProperty("hearlog");
@@ -42,9 +38,9 @@ async function tester() {
 								output.forEach(l => {
 									let arr = [];
 									l.forEach(obj => {
-										if (obj instanceof Execution.NotationWrapper) {
+										if (obj instanceof World.NotationWrapper) {
 											arr.push(obj.notation.text);
-											if (obj.notation.value instanceof Wob) {
+											if (obj.notation.value instanceof World.Wob) {
 												arr.push("(#" + obj.notation.value.id + ")");
 											}
 										} else

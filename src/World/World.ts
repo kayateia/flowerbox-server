@@ -11,12 +11,20 @@ import * as Strings from "../Utils/Strings";
 import { Utils } from "../Petal/Utils";
 import * as FsPromises from "../Async/FsPromises";
 import * as path from "path";
+import { Database } from "./Database";
 
 // Zaa Warudo
 export class World {
-	constructor() {
+	private _nextId: number;
+	private _wobCache: Map<number, Wob>;
+	private _db: Database;
+
+	constructor(database: Database) {
 		this._nextId = 1;
 		this._wobCache = new Map<number, Wob>();
+		this._db = database;
+
+		setTimeout(() => this.commitTimeout(), 5*1000);
 	}
 
 	public async createDefault(init: any, basePath: string): Promise<void> {
@@ -54,6 +62,29 @@ export class World {
 			}
 			if (wobdef.base)
 				wob.base = wobdef.base;
+
+			wob.dirty = false;
+			this._db.createWob(wob);
+		}
+	}
+
+	public commitTimeout(): void {
+		this.commit()
+			.then(() => {
+			})
+			.catch((err) => {
+				console.log("Unable to persist to database", err);
+			});
+		setTimeout(() => this.commitTimeout(), 5*1000);
+	}
+
+	public async commit(): Promise<void> {
+		for (let k of this._wobCache.keys()) {
+			let wob = this._wobCache.get(k);
+			if (wob.dirty) {
+				await this._db.updateWob(wob);
+				wob.dirty = false;
+			}
 		}
 	}
 
@@ -71,22 +102,29 @@ export class World {
 			containerWob.addContent(wob);
 		}
 
+		this._db.createWob(wob);
+
 		return wob;
 	}
 
-	public getWob(id: number): Promise<Wob> {
-		return new Promise<Wob>((success, fail) => {
-			// For now, we only support the in-memory cache.
-			success(this._wobCache.get(id));
-		});
+	public async getWob(id: number): Promise<Wob> {
+		if (!this._wobCache.has(id)) {
+			let loaded = await this._db.loadWob(id);
+			if (loaded)
+				this._wobCache.set(id, loaded);
+		}
+
+		// For now, we only support the in-memory cache.
+		return this._wobCache.get(id);
 	}
 
 	// Eventually this will be the one to prefer using if you need more than one object,
 	// because it can optimize its SQL queries as needed.
-	public getWobs(ids: number[]): Promise<Wob[]> {
-		return new Promise<Wob[]>((success, fail) => {
-			success(ids.map((id) => this._wobCache.get(id)));
-		});
+	public async getWobs(ids: number[]): Promise<Wob[]> {
+		let result: Wob[] = [];
+		for (let id of ids)
+			result.push(await this.getWob(id));
+		return result;
 	}
 
 	public getWobsByGlobalId(ids: string[]): Promise<Wob[]> {
@@ -105,6 +143,9 @@ export class World {
 		let wobs = await this.getWobs([id, to]);
 		if (!wobs[0] || !wobs[1])
 			throw new WobOperationException("Couldn't find source and/or destination wobs", [id, to]);
+
+		if (wobs[0].id !== id)
+			wobs = wobs.reverse();
 
 		let container = await this.getWob(wobs[0].container);
 		if (!container)
@@ -133,10 +174,10 @@ export class World {
 		// Remove it from the original container.
 		container.removeContent(wob);
 
+		// Remove it from the database.
+		this._db.deleteWob(id);
+
 		// And remove it from our store.
 		this._wobCache.delete(id);
 	}
-
-	private _nextId: number;
-	private _wobCache: Map<number, Wob>;
 }
