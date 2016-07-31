@@ -8,6 +8,7 @@
 
 import * as express from "express";
 import * as World from "../World/All";
+import * as Database from "../Database/All";
 import { indexRouter } from "./Routes/Index";
 import { terminalRouter } from "./Routes/Terminal";
 import { userRouter } from "./Routes/User";
@@ -17,7 +18,12 @@ const bodyParser = require("body-parser");
 const InitWorld = require("../../notes/init/InitWorld");
 
 export let app = express();
-export let world = new World.World();
+
+let config = require("../../config");
+
+let dbdriver = new Database.SQLite(config);
+let sal = new Database.AccessLayer(dbdriver);
+let world = new World.World(new World.Database(sal));
 
 let cors = require("cors");
 
