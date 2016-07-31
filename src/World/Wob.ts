@@ -65,6 +65,34 @@ export class Wob {
 		return this._container;
 	}
 
+	// Only for use by World and Database.
+	public set container(id: number) {
+		this.updateLastUse();
+		this.dirty = true;
+		this._container = id;
+	}
+
+	// Read-only for everyone but World and Database. This is an in-memory cache of the
+	// objects contained by this one. It will be maintained by World whenever an operation happens.
+	public get contents(): number[] {
+		this.updateLastUse();
+		return this._contents;
+	}
+
+	// Only for use by World.
+	// Note that this doesn't set the dirty flag because this is a computed property.
+	public addContent(id: number): void {
+		this.updateLastUse();
+		this._contents.push(id);
+	}
+
+	// Only for use by World.
+	// Note that this doesn't set the dirty flag because this is a computed property.
+	public removeContent(id: number): void {
+		this.updateLastUse();
+		this._contents = this._contents.filter(i => i != id);
+	}
+
 	public get base(): number {
 		this.updateLastUse();
 		return this._base;
@@ -73,31 +101,6 @@ export class Wob {
 		this.updateLastUse();
 		this._dirty = true;
 		this._base = v;
-	}
-
-	public get contents(): number[] {
-		this.updateLastUse();
-		return this._contents;
-	}
-	public addContent(other: Wob): void {
-		this.updateLastUse();
-		if (other.container === this._id)
-			throw new WobOperationException("Wob is already contained by parent", [other.id, this._id]);
-
-		if (other.container)
-			throw new WobOperationException("Wob is already contained by another object", [other.id, other.container, this._id]);
-
-		other._container = this._id;
-		this._contents.push(other.id);
-	}
-
-	public removeContent(other: Wob): void {
-		this.updateLastUse();
-		if (other.container !== this._id)
-			throw new WobOperationException("Wob is not contained by us", [other.id, this._id]);
-
-		other._container = 0;
-		this._contents = this._contents.filter(x => x != other._id);
 	}
 
 	public getPropertyNames(): string[] {
@@ -202,6 +205,12 @@ export class Wob {
 	}
 
 	public set verbCode(v: string) {
+		if (!v) {
+			this._verbCode = null;
+			this._verbs = new CaseMap<Verb>();
+			return;
+		}
+
 		// Eat CRLFs.
 		if (v.indexOf("\r") >= 0)
 			v = v.replace("\r\n", "\n");

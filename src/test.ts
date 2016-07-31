@@ -9,10 +9,14 @@
 import * as World from "./World/All";
 import * as readline from "readline";
 import * as Petal from "./Petal/Petal";
+import * as Database from "./Database/All";
 
 let InitWorld = require("../notes/init/InitWorld");
+let config = require("../config");
 
-let world = new World.World(new World.Database());
+let dbdriver = new Database.SQLite(config);
+let sal = new Database.AccessLayer(dbdriver);
+let world = new World.World(new World.Database(sal));
 
 const rl = readline.createInterface({
 	input: process.stdin,

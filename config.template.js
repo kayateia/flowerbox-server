@@ -11,5 +11,9 @@ module.exports = {
 	mysqlHost: "localhost",
 	mysqlUser: "username",
 	mysqlPassword: "password",
-	mysqlDatabase: "flowerbox"
+	mysqlDatabase: "flowerbox",
+
+	// SQLite information, if needed.
+	sqliteFile: ":memory:",
+	sqliteSchema: "notes/sqlite.sql"
 };

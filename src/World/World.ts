@@ -10,17 +10,24 @@ import { Verb } from "./Verb";
 import * as Strings from "../Utils/Strings";
 import { Utils } from "../Petal/Utils";
 import * as FsPromises from "../Async/FsPromises";
+import * as CorePromises from "../Async/CorePromises";
 import * as path from "path";
 import { Database } from "./Database";
 
 // Zaa Warudo
 export class World {
 	private _nextId: number;
+	private _nextIdDirty: boolean;
 	private _wobCache: Map<number, Wob>;
 	private _db: Database;
 
 	constructor(database: Database) {
+		// This is the default nextId. We don't set it to dirty because in the case
+		// where the database hasn't been created yet, we will write it out after the first
+		// wob create anyway; and if it has been created, we don't want to accidentally overwrite it.
 		this._nextId = 1;
+		this._nextIdDirty = false;
+
 		this._wobCache = new Map<number, Wob>();
 		this._db = database;
 
@@ -28,6 +35,14 @@ export class World {
 	}
 
 	public async createDefault(init: any, basePath: string): Promise<void> {
+		if (await this._db.exists(1)) {
+			console.log("Skipping default world creation; already exists");
+			let nextidstr = await this._db.readMeta("nextid");
+			if (nextidstr)
+				this._nextId = parseInt(nextidstr, 10);
+			return;
+		}
+
 		for (let wobdef of init) {
 			let wob = await this.createWob();
 			for (let prop of Utils.GetPropertyNames(wobdef.properties))
@@ -57,15 +72,15 @@ export class World {
 			}
 
 			if (wobdef.container) {
-				let container = await this.getWob(wobdef.container);
-				container.addContent(wob);
+				let container = this.getCachedWob(wobdef.container);
+				wob.container = wobdef.container;
+				container.contents.push(wob.id);
 			}
 			if (wobdef.base)
 				wob.base = wobdef.base;
-
-			wob.dirty = false;
-			this._db.createWob(wob);
 		}
+
+		await this.commit();
 	}
 
 	public commitTimeout(): void {
@@ -86,12 +101,18 @@ export class World {
 				wob.dirty = false;
 			}
 		}
+
+		if (this._nextIdDirty) {
+			this._db.writeMeta("nextid", this._nextId.toString());
+			this._nextIdDirty = false;
+		}
 	}
 
 	public async createWob(container?: number): Promise<Wob> {
 		// Make the object.
 		let wob = new Wob(this._nextId++);
 		this._wobCache.set(wob.id, wob);
+		this._nextIdDirty = true;
 
 		// If there's a container specified, place the object into the container.
 		if (container) {
@@ -99,10 +120,10 @@ export class World {
 			if (!containerWob)
 				throw new WobReferenceException("Can't find container", container);
 
-			containerWob.addContent(wob);
+			containerWob.contents.push(wob.id);
 		}
 
-		this._db.createWob(wob);
+		await this._db.createWob(wob);
 
 		return wob;
 	}
@@ -118,6 +139,11 @@ export class World {
 		return this._wobCache.get(id);
 	}
 
+	// Returns the requested wob if it's memory; otherwise null.
+	public getCachedWob(id: number): Wob {
+		return this._wobCache.get(id);
+	}
+
 	// Eventually this will be the one to prefer using if you need more than one object,
 	// because it can optimize its SQL queries as needed.
 	public async getWobs(ids: number[]): Promise<Wob[]> {
@@ -127,35 +153,62 @@ export class World {
 		return result;
 	}
 
-	public getWobsByGlobalId(ids: string[]): Promise<Wob[]> {
-		return new Promise<Wob[]>((success, fail) => {
-			success([...this._wobCache.values()].filter((w) => Strings.caseIn(w.getProperty(WobProperties.GlobalId), ids)));
+	public async getWobsByGlobalId(ids: string[]): Promise<Wob[]> {
+		// Start off getting the in-memory results.
+		let resultMap = new Map<number, boolean>();
+		let results = [...this._wobCache.values()].filter((w) => Strings.caseIn(w.getProperty(WobProperties.GlobalId), ids));
+		results.forEach(w => resultMap.set(w.id, true));
+
+		// Look for results in the database as well.
+		let dbresults = await this._db.loadWobsByGlobalId(ids);
+		dbresults.forEach(w => {
+			if (!resultMap.has(w.id)) {
+				results.push(w);
+				resultMap.set(w.id, true);
+				this._wobCache.set(w.id, w);
+			}
 		});
+
+		return results;
 	}
 
-	public getWobsByPropertyMatch(property: string, value: any): Promise<Wob[]> {
-		return new Promise<Wob[]>((success, fail) => {
-			success([...this._wobCache.values()].filter((w) => w.getProperty(property) === value));
+	public async getWobsByPropertyMatch(property: string, value: any): Promise<Wob[]> {
+		// Start off getting the in-memory results.
+		let resultMap = new Map<number, boolean>();
+		let results = [...this._wobCache.values()].filter((w) => w.getProperty(property) === value);
+		results.forEach(w => resultMap.set(w.id, true));
+
+		// Look for results in the database as well.
+		let dbresults = await this._db.loadWobsByPropertyMatch(property, value);
+		dbresults.forEach(w => {
+			if (!resultMap.has(w.id)) {
+				results.push(w);
+				resultMap.set(w.id, true);
+				this._wobCache.set(w.id, w);
+			}
 		});
+
+		return results;
 	}
 
 	public async moveWob(id: number, to: number) : Promise<void> {
-		let wobs = await this.getWobs([id, to]);
-		if (!wobs[0] || !wobs[1])
-			throw new WobOperationException("Couldn't find source and/or destination wobs", [id, to]);
+		let wob = await this.getWob(id);
+		if (!wob)
+			throw new WobOperationException("Couldn't find source wob", [id]);
 
-		if (wobs[0].id !== id)
-			wobs = wobs.reverse();
+		let container = this.getCachedWob(wob.container);
+		if (container) {
+			// Remove it from the original container.
+			container.removeContent(id);
+		}
 
-		let container = await this.getWob(wobs[0].container);
-		if (!container)
-			throw new WobOperationException("Couldn't find container", [id, wobs[0].container]);
+		wob.container = to;
 
-		// Remove it from the original container.
-		container.removeContent(wobs[0]);
-
-		// Add it to the new one.
-		wobs[1].addContent(wobs[0]);
+		container = this.getCachedWob(to);
+		if (container) {
+			// Add it to the new one.
+			container.addContent(id);
+		}
 	}
 
 	public async compostWob(id: number): Promise<void> {
@@ -167,15 +220,14 @@ export class World {
 		if (wob.contents.length)
 			throw new WobOperationException("Wob can't be composted because it contains other wobs", [id, ...wob.contents]);
 
-		let container = await this.getWob(wob.container);
-		if (!container)
-			throw new WobReferenceException("Couldn't find container wob", wob.container);
-
-		// Remove it from the original container.
-		container.removeContent(wob);
+		let container = this.getCachedWob(wob.container);
+		if (container) {
+			// Remove it from the original container.
+			container.removeContent(id);
+		}
 
 		// Remove it from the database.
-		this._db.deleteWob(id);
+		await this._db.deleteWob(id);
 
 		// And remove it from our store.
 		this._wobCache.delete(id);
