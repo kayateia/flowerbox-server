@@ -12,15 +12,9 @@ import * as Persistence from "../Utils/Persistence";
 export class Database {
 	public verbose: boolean;
 	private _sal: DB.AccessLayer;
-	private _conn: any;
 
 	constructor(sal: DB.AccessLayer) {
 		this._sal = sal;
-
-		// We keep one persistent connection in case we're using an in-memory driver.
-		this.connect()
-			.then(c => this._conn = c)
-			.catch(e => console.log(e));
 	}
 
 	private async connect(): Promise<void> {
@@ -127,13 +121,10 @@ export class Database {
 
 	public async exists(id: number): Promise<boolean> {
 		let conn = await this.connect();
-		console.log("conn is", conn);
 		try {
 			let wobrows = await this._sal.select(conn, "select id from wobs where id=?", [id]);
-			console.log("wobrows is", wobrows);
 			return wobrows && wobrows.length > 0;
 		} finally {
-			console.log("closing", conn);
 			this.close(conn);
 		}
 	}
@@ -151,13 +142,13 @@ export class Database {
 	public async updateWob(wob: Wob): Promise<void> {
 		let conn = await this.connect();
 		try {
-			await this._sal.transact(this._conn, async () => {
-				await this._sal.run(this._conn,"update wobs set container=?, base=?, verbCode=? where wobid=?",
+			await this._sal.transact(conn, async () => {
+				await this._sal.run(conn,"update wobs set container=?, base=?, verbCode=? where wobid=?",
 					[wob.container, wob.base, wob.verbCode, wob.id]);
 
-				await this._sal.run(this._conn, "delete from properties where wobid=?", [wob.id]);
+				await this._sal.run(conn, "delete from properties where wobid=?", [wob.id]);
 
-				await this.insertProperties(this._conn, wob);
+				await this.insertProperties(conn, wob);
 			});
 		} finally {
 			this.close(conn);
@@ -176,9 +167,9 @@ export class Database {
 	public async deleteWob(id: number): Promise<void> {
 		let conn = await this.connect();
 		try {
-			await this._sal.transact(this._conn, async () => {
-				await this._sal.run(this._conn, "delete from properties where wobid=?", [id]);
-				await this._sal.run(this._conn, "delete from wobs where id=?", [id]);
+			await this._sal.transact(conn, async () => {
+				await this._sal.run(conn, "delete from properties where wobid=?", [id]);
+				await this._sal.run(conn, "delete from wobs where id=?", [id]);
 			});
 		} finally {
 			this.close(conn);
