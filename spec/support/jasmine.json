@@ -2,7 +2,7 @@
 	"spec_dir": "js",
 	"spec_files": [
 		"Petal/Tests/*.js",
-		"World/Tests/*.js"
+		"Utils/Tests/*.js"
 	],
 	"helpers": [
 		"helpers/**/*.js"

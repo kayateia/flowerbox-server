@@ -18,13 +18,16 @@ import { LValue } from "./LValue";
 import { Runtime } from "./Runtime";
 import { RuntimeException } from "./Exceptions";
 import * as Strings from "../Utils/Strings";
+import * as Persistence from "../Utils/Persistence";
 import { Address } from "./Address";
 import { Utils } from "./Utils";
 
 // Simple interface for getting an LValue for a given index/name out of the wrapped object.
 // This may also return a ThisValue or a Promise.
+//
+// If runtime.accessorCargo is non-null, it will be passed along as the second parameter here.
 export interface IObject {
-	getAccessor(index: any): any;
+	getAccessor(index: any, cargo?: any): any;
 }
 
 export interface IPetalWrapper {
@@ -35,20 +38,18 @@ export interface IPetalWrapper {
 // allow for change callbacks.
 export class PetalArray implements IObject, IPetalWrapper {
 	private _items: any[];
-	private _runtime: Runtime;
 	public tag: any;
 
-	constructor(runtime: Runtime, init?: any[], tag?: any) {
+	constructor(init?: any[], tag?: any) {
 		if (!init)
 			init = [];
 		this._items = init;
 		this.tag = tag;
-		this._runtime = runtime;
 	}
 
-	public notify(): void {
+	public notify(runtime: Runtime): void {
 		if (this.tag)
-			this._runtime.notifyChange(this);
+			runtime.notifyChange(this);
 	}
 
 	public get array(): any[] {
@@ -57,11 +58,9 @@ export class PetalArray implements IObject, IPetalWrapper {
 
 	public push(item: any): void {
 		this._items.push(item);
-		this.notify();
 	}
 
 	public pop(): any {
-		this.notify();
 		return this._items.pop();
 	}
 
@@ -76,7 +75,6 @@ export class PetalArray implements IObject, IPetalWrapper {
 		if (value instanceof PetalArray || value instanceof PetalObject)
 			ObjectWrapper.SetTag(value, this.tag);
 		this._items[index] = value;
-		this.notify();
 	}
 
 	public get length(): number {
@@ -88,12 +86,11 @@ export class PetalArray implements IObject, IPetalWrapper {
 	}
 
 	public slice(a: number, b?: number): PetalArray {
-		return new PetalArray(this._runtime, this._items.slice(a, b));
+		return new PetalArray(this._items.slice(a, b));
 	}
 
 	public unshift(item: any): void {
 		this._items.unshift(item);
-		this.notify();
 	}
 
 	// Makes a shallow copy of the object.
@@ -106,10 +103,14 @@ export class PetalArray implements IObject, IPetalWrapper {
 			"push", "pop", "length", "indexOf", "slice", "unshift", "copy"
 		];
 		if (typeof(name) === "string" && Strings.stringIn(name, names))
-			return new LValue("Member access", () => {
+			return new LValue("Member access", (runtime: Runtime) => {
 				if (typeof(this[name]) === "function") {
 					let that = this;
-					return Address.Function(function() { return ObjectWrapper.Call(that, name, arguments); });
+					return Address.Function(function() {
+						let rv = ObjectWrapper.Call(that, name, arguments);
+						that.notify(runtime);
+						return rv;
+					});
 				}
 				else
 					return this[name];
@@ -122,31 +123,41 @@ export class PetalArray implements IObject, IPetalWrapper {
 				return this.get(name);
 			}, (runtime: Runtime, value: any): void => {
 				this.set(name, value);
+				this.notify(runtime);
 			},
 			this);
 		} else
 			return LValue.MakeReadOnly(null, this);
 	}
+
+	public persist(): any {
+		return this.array.map(i => Persistence.persist(i));
+	}
+
+	public static Unpersist(obj: any[]): PetalArray {
+		let arr = obj.map(i => Persistence.unpersist(i));
+		return new PetalArray(arr);
+	}
+
 }
+Persistence.registerType(PetalArray);
 
 // A Petal object; we wrap these to keep better control over them as well as to
 // allow for change callbacks.
 export class PetalObject implements IObject, IPetalWrapper {
 	private _items: Map<string, any>;
-	private _runtime: Runtime;
 	public tag: any;
 
-	constructor(runtime: Runtime, init?: Map<string, any>, tag?: any) {
+	constructor(init?: Map<string, any>, tag?: any) {
 		if (!init)
 			init = new Map<string, any>();
-		this._runtime = runtime;
 		this._items = init;
 		this.tag = tag;
 	}
 
-	public notify(): void {
+	public notify(runtime: Runtime): void {
 		if (this.tag)
-			this._runtime.notifyChange(this);
+			runtime.notifyChange(this);
 	}
 
 	public get(index: string): any {
@@ -160,7 +171,6 @@ export class PetalObject implements IObject, IPetalWrapper {
 		if (value instanceof PetalArray || value instanceof PetalObject)
 			ObjectWrapper.SetTag(value, this.tag);
 		this._items.set(index, value);
-		this.notify();
 	}
 
 	public get keys(): string[] {
@@ -172,7 +182,7 @@ export class PetalObject implements IObject, IPetalWrapper {
 		let map = new Map<string, any>();
 		for (let k of this._items.keys())
 			map[k] = this._items.get(k);
-		return new PetalObject(this._runtime, map);
+		return new PetalObject(map);
 	}
 
 	public getAccessor(name: any): any {
@@ -183,21 +193,37 @@ export class PetalObject implements IObject, IPetalWrapper {
 			return this.get(name);
 		}, (runtime: Runtime, value: any) => {
 			this.set(name, value);
+			this.notify(runtime);
 		},
 		this);
 	}
+
+	public persist(): any {
+		let rv = {};
+		for (let k of this.keys)
+			rv[k] = Persistence.persist(this.get(k));
+		return rv;
+	}
+
+	public static Unpersist(obj: any): PetalObject {
+		let rv = new PetalObject();
+		for (let k of Utils.GetPropertyNames(obj))
+			rv.set(k, Persistence.unpersist(obj[k]));
+		return rv;
+	}
 }
+Persistence.registerType(PetalObject);
 
 export class ObjectWrapper {
 	// Takes a JavaScript (JSON-style) object and converts it into a Petal structure.
 	public static Wrap(obj: any, runtime: Runtime, tag?: any): IPetalWrapper {
 		if (obj instanceof Array)
-			return new PetalArray(runtime, obj.map(i => ObjectWrapper.Wrap(i, runtime, tag)));
+			return new PetalArray(obj.map(i => ObjectWrapper.Wrap(i, runtime, tag)));
 		else if (typeof(obj) === "object") {
 			let rvmap = new Map<string, any>();
 			for (let k of Utils.GetPropertyNames(obj))
 				rvmap.set(k, ObjectWrapper.Wrap(obj[k], runtime, tag));
-			return new PetalObject(runtime, rvmap, tag);
+			return new PetalObject(rvmap, tag);
 		} else
 			return obj;
 	}

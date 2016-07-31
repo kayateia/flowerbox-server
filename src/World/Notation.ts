@@ -4,7 +4,7 @@
 	For license info, please see notes/gpl-3.0.txt under the project root.
 */
 
-import * as Persistence from "./Persistence";
+import * as Persistence from "../Utils/Persistence";
 
 // A text annotation that can accompany user output to provide rich information about
 // what the text contained within means.
@@ -25,3 +25,4 @@ export class Notation {
 	public text: string;
 	public value: any;
 }
+Persistence.registerType(Notation);

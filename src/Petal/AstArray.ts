@@ -23,7 +23,7 @@ export class AstArray extends AstNode {
 
 		compiler.emit("Array constructor", this, (runtime: Runtime) => {
 			let result = this.elements.map(() => Value.PopAndDeref(runtime)).reverse();
-			runtime.pushOperand(new PetalArray(runtime, result));
+			runtime.pushOperand(new PetalArray(result));
 		});
 	}
 

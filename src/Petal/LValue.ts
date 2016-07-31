@@ -10,8 +10,9 @@ export interface ILValueReader {
 	(runtime: Runtime): any
 }
 
+// This may return a Promise or undefined/null.
 export interface ILValueWriter {
-	(runtime: Runtime, value: any): void
+	(runtime: Runtime, value: any): any
 }
 
 /*
@@ -34,9 +35,9 @@ export class LValue {
 		return this._reader(runtime);
 	}
 
-	// Writes to the value behind the l-value.
-	public write(runtime: Runtime, value: any): void {
-		this._writer(runtime, value);
+	// Writes to the value behind the l-value. This may return a Promise or undefined/null.
+	public write(runtime: Runtime, value: any): any {
+		return this._writer(runtime, value);
 	}
 
 	// Return the "this" value associated with this l-value, if there is one.
@@ -61,7 +62,7 @@ export class LValue {
 	// Otherwise, returns the original value.
 	public static Deref(runtime: Runtime, value: any): any {
 		if (LValue.IsLValue(value))
-			return value.read();
+			return value.read(runtime);
 		else
 			return value;
 	}

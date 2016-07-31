@@ -7,6 +7,7 @@
 import { WobOperationException, InvalidCodeException } from "./Exceptions";
 import { Verb, VerbCode } from "./Verb";
 import { CaseMap } from "../Utils/Strings";
+import * as Persistence from "../Utils/Persistence";
 import { World } from "./World";
 import * as Petal from "../Petal/All";
 import { Utils } from "./Utils";
@@ -27,6 +28,7 @@ export class WobRef {
 
 	public id: number;
 }
+Persistence.registerType(WobRef);
 
 // Some well-defined properties.
 export class WobProperties {

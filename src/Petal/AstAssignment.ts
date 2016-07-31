@@ -49,8 +49,14 @@ export class AstAssignment extends AstNode {
 					break;
 			}
 
-			lhs.write(runtime, newlhs);
-			runtime.pushOperand(newlhs);
+			let rv = lhs.write(runtime, newlhs);
+			if (rv instanceof Promise) {
+				// FIXME: Will the error actually throw out somewhere useful?
+				return rv
+					.then(() => newlhs)
+					.catch(err => { throw err; });
+			} else
+				runtime.pushOperand(newlhs);
 		});
 	}
 

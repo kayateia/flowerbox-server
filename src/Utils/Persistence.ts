@@ -4,9 +4,6 @@
 	For license info, please see notes/gpl-3.0.txt under the project root.
 */
 
-import { WobRef } from "./Wob";
-import { Notation } from "./Notation";
-import { NotationWrapper } from "./Execution";
 import { Utils as PetalUtils } from "../Petal/Utils";
 
 /*
@@ -33,10 +30,12 @@ values directly, it describes them in terms of types and persisted values.
 
 */
 
-let types = [
-	NotationWrapper,
-	WobRef
-];
+let types: any[] = [];
+
+// Registers a type for persistence handling.
+export function registerType(type: any): void {
+	types.push(type);
+}
 
 // Convert a complex object into a JSON persistence output.
 export function persist(obj: any): any {
@@ -72,6 +71,7 @@ export function persist(obj: any): any {
 	}
 }
 
+// Convert a JSON persistence input into a complex object.
 export function unpersist(obj: any) {
 	if (!obj.type) {
 		console.warn("Can't convert", obj, "from persistence JSON");

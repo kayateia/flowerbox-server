@@ -42,7 +42,7 @@ export class AstObject extends AstNode {
 			this.properties[i].compile(compiler));
 
 		compiler.emit("Object collection", this, (runtime: Runtime) => {
-			let result = new PetalObject(runtime);
+			let result = new PetalObject();
 			Utils.GetPropertyNames(this.properties).forEach((p) => {
 				let value = Value.PopAndDeref(runtime);
 				result.set(p, value);

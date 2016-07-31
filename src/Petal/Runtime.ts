@@ -39,12 +39,16 @@ export class ExecuteResult {
 }
 
 export interface IChangeNotification {
-	(item: IPetalWrapper): void
+	(item: IPetalWrapper, runtime: Runtime): void
 }
 
 export class Runtime {
 	public address: Address;
 	public returnValue: any;
+
+	// This is data passed to the getAccessor method in IObject. It lets you customize
+	// the actions of your IObjects if needed.
+	public accessorCargo: any;
 
 	private _programStack: FixedStack<Address>;
 	private _scopeStack: FixedStack<IScope>;
@@ -62,7 +66,7 @@ export class Runtime {
 
 	private _changeNotification: IChangeNotification;
 
-	constructor(verbose?: boolean, scopeCatcher?: IScopeCatcher, changeNotification?: IChangeNotification) {
+	constructor(verbose?: boolean, scopeCatcher?: IScopeCatcher, changeNotification?: IChangeNotification, accessorCargo?: any) {
 		this._setPC = false;
 
 		this._operandStack = new FixedStack<any>();
@@ -77,6 +81,8 @@ export class Runtime {
 		this._rootScope = new StandardScope(runtimeLib);
 
 		this._changeNotification = changeNotification;
+
+		this.accessorCargo = accessorCargo;
 
 		if (!runtimeRegistered) {
 			runtimeRegistered = true;
@@ -208,7 +214,7 @@ export class Runtime {
 		if (this.verbose)
 			console.log("CHANGED", target, "TAG", target.tag);
 		if (this._changeNotification)
-			this._changeNotification(target);
+			this._changeNotification(target, this);
 	}
 
 	public pushPC(address?: Address): void {

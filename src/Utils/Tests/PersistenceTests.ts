@@ -5,7 +5,7 @@
 */
 
 import * as Persistence from "../Persistence";
-import * as World from "../All";
+import * as World from "../../World/All";
 
 describe("Persistence", function() {
 	it("should persist and unpersist basic JSON structures", function() {

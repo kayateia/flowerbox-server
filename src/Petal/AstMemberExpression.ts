@@ -49,9 +49,9 @@ export class AstMemberExpression extends AstNode {
 
 			let value;
 			if (this.property)
-				value = iobj.getAccessor(property);
+				value = iobj.getAccessor(property, runtime.accessorCargo);
 			else
-				value = iobj.getAccessor(this.member);
+				value = iobj.getAccessor(this.member, runtime.accessorCargo);
 
 			if (value instanceof Promise)
 				return value;

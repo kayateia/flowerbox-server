@@ -37,11 +37,20 @@ export class AstUpdate extends AstNode {
 					break;
 			}
 
-			lval.write(runtime, newValue);
+			let writeRet = lval.write(runtime, newValue);
+			let pushValue;
 			if (this.prefix)
-				runtime.pushOperand(newValue);
+				pushValue = newValue;
 			else
-				runtime.pushOperand(oldValue);
+				pushValue = oldValue;
+
+			if (writeRet instanceof Promise) {
+				// FIXME: Will the error actually throw out somewhere useful?
+				return writeRet
+					.then(() => pushValue)
+					.catch(err => { throw err; });
+			} else
+				runtime.pushOperand(pushValue);
 		});
 	}
 
