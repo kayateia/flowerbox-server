@@ -370,6 +370,17 @@ class RootScope implements Petal.IScopeCatcher {
 	private _injections: any;
 }
 
+function handleFailure(parse: ParseResult) {
+	switch (parse.failure) {
+		case ParseError.NoVerb:
+			console.log("Don't understand.");
+			break;
+		case ParseError.Ambiguous:
+			console.log("Ambiguous.");
+			break;
+	}
+}
+
 export async function executeResult(parse: ParseResult, player: Wob, world: World): Promise<void> {
 	// Get the environment ready.
 	let injections: any = {};
@@ -415,6 +426,12 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 		return;
 	}
 
+	// Did we actually get any text?
+	if (parse.failure) {
+		handleFailure(parse);
+		return;
+	}
+
 	let root = await world.getWob(1);
 	let parserVerb = root.getVerb("$command");
 	if (parserVerb) {
@@ -450,13 +467,6 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 			return;
 		}
 	} else {
-		switch (parse.failure) {
-			case ParseError.NoVerb:
-				console.log("Don't understand.");
-				break;
-			case ParseError.Ambiguous:
-				console.log("Ambiguous.");
-				break;
-		}
+		handleFailure(parse);
 	}
 }
