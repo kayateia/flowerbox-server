@@ -4,7 +4,7 @@
 	For license info, please see notes/gpl-3.0.txt under the project root.
 */
 
-import * as Petal from "../Petal/Petal";
+import * as Petal from "../Petal/All";
 import { World } from "./World";
 import { LanguageParseException } from "./Exceptions";
 

@@ -5,7 +5,7 @@
 */
 
 import { Wob, WobProperties } from "./Wob";
-import * as Petal from "../Petal/Petal";
+import * as Petal from "../Petal/All";
 import * as DB from "../Database/All";
 
 export class Database {

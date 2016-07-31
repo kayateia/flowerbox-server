@@ -4,7 +4,7 @@
 	For license info, please see notes/gpl-3.0.txt under the project root.
 */
 
-import * as Petal from "../Petal";
+import * as Petal from "../All";
 
 export class TestSetup {
 	constructor(program: string, verbose?: boolean) {

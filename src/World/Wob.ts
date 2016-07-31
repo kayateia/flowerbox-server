@@ -8,7 +8,7 @@ import { WobOperationException, InvalidCodeException } from "./Exceptions";
 import { Verb, VerbCode } from "./Verb";
 import { CaseMap } from "../Utils/Strings";
 import { World } from "./World";
-import * as Petal from "../Petal/Petal";
+import * as Petal from "../Petal/All";
 import { Utils } from "./Utils";
 
 // When a wob wants to reference another wob in its properties, one of these should be used.

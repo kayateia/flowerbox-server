@@ -6,7 +6,7 @@
 
 ///<reference path="../../../typings/globals/jasmine/index.d.ts" />
 
-import * as Petal from "../Petal";
+import * as Petal from "../All";
 import { TestSetup } from "./TestSetup";
 
 describe("Object test", function() {

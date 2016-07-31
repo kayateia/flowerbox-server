@@ -6,7 +6,7 @@
 
 ///<reference path="../../../typings/globals/jasmine/index.d.ts" />
 
-import * as Petal from "../Petal";
+import * as Petal from "../All";
 import { TestSetup } from "./TestSetup";
 
 // These aren't the most ideal set of tests, but they're designed to be a torture test gamut of

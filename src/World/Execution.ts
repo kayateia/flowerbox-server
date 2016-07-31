@@ -7,7 +7,7 @@
 import { ParseResult, ParseError } from "./InputParser";
 import { Wob, WobProperties, WobValue } from "./Wob";
 import { World } from "./World";
-import * as Petal from "../Petal/Petal";
+import * as Petal from "../Petal/All";
 import * as Strings from "../Utils/Strings";
 import { WobReferenceException, WobOperationException } from "./Exceptions";
 import { Notation } from "./Notation";

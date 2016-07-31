@@ -1,6 +1,6 @@
 "use strict";
 
-import * as Petal from "./Petal/Petal";
+import * as Petal from "./Petal/All";
 import * as fs from "fs";
 const process = require("process");
 

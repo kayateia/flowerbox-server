@@ -11,7 +11,7 @@ import { ModelBase } from "../Model/ModelBase";
 import { HearLog, HearLogItem, WobRef } from "../Model/HearLog";
 import * as World from "../../World/All";
 import * as CorePromises from "../../Async/CorePromises";
-import * as Petal from "../../Petal/Petal";
+import * as Petal from "../../Petal/All";
 
 export class TerminalRouter extends RouterBase {
 	constructor() {

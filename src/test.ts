@@ -8,7 +8,7 @@
 
 import * as World from "./World/All";
 import * as readline from "readline";
-import * as Petal from "./Petal/Petal";
+import * as Petal from "./Petal/All";
 import * as Database from "./Database/All";
 
 let InitWorld = require("../notes/init/InitWorld");

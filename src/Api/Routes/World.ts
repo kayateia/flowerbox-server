@@ -9,7 +9,7 @@
 import { RouterBase } from "./RouterBase";
 import { ModelBase } from "../Model/ModelBase";
 import * as Wob from "../Model/Wob";
-import * as Petal from "../../Petal/Petal";
+import * as Petal from "../../Petal/All";
 
 export class WorldRouter extends RouterBase {
 	constructor() {

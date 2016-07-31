@@ -6,7 +6,7 @@
 
 import { NotationWrapper } from "./Execution";
 import { DuplicationException } from "./Exceptions";
-import * as Petal from "../Petal/Petal";
+import * as Petal from "../Petal/All";
 
 export class Utils {
 	// This can't do anything super complex, but it can handle JSON-like structures as
