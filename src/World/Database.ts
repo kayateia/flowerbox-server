@@ -7,6 +7,7 @@
 import { Wob, WobProperties } from "./Wob";
 import * as Petal from "../Petal/All";
 import * as DB from "../Database/All";
+import * as Persistence from "../Utils/Persistence";
 
 export class Database {
 	public verbose: boolean;
@@ -45,8 +46,11 @@ export class Database {
 			wob.base = wobrows[0].base;
 			wob.verbCode = wobrows[0].verbCode;
 
-			for (let p of props)
-				wob.setProperty(p.key, p.value);
+			for (let p of props) {
+				let json = JSON.parse(p.value);
+				let unp = Persistence.unpersist(json);
+				wob.setProperty(p.key, unp);
+			}
 
 			let contained = await this._sal.select(conn, "select wobid from wobs where container=?", [id]);
 			wob.contents.push(...contained.map(i => i.wobid));
@@ -64,10 +68,12 @@ export class Database {
 
 		try {
 			let instr = ids.map(i => "?").join(",");
+			let pers = ids.map(i => Persistence.persist(i));
+			let json = pers.map(p => JSON.stringify(p));
 			let wobs = await this._sal.select(conn, "select wobs.wobid from wobs " +
 												"inner join properties on wobs.wobid=properties.wobid " +
 												"where properties.key=? and properties.value in (" + instr + ")",
-												[ WobProperties.GlobalId, ...ids ]);
+												[ WobProperties.GlobalId, ...json ]);
 
 			this.close(conn); conn = null;
 			return await Promise.all(wobs.map(w => this.loadWob(w.wobid)));
@@ -77,14 +83,16 @@ export class Database {
 		}
 	}
 
-	public async loadWobsByPropertyMatch(key: string, value: string): Promise<Wob[]> {
+	public async loadWobsByPropertyMatch(key: string, value: any): Promise<Wob[]> {
 		let conn = await this.connect();
 
 		try {
+			let pers = Persistence.persist(value);
+			let json = JSON.stringify(pers);
 			let wobs = await this._sal.select(conn, "select wobs.wobid from wobs " +
 												"inner join properties on wobs.wobid=properties.wobid " +
 												"where properties.key=? and properties.value =?",
-												[ key, value ]);
+												[ key, json ]);
 
 			this.close(conn); conn = null;
 			return await Promise.all(wobs.map(w => this.loadWob(w.wobid)));
@@ -158,8 +166,10 @@ export class Database {
 
 	private async insertProperties(conn: any, wob: Wob): Promise<any> {
 		for (let p of wob.getPropertyNames()) {
+			let pers = Persistence.persist(wob.getProperty(p));
+			let json = JSON.stringify(pers);
 			await this._sal.run(conn, "insert into properties (wobid, key, value) values (?, ?, ?)",
-				[wob.id, p, wob.getProperty(p)]);
+				[wob.id, p, json]);
 		}
 	}
 
