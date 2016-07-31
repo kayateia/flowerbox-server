@@ -1,7 +1,8 @@
 {
 	"spec_dir": "js",
 	"spec_files": [
-		"Petal/Tests/*.js"
+		"Petal/Tests/*.js",
+		"World/Tests/*.js"
 	],
 	"helpers": [
 		"helpers/**/*.js"

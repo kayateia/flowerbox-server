@@ -14,7 +14,18 @@ import { Utils } from "./Utils";
 // When a wob wants to reference another wob in its properties, one of these should be used.
 export class WobRef {
 	constructor(id: number) {
+		this.id = id;
 	}
+
+	public persist(): any {
+		return { id: this.id };
+	}
+
+	public static Unpersist(obj: any): WobRef {
+		return new WobRef(obj.id);
+	}
+
+	public id: number;
 }
 
 // Some well-defined properties.

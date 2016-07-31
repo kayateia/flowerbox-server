@@ -12,6 +12,7 @@ import * as Strings from "../Utils/Strings";
 import { WobReferenceException, WobOperationException } from "./Exceptions";
 import { Notation } from "./Notation";
 import { Utils } from "./Utils";
+import * as Persistence from "./Persistence";
 
 // Wraps a notation for passing around in Petal scripts. These are opaque
 // objects and you can't do anything with them but pass them around.
@@ -26,6 +27,14 @@ export class NotationWrapper implements Petal.IObject {
 
 	public toString(): string {
 		return "[Notation: " + this.notation.text + "]";
+	}
+
+	public persist(): any {
+		return this.notation.persist();
+	}
+
+	public static Unpersist(obj: any): NotationWrapper {
+		return new NotationWrapper(Notation.Unpersist(obj));
 	}
 
 	public notation: Notation;
