@@ -126,7 +126,7 @@ export class Database {
 	public async exists(id: number): Promise<boolean> {
 		let conn = await this.connect();
 		try {
-			let wobrows = await this._sal.select(conn, "select id from wobs where id=?", [id]);
+			let wobrows = await this._sal.select(conn, "select id from wobs where wobid=?", [id]);
 			return wobrows && wobrows.length > 0;
 		} finally {
 			this.close(conn);
@@ -177,7 +177,7 @@ export class Database {
 		try {
 			await this._sal.transact(conn, async () => {
 				await this._sal.run(conn, "delete from properties where wobid=?", [id]);
-				await this._sal.run(conn, "delete from wobs where id=?", [id]);
+				await this._sal.run(conn, "delete from wobs where wobid=?", [id]);
 			});
 		} finally {
 			this.close(conn);
