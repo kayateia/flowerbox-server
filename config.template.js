@@ -5,6 +5,7 @@ module.exports = {
 	// Supported database drivers:
 	//   - mysql (recommended)
 	//   - sqlite
+	//   - dummy (acts like an empty database)
 	databaseDriver: "mysql",
 
 	// If true, spew a lot of debug about database access.

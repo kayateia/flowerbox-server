@@ -16,21 +16,19 @@ export class Dummy implements IDriver {
 	// Do a SQL select with the specified args (an array), and call the callback with an error
 	// object or with rows of data.
 	public select(connection: any, statement: string, args: any[], callback:(err: any, rows: any[]) => void) {
-		console.log(statement, args);
 		callback(null, []);
 	}
 
 	// Do a SQL execute with the specified args (an array), and call the callback with an error
 	// object or with an ID of the last inserted row (if applicable).
 	public run(connection: any, statement: string, args: any[], callback:(err: any, insertId: number) => void) {
-		console.log(statement, args);
 		callback(null, 0);
 	}
 
 	// Returns a string that represents a transaction beginning statement.
 	// Really lame, guys. Lame.
 	public getTransactStartSql(): string {
-		return "begin transation;";
+		return "begin transaction;";
 	}
 
 	// Closes the database connection.

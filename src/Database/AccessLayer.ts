@@ -7,6 +7,10 @@
 	For license info, please see notes/gpl-3.0.txt under the project root.
  */
 
+import { MySQL } from "./MySQL";
+import { SQLite } from "./SQLite";
+import { Dummy } from "./Dummy";
+
 // Drivers will implement this interface. The driver's constructor should connect to the database.
 export interface IDriver {
 	// Make a connection to the database and call the callback with it (or an error object).
@@ -34,15 +38,24 @@ export interface ICallback {
 
 export interface IAccessLayerConfig {
 	databaseVerbose: boolean;
+	databaseDriver: string;
 }
 
 export class AccessLayer {
 	private _driver: IDriver;
 	private _verbose: boolean;
 
-	constructor(config: IAccessLayerConfig, driver: IDriver) {
-		this._driver = driver;
+	constructor(config: IAccessLayerConfig) {
 		this._verbose = config.databaseVerbose;
+
+		if (config.databaseDriver === "mysql") {
+			this._driver = new MySQL(<any>config);
+		} else if (config.databaseDriver === "sqlite") {
+			this._driver = new SQLite(<any>config);
+		} else if (config.databaseDriver === "dummy") {
+			this._driver = new Dummy();
+		} else
+			throw new Error("Invalid database driver " + config.databaseDriver);
 	}
 
 	// Returns a promise that evaluates to a database connection, ready for statements.
