@@ -14,7 +14,9 @@ import * as Database from "./Database/All";
 let InitWorld = require("../notes/init/InitWorld");
 let config = require("../config");
 
-let dbdriver = new Database.SQLite(config);
+// let dbdriver = new Database.SQLite(config);
+// let dbdriver = new Database.Dummy();
+let dbdriver = new Database.MySQL(config);
 let sal = new Database.AccessLayer(dbdriver);
 let world = new World.World(new World.Database(sal));
 

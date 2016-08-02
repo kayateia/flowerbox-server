@@ -8,6 +8,7 @@ import { Wob, WobProperties } from "./Wob";
 import * as Petal from "../Petal/All";
 import * as DB from "../Database/All";
 import * as Persistence from "../Utils/Persistence";
+import { DatabaseException } from "./Exceptions";
 
 export class Database {
 	public verbose: boolean;
@@ -43,7 +44,7 @@ export class Database {
 			for (let p of props) {
 				let json = JSON.parse(p.value);
 				let unp = Persistence.unpersist(json);
-				wob.setProperty(p.key, unp);
+				wob.setProperty(p.name, unp);
 			}
 
 			let contained = await this._sal.select(conn, "select wobid from wobs where container=?", [id]);
@@ -57,7 +58,7 @@ export class Database {
 		}
 	}
 
-	public async loadWobsByGlobalId(ids): Promise<Wob[]> {
+	public async loadWobsByGlobalId(ids: string[]): Promise<Wob[]> {
 		let conn = await this.connect();
 
 		try {
@@ -66,7 +67,7 @@ export class Database {
 			let json = pers.map(p => JSON.stringify(p));
 			let wobs = await this._sal.select(conn, "select wobs.wobid from wobs " +
 												"inner join properties on wobs.wobid=properties.wobid " +
-												"where properties.key=? and properties.value in (" + instr + ")",
+												"where properties.name=? and properties.value in (" + instr + ")",
 												[ WobProperties.GlobalId, ...json ]);
 
 			this.close(conn); conn = null;
@@ -85,7 +86,7 @@ export class Database {
 			let json = JSON.stringify(pers);
 			let wobs = await this._sal.select(conn, "select wobs.wobid from wobs " +
 												"inner join properties on wobs.wobid=properties.wobid " +
-												"where properties.key=? and properties.value =?",
+												"where properties.name=? and properties.value =?",
 												[ key, json ]);
 
 			this.close(conn); conn = null;
@@ -99,7 +100,7 @@ export class Database {
 	public async readMeta(key: string): Promise<string> {
 		let conn = await this.connect();
 		try {
-			let rows = await this._sal.select(conn, "select * from meta where key=?", [key]);
+			let rows = await this._sal.select(conn, "select * from meta where name=?", [key]);
 			if (!rows || !rows.length)
 				return null;
 			else
@@ -112,8 +113,8 @@ export class Database {
 	public async writeMeta(key: string, value: string): Promise<void> {
 		let conn = await this.connect();
 		try {
-			await this._sal.run(conn, "delete from meta where key=?", [key]);
-			await this._sal.run(conn, "insert into meta (key,value) values (?,?)", [key, value]);
+			await this._sal.run(conn, "delete from meta where name=?", [key]);
+			await this._sal.run(conn, "insert into meta (name,value) values (?,?)", [key, value]);
 		} finally {
 			this.close(conn);
 		}
@@ -143,6 +144,10 @@ export class Database {
 		let conn = await this.connect();
 		try {
 			await this._sal.transact(conn, async () => {
+				let rows = await this._sal.select(conn, "select id from wobs where wobid=?", [wob.id]);
+				if (!rows || !rows.length)
+					throw new DatabaseException("Can't find wob for updating.", wob.id);
+
 				await this._sal.run(conn,"update wobs set container=?, base=?, verbCode=? where wobid=?",
 					[wob.container, wob.base, wob.verbCode, wob.id]);
 
@@ -159,7 +164,7 @@ export class Database {
 		for (let p of wob.getPropertyNames()) {
 			let pers = Persistence.persist(wob.getProperty(p));
 			let json = JSON.stringify(pers);
-			await this._sal.run(conn, "insert into properties (wobid, key, value) values (?, ?, ?)",
+			await this._sal.run(conn, "insert into properties (wobid, name, value) values (?, ?, ?)",
 				[wob.id, p, json]);
 		}
 	}

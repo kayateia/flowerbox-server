@@ -60,3 +60,14 @@ export class DuplicationException extends Exception {
 	public cause: string;
 	public value: string;
 }
+
+export class DatabaseException extends Exception {
+	constructor(cause: string, value: any) {
+		super();
+		this.cause = cause;
+		this.value = value;
+	}
+
+	public cause: string;
+	public value: any;
+}

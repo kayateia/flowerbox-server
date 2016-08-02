@@ -2,10 +2,10 @@ pragma journal_mode = WAL;
 
 create table meta (
 	id integer primary key,
-	key text,
+	name text,
 	value text);
 
-insert into meta(key, value) values ('version', '1');
+insert into meta(name, value) values ('version', '1');
 
 create table wobs (
 	id integer primary key,
@@ -17,6 +17,6 @@ create table wobs (
 create table properties (
 	id integer primary key,
 	wobid integer,
-	key text,
+	name text,
 	value text,
 	foreign key(wobid) references wobs(id));

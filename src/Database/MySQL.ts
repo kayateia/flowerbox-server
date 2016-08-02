@@ -32,27 +32,14 @@ export class MySQL implements IDriver {
 	// Initialize the database if it's not already been initialized. Callback is
 	// a standard err function.
 	private dbInit(db: any, callback: ICallback) {
-		/*db.query("select * from meta", function(err, results) {
-			if (err)
-				return callback(models.error("Can't check for database initialisation", err));
-
-			if (results && results.length) {
-				// The database was already initialized.
-				return callback();
+		db.query("select * from meta", function(err, results) {
+			if (err || !results || !results.length) {
+				console.error("Database can't be checked for initialization or has not been initialized.",
+					"Please do so and try again.", err);
 			}
 
-			// We need to initialize some values in the tables. This assumes the tables
-			// were already created earlier.
-			db.query("start transaction;"
-					+ "insert into meta(token, value) values ('version', '1');"
-					+ "insert into user(login, pwhash, name, isadmin) values (?, ?, 'Admin', 1);"
-					+ "select @id := last_insert_id();"
-					+ "insert into stream(userid, name, permission) values (@id, 'Global Stream', ?);"
-					+ "insert into subscription(userid, streamid, state) values (@id, last_insert_id(), ?);"
-					+ "commit;",
-					[ config.adminLogin, lscrypto.hash(config.adminPassword), dbconst.perms.public, dbconst.sub.active ],
-					modelWrapper("Can't initialise database", callback));
-		}); */
+			return callback();
+		});
 	}
 
 	// Executes a database statement on a pooled connection. All commands executed

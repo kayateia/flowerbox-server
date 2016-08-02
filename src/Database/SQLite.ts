@@ -28,29 +28,15 @@ export class SQLite implements IDriver {
 		this._config = config;
 	}
 
-	public createDatabase(db: any, callback: ICallback) {
-		if (this._verbose)
-			console.log("Creating database");
-
-		let schema = fs.readFileSync(this._config.sqliteSchema).toString();
-		console.log(schema);
-		db.run(schema, [], (err) => {
-			callback(err);
-		});
-	}
-
 	public connect(callback: ICallback): void {
 		let db = new sqlite3.Database(this._config.sqliteFile);
 
 		if (!this._checkedExists) {
 			this._checkedExists = true;
 			db.get("select * from meta", (err: any, row: any[]) => {
-				//if (err)
-				//	return callback(err);
-
-				if (!row)
-					this.createDatabase(db, () => { callback(null, db); });
-				else
+				if (!row) {
+					console.error("Database is not created; please do so and try again.");
+				} else
 					callback(null, db);
 			});
 		} else
