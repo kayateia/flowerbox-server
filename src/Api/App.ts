@@ -22,7 +22,7 @@ export let app = express();
 let config = require("../../config");
 
 let dbdriver = new Database.SQLite(config);
-let sal = new Database.AccessLayer(dbdriver);
+let sal = new Database.AccessLayer(config, dbdriver);
 let world = new World.World(new World.Database(sal));
 
 let cors = require("cors");

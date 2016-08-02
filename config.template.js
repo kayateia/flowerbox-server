@@ -7,6 +7,9 @@ module.exports = {
 	//   - sqlite
 	databaseDriver: "mysql",
 
+	// If true, spew a lot of debug about database access.
+	databaseVerbose: false,
+
 	// MySQL connection information, if needed.
 	mysqlHost: "localhost",
 	mysqlUser: "username",
@@ -14,6 +17,5 @@ module.exports = {
 	mysqlDatabase: "flowerbox",
 
 	// SQLite information, if needed.
-	sqliteFile: ":memory:",
-	sqliteSchema: "notes/sqlite.sql"
+	sqliteFile: ":memory:"
 };

@@ -17,7 +17,7 @@ let config = require("../config");
 // let dbdriver = new Database.SQLite(config);
 // let dbdriver = new Database.Dummy();
 let dbdriver = new Database.MySQL(config);
-let sal = new Database.AccessLayer(dbdriver);
+let sal = new Database.AccessLayer(config, dbdriver);
 let world = new World.World(new World.Database(sal));
 
 const rl = readline.createInterface({

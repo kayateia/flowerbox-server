@@ -32,13 +32,17 @@ export interface ICallback {
 	(error?, result?): void
 }
 
+export interface IAccessLayerConfig {
+	databaseVerbose: boolean;
+}
+
 export class AccessLayer {
 	private _driver: IDriver;
 	private _verbose: boolean;
 
-	constructor(driver: IDriver) {
+	constructor(config: IAccessLayerConfig, driver: IDriver) {
 		this._driver = driver;
-		this._verbose = true;
+		this._verbose = config.databaseVerbose;
 	}
 
 	// Returns a promise that evaluates to a database connection, ready for statements.
