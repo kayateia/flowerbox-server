@@ -8,7 +8,6 @@ import { Wob, WobProperties } from "./Wob";
 import * as Petal from "../Petal/All";
 import * as DB from "../Database/All";
 import * as Persistence from "../Utils/Persistence";
-import { DatabaseException } from "./Exceptions";
 
 export class Database {
 	public verbose: boolean;
@@ -147,10 +146,6 @@ export class Database {
 		let conn = await this.connect();
 		try {
 			await this._sal.transact(conn, async () => {
-				let rows = await this._sal.select(conn, "select id from wobs where wobid=?", [wob.id]);
-				if (!rows || !rows.length)
-					throw new DatabaseException("Can't find wob for updating.", wob.id);
-
 				await this._sal.run(conn,"update wobs set container=?, base=?, verbCode=? where wobid=?",
 					[wob.container, wob.base, wob.verbCode, wob.id]);
 
