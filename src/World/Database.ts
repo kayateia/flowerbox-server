@@ -59,6 +59,9 @@ export class Database {
 	}
 
 	public async loadWobsByGlobalId(ids: string[]): Promise<Wob[]> {
+		if (!ids.length)
+			return [];
+
 		let conn = await this.connect();
 
 		try {
