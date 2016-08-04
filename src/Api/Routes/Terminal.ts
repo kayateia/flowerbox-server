@@ -26,6 +26,10 @@ export class TerminalRouter extends RouterBase {
 	}
 
 	public async command(req, res, next): Promise<ModelBase> {
+		// Parameters.
+		let command = req.params.command;
+		let tag = req.query.tag;
+
 		// Get the player.
 		let playerAny = await this.getUserWob();
 		if (playerAny instanceof ModelBase)
@@ -38,10 +42,10 @@ export class TerminalRouter extends RouterBase {
 			log = new Petal.PetalArray();
 			player.setProperty(World.WobProperties.HearLog, log);
 		}
-		log.push(Petal.ObjectWrapper.Wrap({ type: HearLogItem.TypeCommand, time: Date.now(), text: [req.params.command] }));
+		log.push(Petal.ObjectWrapper.Wrap({ type: HearLogItem.TypeCommand, time: Date.now(), tag: tag, text: [command] }));
 
 		// Execute the command.
-		let match = await World.parseInput(req.params.command, player, this.world);
+		let match = await World.parseInput(command, player, this.world);
 		await World.executeResult(match, player, this.world);
 
 		res.json(new ModelBase(true));
@@ -81,7 +85,7 @@ export class TerminalRouter extends RouterBase {
 		// to do some sanitizing of the output before sending it back.
 		let logs: HearLogItem[] = [];
 		output.forEach(l => {
-			logs.push(new HearLogItem(l.time, l.type, l.text.map(i => {
+			logs.push(new HearLogItem(l.time, l.type, l.tag, l.text.map(i => {
 				if (i instanceof World.NotationWrapper) {
 					let value = i.notation.value;
 					if (value instanceof World.WobRef)

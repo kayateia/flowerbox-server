@@ -16,14 +16,16 @@ export class HearLog extends ModelBase {
 }
 
 export class HearLogItem {
-	constructor(timestamp: number, type: string, items: any[]) {
+	constructor(timestamp: number, type: string, tag: string, items: any[]) {
 		this.timestamp = timestamp;
 		this.type = type;
+		this.tag = tag;
 		this.items = items;
 	}
 
 	public timestamp: number;
 	public type: string;
+	public tag: string;
 	public items: any[];
 
 	// These are possible values for the "type" member.
