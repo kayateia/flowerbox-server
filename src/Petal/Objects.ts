@@ -216,13 +216,13 @@ Persistence.registerType(PetalObject);
 
 export class ObjectWrapper {
 	// Takes a JavaScript (JSON-style) object and converts it into a Petal structure.
-	public static Wrap(obj: any, runtime: Runtime, tag?: any): IPetalWrapper {
+	public static Wrap(obj: any, tag?: any): IPetalWrapper {
 		if (obj instanceof Array)
-			return new PetalArray(obj.map(i => ObjectWrapper.Wrap(i, runtime, tag)));
+			return new PetalArray(obj.map(i => ObjectWrapper.Wrap(i, tag)));
 		else if (typeof(obj) === "object") {
 			let rvmap = new Map<string, any>();
 			for (let k of Utils.GetPropertyNames(obj))
-				rvmap.set(k, ObjectWrapper.Wrap(obj[k], runtime, tag));
+				rvmap.set(k, ObjectWrapper.Wrap(obj[k], tag));
 			return new PetalObject(rvmap, tag);
 		} else
 			return obj;

@@ -26,11 +26,21 @@ export class TerminalRouter extends RouterBase {
 	}
 
 	public async command(req, res, next): Promise<ModelBase> {
+		// Get the player.
 		let playerAny = await this.getUserWob();
 		if (playerAny instanceof ModelBase)
 			return playerAny;
 		let player: World.Wob = playerAny;
 
+		// Add it to the log.
+		let log = player.getProperty(World.WobProperties.HearLog);
+		if (!log) {
+			log = new Petal.PetalArray();
+			player.setProperty(World.WobProperties.HearLog, log);
+		}
+		log.push(Petal.ObjectWrapper.Wrap({ type: HearLogItem.TypeCommand, time: Date.now(), text: [req.params.command] }));
+
+		// Execute the command.
 		let match = await World.parseInput(req.params.command, player, this.world);
 		await World.executeResult(match, player, this.world);
 
@@ -51,7 +61,7 @@ export class TerminalRouter extends RouterBase {
 		let player: World.Wob = playerAny;
 
 		// If we don't have new output immediately available, then turn it into a long-wait push request.
-		let output: any[][] = this.newerThan(Petal.ObjectWrapper.Unwrap(player.getProperty(World.WobProperties.HearLog)), since);
+		let output: any[] = this.newerThan(Petal.ObjectWrapper.Unwrap(player.getProperty(World.WobProperties.HearLog)), since);
 		let count = 10000 / 500;
 		while (count-- && !output.length) {
 			await CorePromises.delay(500);
@@ -71,7 +81,7 @@ export class TerminalRouter extends RouterBase {
 		// to do some sanitizing of the output before sending it back.
 		let logs: HearLogItem[] = [];
 		output.forEach(l => {
-			logs.push(new HearLogItem(l[0], l.slice(1).map(i => {
+			logs.push(new HearLogItem(l.time, l.type, l.text.map(i => {
 				if (i instanceof World.NotationWrapper) {
 					let value = i.notation.value;
 					if (value instanceof World.Wob)
@@ -87,13 +97,13 @@ export class TerminalRouter extends RouterBase {
 	}
 
 	// Helper for newOutput - returns any log lines that are newer than the specified cutoff time.
-	private newerThan(output: any[][], since: number): any[][] {
+	private newerThan(output: any[], since: number): any[] {
 		if (!output || !output.length)
 			return [];
 
 		let rv = [];
 		for (let o of output) {
-			if (o[0] >= since)
+			if (o.time >= since)
 				rv.push(o);
 		}
 

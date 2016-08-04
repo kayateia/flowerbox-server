@@ -16,13 +16,19 @@ export class HearLog extends ModelBase {
 }
 
 export class HearLogItem {
-	constructor(timestamp: number, items: any[]) {
+	constructor(timestamp: number, type: string, items: any[]) {
 		this.timestamp = timestamp;
+		this.type = type;
 		this.items = items;
 	}
 
 	public timestamp: number;
+	public type: string;
 	public items: any[];
+
+	// These are possible values for the "type" member.
+	public static TypeOutput = "output";
+	public static TypeCommand = "command";
 }
 
 // Rich text with a wob reference.

@@ -4,8 +4,7 @@ var verbs = {
 		code: function(what) {
 			if (!this.hearlog)
 				this.hearlog = [];
-			what = what.slice(0);
-			what.unshift($.timestamp());
+			what = { type: "output", time: $.timestamp(), text: what.slice(0) };
 			this.hearlog.push(what);
 		}
 	}

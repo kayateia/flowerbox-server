@@ -63,7 +63,7 @@ class AccessorCargo {
 }
 
 // Wraps a Wob for use within Petal.
-class WobWrapper implements Petal.IObject {
+export class WobWrapper implements Petal.IObject {
 	constructor(id: number) {
 		this._id = id;
 	}

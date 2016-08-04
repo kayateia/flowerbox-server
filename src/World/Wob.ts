@@ -39,7 +39,7 @@ export class WobProperties {
 	public static Description = "desc";			// string
 
 	// On player objects.
-	public static HearLog = "hearlog";			// string[]
+	public static HearLog = "hearlog";			// [{ type, time, text }]
 	public static PasswordHash = "pwhash";		// string
 	public static LastActive = "lastactive";	// int (unix timestamp)
 }
