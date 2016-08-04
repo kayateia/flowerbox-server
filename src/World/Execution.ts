@@ -223,9 +223,9 @@ class DollarObject {
 			throw new WobReferenceException("Received a null wob in move()", 0);
 
 		if (objOrId instanceof WobWrapper)
-			objOrId = objOrId.wob.id;
+			objOrId = objOrId.id;
 		if (intoOrId instanceof WobWrapper)
-			intoOrId = intoOrId.wob.id;
+			intoOrId = intoOrId.id;
 
 		if (typeof(objOrId) !== "number" || typeof(intoOrId) !== "number")
 			throw new WobReferenceException("Received a non-wob object in move()", 0);
@@ -241,7 +241,7 @@ class DollarObject {
 		if (typeof(objOrId) === "number")
 			wob = await this._world.getWob(objOrId);
 		if (objOrId instanceof WobWrapper)
-			wob = objOrId.wob;
+			wob = await this._world.getWob(objOrId.id);
 
 		if (!wob)
 			throw new WobReferenceException("Received a non-wob object in contents()", 0);
@@ -254,7 +254,7 @@ class DollarObject {
 			throw new WobReferenceException("Received a null wob in create()", 0);
 
 		if (intoOrId instanceof WobWrapper)
-			intoOrId = intoOrId.wob.id;
+			intoOrId = intoOrId.id;
 
 		if (typeof(intoOrId) !== "number")
 			throw new WobReferenceException("Received a non-wob object in create()", 0);
