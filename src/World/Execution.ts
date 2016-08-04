@@ -394,6 +394,7 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 
 	injections.$ = dollar;
 	injections.$parse = dollarParse;
+	injections.$player = dollarParseObj.player;
 
 	// Check for a global command handler on #1. If it exists, we'll call that first.
 	let rootScope = new RootScope(world, injections);
@@ -412,6 +413,7 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 		let immediateInjections = {
 			$: injections.$,
 			$parse: injections.$parse,
+			$player: injections.$player,
 			caller: dollarParseObj.player,
 			this: null
 		};

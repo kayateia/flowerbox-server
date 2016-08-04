@@ -2,14 +2,14 @@ var verbs = {
 	release: {
 		sigs: [ "release self" ],
 		code: function() {
-			#1.$sayinto(this.location, [$.notate(this), "was released!"]);
-			$parse.player.$hear(["Thank you for releasing me,", $.notate($parse.player), "!"]);
+			#1.$sayinto(this.location, [$.notate(this), " was released!"]);
+			$parse.player.$hear(["Thank you for releasing me, ", $.notate($parse.player), "!"]);
 		}
 	},
 	put: {
 		sigs: [ "put self in any" ],
 		code: function() {
-			$.log("Noooes,", $parse.player.name, ", why did you put me in the", $parse.indirect.name, "?");
+			$player.$hear(["Noooes, ", $.notate($parse.player), ", why did you put me in the ", $.notate($parse.indirect), "?"]);
 		}
 	}
 };

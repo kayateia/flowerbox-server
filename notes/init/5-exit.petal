@@ -3,7 +3,7 @@ var verbs = {
 		sigs: [ "go self", "go none in self", "go none at self", "go none through self" ],
 		code: function() {
 			var target = $.get(this.target);
-			$.log("You go into", target.name);
+			$player.$hear(["You go into ", $.notate(target)]);
 			$.move(caller, target);
 			target.look();
 		}

@@ -38,21 +38,28 @@ var verbs = {
 	look: {
 		sigs: [ "look none at self", "look self" ],
 		code: function(target) {
-			if (!$parse.player.$hear)
+			if (!$player.$hear)
 				return;
 
 			if (!target)
 				target = this;
 
-			$parse.player.$hear([$.notate(target)]);
-			$parse.player.$hear([target.desc]);
-			$parse.player.$hear([]);
+			$player.$hear([$.notate(target)]);
+			$player.$hear([target.desc]);
+			$player.$hear([]);
 
 			var contents = target.contents;
 			if (contents.length) {
-				var arr = ["Here:"];
-				map(contents, function(w) { arr.push($.notate(w)); });
-				$parse.player.$hear(arr);
+				var arr = ["Here: "];
+				var first = true;
+				map(contents, function(w) {
+					if (!first)
+						arr.push(", ");
+					else
+						first = false;
+					arr.push($.notate(w));
+				});
+				$player.$hear(arr);
 			}
 		}
 	},

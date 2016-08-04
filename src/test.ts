@@ -40,7 +40,7 @@ async function tester() {
 							if (output && output.length) {
 								output.forEach(l => {
 									let arr = [];
-									arr.push(l.time);
+									arr.push(l.time, " -- ");
 									l.text.forEach(obj => {
 										if (obj instanceof World.NotationWrapper) {
 											arr.push(obj.notation.text);
@@ -50,7 +50,7 @@ async function tester() {
 										} else
 											arr.push(obj.toString());
 									});
-									(<any>console.log)(...arr);
+									console.log(arr.join(""));
 								});
 								player.setProperty("hearlog", null);
 							}
