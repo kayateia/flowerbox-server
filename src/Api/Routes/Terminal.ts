@@ -84,7 +84,7 @@ export class TerminalRouter extends RouterBase {
 			logs.push(new HearLogItem(l.time, l.type, l.text.map(i => {
 				if (i instanceof World.NotationWrapper) {
 					let value = i.notation.value;
-					if (value instanceof World.Wob)
+					if (value instanceof World.WobRef)
 						return new WobRef(i.notation.text, i.notation.value.id);
 					else
 						return i.notation.text;
