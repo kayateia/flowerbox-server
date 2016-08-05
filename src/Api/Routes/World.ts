@@ -37,7 +37,7 @@ export class WorldRouter extends RouterBase {
 		let wob = await this.getWob(id, res);
 
 		let prop = await wob.getPropertyI(name, this.world);
-		return res.json(new Wob.Property(
+		res.json(new Wob.Property(
 			prop.wob,
 			name,
 			Petal.ObjectWrapper.Unwrap(prop)
@@ -63,7 +63,7 @@ export class WorldRouter extends RouterBase {
 			properties.map(p => new Wob.AttachedItem(p.wob, p.value)),
 			verbs.map(v => new Wob.AttachedItem(v.wob, v.value)));
 
-		return res.json(rv);
+		res.json(rv);
 	}
 
 	private async contents(req, res, next): Promise<any> {
@@ -71,7 +71,7 @@ export class WorldRouter extends RouterBase {
 
 		let wob = await this.getWob(id, res);
 
-		return new Wob.IdList(wob.contents);
+		res.json(new Wob.IdList(wob.contents));
 	}
 
 	private async contentNames(req, res, next): Promise<any> {
@@ -86,7 +86,7 @@ export class WorldRouter extends RouterBase {
 		for (let w of subwobs)
 			wobnames.push((await w.getPropertyI(World.WobProperties.Name, this.world)).value);
 
-		return new Wob.NameList(wobnames);
+		res.json(new Wob.NameList(wobnames));
 	}
 }
 

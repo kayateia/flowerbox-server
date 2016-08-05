@@ -24,7 +24,7 @@ export class RouterBase {
 					res.json(err);
 			})
 			.catch(err => {
-				console.log(err);
+				console.log(err, err.stack);
 				if (!(err instanceof ModelBase))
 					err = new ModelBase(false, err);
 				res.json(err);
