@@ -58,6 +58,62 @@ module.exports = [
 		verbs: "5-exit.petal"
 	},
 
+	// #6
+	{
+		properties: {
+			"name": "Empty room 1",
+			"desc": "An empty room with #1 on the wall."
+		},
+		container: 1,
+		base: 3
+	},
+
+	// #7
+	{
+		properties: {
+			"name": "Empty room 2",
+			"desc": "An empty room with #2 on the wall."
+		},
+		container: 1,
+		base: 3,
+	},
+
+	{
+		properties: {
+			"name": "ToRoom",
+			"target": 6
+		},
+		container: 1,
+		base: 5
+	},
+
+	{
+		properties: {
+			"name": "East",
+			"target": 7
+		},
+		container: 6,
+		base: 5
+	},
+
+	{
+		properties: {
+			"name": "West",
+			"target": 6
+		},
+		container: 7,
+		base: 5
+	},
+
+	{
+		properties: {
+			"name": "ToOne",
+			"target": 1
+		},
+		container: 6,
+		base: 5
+	},
+
 	{
 		properties: {
 			"name": "Door",
