@@ -63,3 +63,19 @@ export class AttachedItem {
 	public sourceid: number;
 	public value: string;
 }
+
+export class IdList {
+	constructor(list: number[]) {
+		this.list = list;
+	}
+
+	public list: number[];
+}
+
+export class NameList {
+	constructor(list: string[]) {
+		this.list = list;
+	}
+
+	public list: string[];
+}

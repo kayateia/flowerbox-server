@@ -18,15 +18,23 @@ export class WorldRouter extends RouterBase {
 
 		this.router.get("/wob/:id/property/:name", (rq,rs,n) => { this.asyncWrapper(rq,rs,n, ()=>this.getProperty(rq,rs,n)); });
 		this.router.get("/wob/:id/info", (rq,rs,n) => { this.asyncWrapper(rq,rs,n,()=>this.info(rq,rs,n)); });
+		this.router.get("/wob/:id/contents", (rq,rs,n) => { this.asyncWrapper(rq,rs,n,()=>this.contents(rq,rs,n)); });
+		this.router.get("/wob/:id/content-names", (rq,rs,n) => { this.asyncWrapper(rq,rs,n,()=>this.contentNames(rq,rs,n)); });
+	}
+
+	private async getWob(id: string, res): Promise<World.Wob> {
+		let wob = await this.world.getWob(parseInt(id, 10));
+		if (!wob)
+			return res.json(new ModelBase(false, "Unknown wob ID"));
+
+		return wob;
 	}
 
 	private async getProperty(req, res, next): Promise<any> {
 		let id = req.params.id;
 		let name = req.params.name;
 
-		let wob = await this.world.getWob(parseInt(id, 10));
-		if (!wob)
-			return res.json(new ModelBase(false, "Unknown wob ID"));
+		let wob = await this.getWob(id, res);
 
 		let prop = await wob.getPropertyI(name, this.world);
 		return res.json(new Wob.Property(
@@ -39,9 +47,7 @@ export class WorldRouter extends RouterBase {
 	private async info(req, res, next): Promise<any> {
 		let id = req.params.id;
 
-		let wob = await this.world.getWob(parseInt(id, 10));
-		if (!wob)
-			return res.json(new ModelBase(false, "Unknown wob ID"));
+		let wob = await this.getWob(id, res);
 
 		let base = wob.base;
 		let container = wob.container;
@@ -58,6 +64,29 @@ export class WorldRouter extends RouterBase {
 			verbs.map(v => new Wob.AttachedItem(v.wob, v.value)));
 
 		return res.json(rv);
+	}
+
+	private async contents(req, res, next): Promise<any> {
+		let id = req.params.id;
+
+		let wob = await this.getWob(id, res);
+
+		return new Wob.IdList(wob.contents);
+	}
+
+	private async contentNames(req, res, next): Promise<any> {
+		let id = req.params.id;
+
+		// Get our target wob, then query for all the sub-wobs.
+		let wob = await this.getWob(id, res);
+		let subwobs = await Promise.all(wob.contents.map(i => this.world.getWob(i)));
+
+		// Get the name properties of each sub-wob.
+		let wobnames = [];
+		for (let w of subwobs)
+			wobnames.push((await w.getPropertyI(World.WobProperties.Name, this.world)).value);
+
+		return new Wob.NameList(wobnames);
 	}
 }
 
