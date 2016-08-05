@@ -160,14 +160,14 @@ var verbs = {
 			var y1 = 0;
 			next(x1, y1, true);
 
-			$.log("Finished with maze generation");
+			$player.$hear([ "Finished with maze generation" ]);
 
 			for (var y=0; y<ysize; ++y) {
 				var o = "";
 				for (var x=0; x<xsize; ++x) {
 					o = o + grid[y][x];
 				}
-				$.log(o);
+				$player.$hear([ o ]);
 			}
 		}
 	}
