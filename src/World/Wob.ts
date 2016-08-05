@@ -123,14 +123,20 @@ export class Wob {
 
 	// This version searches up the inheritance chain for answers.
 	public async getPropertyNamesI(world: World): Promise<WobValue<string>[]> {
-		let ourProps = this.getPropertyNames().map(p => new WobValue<string>(this.id, p));
+		let map = new CaseMap<WobValue<string>>();
+		await this.mapPropertyNamesI(world, map);
+		return map.values();
+	}
+
+	private async mapPropertyNamesI(world: World, map: CaseMap<WobValue<string>>): Promise<void> {
+		this.getPropertyNames().forEach(pn => {
+			if (!map.has(pn))
+				map.set(pn, new WobValue<string>(this.id, pn));
+		});
 		if (this.base) {
 			let baseWob = await world.getWob(this.base);
-			let baseProps = await baseWob.getPropertyNamesI(world);
-			ourProps.push(...baseProps);
+			baseWob.mapPropertyNamesI(world, map);
 		}
-
-		return ourProps;
 	}
 
 	public getProperty(name: string): any {
@@ -196,14 +202,21 @@ export class Wob {
 
 	// This version searches up the inheritance chain for answers.
 	public async getVerbsI(world: World): Promise<WobValue<Verb>[]> {
-		let ourVerbs = this.getVerbs().map(v => new WobValue<Verb>(this.id, v));
+		let map = new CaseMap<WobValue<Verb>>();
+		await this.mapVerbsI(world, map);
+		return map.values();
+	}
+
+	private async mapVerbsI(world: World, map: CaseMap<WobValue<Verb>>): Promise<void> {
+		this.getVerbs().forEach(v => {
+			if (!map.has(v.verb)) {
+				map.set(v.verb, new WobValue<Verb>(this.id, v));
+			}
+		});
 		if (this.base) {
 			let baseWob = await world.getWob(this.base);
-			let baseVerbs = await baseWob.getVerbsI(world);
-			ourVerbs.push(...baseVerbs);
+			await baseWob.mapVerbsI(world, map);
 		}
-
-		return ourVerbs;
 	}
 
 	public setVerb(name: string, value: Verb): void {
