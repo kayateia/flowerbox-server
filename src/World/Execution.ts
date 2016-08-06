@@ -166,8 +166,12 @@ export class WobWrapper implements Petal.IObject {
 		// it doesn't matter anyway, it can't be dirty.
 		let cargo: AccessorCargo = runtime.accessorCargo;
 		let wob = cargo.world.getCachedWob(this._id);
-		if (wob)
-			wob.dirty = true;
+		if (wob) {
+			// This may not be necessary, but:
+			// a) it sets the dirty flag for us,
+			// b) if this came to us through inheritance, it will set the local copy.
+			wob.setProperty((<WobPropertyTag>item.tag).property, item);
+		}
 	}
 
 	public persist(): any {
