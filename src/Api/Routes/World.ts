@@ -84,7 +84,10 @@ export class WorldRouter extends RouterBase {
 		let wob = await this.getWob(id, res);
 		if (!wob)
 			return;
-		let subwobs = await Promise.all(wob.contents.map(i => this.world.getWob(i)));
+
+		// FIXME: TypeScript thinks Promise.all returns Promise<Promise<Wob>[]>. See if they've
+		// fixed this later and try it again without the <any>.
+		let subwobs: World.Wob[] = <any>(await Promise.all(wob.contents.map(i => this.world.getWob(i))));
 
 		// Get the properties of each sub-wob.
 		let wobinfos = [];

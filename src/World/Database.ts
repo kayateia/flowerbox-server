@@ -73,7 +73,10 @@ export class Database {
 												[ WobProperties.GlobalId, ...json ]);
 
 			this.close(conn); conn = null;
-			return await Promise.all(wobs.map(w => this.loadWob(w.wobid)));
+
+			// FIXME: TypeScript thinks Promise.all returns Promise<Promise<Wob>[]>. See if they've
+			// fixed this later and try it again without the <any>.
+			return <any>(await Promise.all(wobs.map(w => this.loadWob(w.wobid))));
 		} finally {
 			if (conn)
 				this.close(conn);
@@ -92,7 +95,10 @@ export class Database {
 												[ key, json ]);
 
 			this.close(conn); conn = null;
-			return await Promise.all(wobs.map(w => this.loadWob(w.wobid)));
+
+			// FIXME: TypeScript thinks Promise.all returns Promise<Promise<Wob>[]>. See if they've
+			// fixed this later and try it again without the <any>.
+			return <any>(await Promise.all(wobs.map(w => this.loadWob(w.wobid))));
 		} finally {
 			if (conn)
 				this.close(conn);
