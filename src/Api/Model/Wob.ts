@@ -72,10 +72,10 @@ export class IdList {
 	public list: number[];
 }
 
-export class NameList {
-	constructor(list: string[]) {
+export class InfoList {
+	constructor(list: Info[]) {
 		this.list = list;
 	}
 
-	public list: string[];
+	public list: Info[];
 }

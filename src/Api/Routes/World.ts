@@ -18,8 +18,8 @@ export class WorldRouter extends RouterBase {
 
 		this.router.get("/wob/:id/property/:name", (rq,rs,n) => { this.asyncWrapper(rq,rs,n, ()=>this.getProperty(rq,rs,n)); });
 		this.router.get("/wob/:id/info", (rq,rs,n) => { this.asyncWrapper(rq,rs,n,()=>this.info(rq,rs,n)); });
+		this.router.get("/wob/:id/content-ids", (rq,rs,n) => { this.asyncWrapper(rq,rs,n,()=>this.contentIds(rq,rs,n)); });
 		this.router.get("/wob/:id/contents", (rq,rs,n) => { this.asyncWrapper(rq,rs,n,()=>this.contents(rq,rs,n)); });
-		this.router.get("/wob/:id/content-names", (rq,rs,n) => { this.asyncWrapper(rq,rs,n,()=>this.contentNames(rq,rs,n)); });
 	}
 
 	private async getWob(id: string, res): Promise<World.Wob> {
@@ -48,11 +48,8 @@ export class WorldRouter extends RouterBase {
 		));
 	}
 
-	private async info(req, res, next): Promise<any> {
-		let id = req.params.id;
-
-		let wob = await this.getWob(id, res);
-
+	// Gets all the Wob.Info data for a loaded wob.
+	private async getInfo(wob: World.Wob): Promise<Wob.Info> {
 		let base = wob.base;
 		let container = wob.container;
 
@@ -63,14 +60,24 @@ export class WorldRouter extends RouterBase {
 		let properties = await wob.getPropertyNamesI(this.world);
 		let verbs = await wob.getVerbNamesI(this.world);
 
-		let rv = new Wob.Info(id, base, container, name.value, desc.value, globalid,
+		let rv = new Wob.Info(wob.id, base, container, name.value, desc.value, globalid,
 			properties.map(p => new Wob.AttachedItem(p.wob, p.value)),
 			verbs.map(v => new Wob.AttachedItem(v.wob, v.value)));
+		return rv;
+	}
 
+	private async info(req, res, next): Promise<any> {
+		let id = req.params.id;
+
+		let wob = await this.getWob(id, res);
+		if (!wob)
+			return;
+
+		let rv = await this.getInfo(wob);
 		res.json(rv);
 	}
 
-	private async contents(req, res, next): Promise<any> {
+	private async contentIds(req, res, next): Promise<any> {
 		let id = req.params.id;
 
 		let wob = await this.getWob(id, res);
@@ -80,7 +87,7 @@ export class WorldRouter extends RouterBase {
 		res.json(new Wob.IdList(wob.contents));
 	}
 
-	private async contentNames(req, res, next): Promise<any> {
+	private async contents(req, res, next): Promise<any> {
 		let id = req.params.id;
 
 		// Get our target wob, then query for all the sub-wobs.
@@ -89,12 +96,19 @@ export class WorldRouter extends RouterBase {
 			return;
 		let subwobs = await Promise.all(wob.contents.map(i => this.world.getWob(i)));
 
-		// Get the name properties of each sub-wob.
-		let wobnames = [];
-		for (let w of subwobs)
-			wobnames.push((await w.getPropertyI(World.WobProperties.Name, this.world)).value);
+		// Get the properties of each sub-wob.
+		let wobinfos = [];
+		for (let w of subwobs) {
+			let info = await this.getInfo(w);
 
-		res.json(new Wob.NameList(wobnames));
+			// This is really terrible but there is no good language construct in TypeScript
+			// to deal with this situation, and I won't copy and paste the whole class.
+			delete info.success;
+
+			wobinfos.push(info);
+		}
+
+		res.json(new Wob.InfoList(wobinfos));
 	}
 }
 
