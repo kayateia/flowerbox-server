@@ -24,8 +24,10 @@ export class WorldRouter extends RouterBase {
 
 	private async getWob(id: string, res): Promise<World.Wob> {
 		let wob = await this.world.getWob(parseInt(id, 10));
-		if (!wob)
-			return res.json(new ModelBase(false, "Unknown wob ID"));
+		if (!wob) {
+			res.json(new ModelBase(false, "Unknown wob ID"));
+			return null;
+		}
 
 		return wob;
 	}
@@ -35,6 +37,8 @@ export class WorldRouter extends RouterBase {
 		let name = req.params.name;
 
 		let wob = await this.getWob(id, res);
+		if (!wob)
+			return;
 
 		let prop = await wob.getPropertyI(name, this.world);
 		res.json(new Wob.Property(
@@ -70,6 +74,8 @@ export class WorldRouter extends RouterBase {
 		let id = req.params.id;
 
 		let wob = await this.getWob(id, res);
+		if (!wob)
+			return;
 
 		res.json(new Wob.IdList(wob.contents));
 	}
@@ -79,6 +85,8 @@ export class WorldRouter extends RouterBase {
 
 		// Get our target wob, then query for all the sub-wobs.
 		let wob = await this.getWob(id, res);
+		if (!wob)
+			return;
 		let subwobs = await Promise.all(wob.contents.map(i => this.world.getWob(i)));
 
 		// Get the name properties of each sub-wob.
