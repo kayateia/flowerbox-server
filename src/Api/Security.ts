@@ -17,9 +17,6 @@ export class Security {
 			if (req.headers.authorization) {
 				auth = req.headers.authorization;
 			}
-			else if (req.cookies.authorization) {
-				auth = req.cookies.authorization;
-			}
 
 			if (!auth) {
 				res.json(new ModelBase(false, "Missing bearer token"));
