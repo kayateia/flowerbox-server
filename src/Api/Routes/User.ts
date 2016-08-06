@@ -24,7 +24,7 @@ export class UserRouter extends RouterBase {
 		this.router.post("/login/:user", (rq,rs,n) => { this.asyncWrapper(rq,rs,n,()=>this.login(rq,rs,n)); });
 
 		// Return info about the user's wob.
-		this.router.get("/player-info", (rq,rs,n) => { this.asyncWrapper(rq,rs,n,()=>this.playerInfo(rq,rs,n)); });
+		this.router.get("/player-info", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.playerInfo(rq,rs,n)); });
 	}
 
 	public async login(req, res, next): Promise<ModelBase> {
@@ -49,11 +49,7 @@ export class UserRouter extends RouterBase {
 	}
 
 	public async playerInfo(req, res, next): Promise<ModelBase> {
-		let tokenInfo = Security.VerifyToken(req, res);
-		if (!tokenInfo)
-			return null;
-
-		let wob = await this.world.getWob(tokenInfo.wobId);
+		let wob = await this.world.getWob(this.token.wobId);
 		if (!wob)
 			return new ModelBase(false, "Can't find user wob");
 
