@@ -18,11 +18,11 @@ export class TerminalRouter extends RouterBase {
 		super();
 
 		// Execute a command on the server, as the user.
-		this.router.get("/command/:command", (rq,rs,n) => { this.asyncWrapper(rq,rs,n,()=>this.command(rq,rs,n)); });
+		this.router.get("/command/:command", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.command(rq,rs,n)); });
 
 		// Get new "hear log" output from the user's wob.
 		// This may have a "since" parameter that only shows things since the specified time.
-		this.router.get("/new-output", (rq,rs,n) => { this.asyncWrapper(rq,rs,n,()=>this.newOutput(rq,rs,n)); });
+		this.router.get("/new-output", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.newOutput(rq,rs,n)); });
 	}
 
 	public async command(req, res, next): Promise<ModelBase> {
@@ -116,10 +116,11 @@ export class TerminalRouter extends RouterBase {
 
 	// Returns the player's Wob or a ModelBase with an error message.
 	private async getUserWob(): Promise<any /*World.Wob | ModelBase*/> {
-		let players = await this.world.getWobsByGlobalId(["Kayateia"]);
-		if (players.length !== 1)
-			return new ModelBase(false, "No such player exists");
-		return players[0];
+		// let players = await this.world.getWobsByGlobalId(["Kayateia"]);
+		let player = await this.world.getWob(this.token.wobId);
+		if (!player)
+			return new ModelBase(false, "Player wob does not exist.");
+		return player;
 	}
 }
 

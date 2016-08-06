@@ -9,6 +9,8 @@
 import * as express from "express";
 import * as World from "../../World/All";
 import { ModelBase } from "../Model/ModelBase";
+import { Security } from "../Security";
+import { Token } from "../Model/Token";
 
 export class RouterBase {
 	constructor() {
@@ -31,6 +33,18 @@ export class RouterBase {
 			});
 	}
 
+	// This wraps asyncWrapper to provide checking credentials, and storing them in the object
+	// for later usage.
+	public asyncWrapperLoggedIn(req, res, next, calldown: any): void {
+		let tokenInfo = Security.VerifyToken(req, res);
+		if (!tokenInfo)
+			return;
+
+		this._token = tokenInfo;
+
+		this.asyncWrapper(req, res, next, calldown);
+	}
+
 	// We'd use express.Router here, but the typing is fairly useless.
 	public get router(): any {
 		return this._router;
@@ -44,6 +58,11 @@ export class RouterBase {
 		this._world = world;
 	}
 
+	public get token(): Token {
+		return this._token;
+	}
+
 	private _router: any;
 	private _world: World.World;
+	private _token: Token;
 }

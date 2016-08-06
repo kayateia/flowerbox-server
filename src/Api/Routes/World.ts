@@ -17,10 +17,17 @@ export class WorldRouter extends RouterBase {
 	constructor() {
 		super();
 
-		this.router.get("/wob/:id/property/:name", (rq,rs,n) => { this.asyncWrapper(rq,rs,n, ()=>this.getProperty(rq,rs,n)); });
-		this.router.get("/wob/:id/info", (rq,rs,n) => { this.asyncWrapper(rq,rs,n,()=>this.info(rq,rs,n)); });
-		this.router.get("/wob/:id/content-ids", (rq,rs,n) => { this.asyncWrapper(rq,rs,n,()=>this.contentIds(rq,rs,n)); });
-		this.router.get("/wob/:id/contents", (rq,rs,n) => { this.asyncWrapper(rq,rs,n,()=>this.contents(rq,rs,n)); });
+		// Get the value of a property on a wob.
+		this.router.get("/wob/:id/property/:name", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.getProperty(rq,rs,n)); });
+
+		// Get a full set of info about a wob.
+		this.router.get("/wob/:id/info", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.info(rq,rs,n)); });
+
+		// Get a list of wob IDs for the contents of another wob.
+		this.router.get("/wob/:id/content-ids", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.contentIds(rq,rs,n)); });
+
+		// Get a list of wob info for the contents of another wob.
+		this.router.get("/wob/:id/contents", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.contents(rq,rs,n)); });
 	}
 
 	private async getWob(id: string, res): Promise<World.Wob> {
