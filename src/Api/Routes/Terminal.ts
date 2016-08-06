@@ -8,7 +8,7 @@
 
 import { RouterBase } from "./RouterBase";
 import { ModelBase } from "../Model/ModelBase";
-import { HearLog, HearLogItem, WobRef } from "../Model/HearLog";
+import { EventStream, EventStreamItem, WobRef } from "../Model/EventStream";
 import * as World from "../../World/All";
 import * as CorePromises from "../../Async/CorePromises";
 import * as Petal from "../../Petal/All";
@@ -20,9 +20,9 @@ export class TerminalRouter extends RouterBase {
 		// Execute a command on the server, as the user.
 		this.router.get("/command/:command", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.command(rq,rs,n)); });
 
-		// Get new "hear log" output from the user's wob.
+		// Get new event stream output from the user's wob.
 		// This may have a "since" parameter that only shows things since the specified time.
-		this.router.get("/new-output", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.newOutput(rq,rs,n)); });
+		this.router.get("/new-events", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.newEvents(rq,rs,n)); });
 	}
 
 	public async command(req, res, next): Promise<ModelBase> {
@@ -37,12 +37,7 @@ export class TerminalRouter extends RouterBase {
 		let player: World.Wob = playerAny;
 
 		// Add it to the log.
-		let log = player.getProperty(World.WobProperties.HearLog);
-		if (!log) {
-			log = new Petal.PetalArray();
-			player.setProperty(World.WobProperties.HearLog, log);
-		}
-		log.push(Petal.ObjectWrapper.Wrap({ type: HearLogItem.TypeCommand, time: Date.now(), tag: tag, text: [command] }));
+		player.event(World.EventType.Command, Date.now(), [command], tag);
 
 		// Execute the command.
 		let match = await World.parseInput(command, player, this.world);
@@ -53,7 +48,7 @@ export class TerminalRouter extends RouterBase {
 		return null;
 	}
 
-	public async newOutput(req, res, next): Promise<ModelBase> {
+	public async newEvents(req, res, next): Promise<ModelBase> {
 		// Query parameters.
 		let since = req.query.since;
 		if (!since)
@@ -65,17 +60,17 @@ export class TerminalRouter extends RouterBase {
 		let player: World.Wob = playerAny;
 
 		// If we don't have new output immediately available, then turn it into a long-wait push request.
-		let output: any[] = this.newerThan(Petal.ObjectWrapper.Unwrap(player.getProperty(World.WobProperties.HearLog)), since);
+		let output: any[] = this.newerThan(Petal.ObjectWrapper.Unwrap(player.getProperty(World.WobProperties.EventStream)), since);
 		let count = 10000 / 500;
 		while (count-- && !output.length) {
 			await CorePromises.delay(500);
-			output = this.newerThan(Petal.ObjectWrapper.Unwrap(player.getProperty(World.WobProperties.HearLog)), since);
+			output = this.newerThan(Petal.ObjectWrapper.Unwrap(player.getProperty(World.WobProperties.EventStream)), since);
 			if (output.length)
 				break;
 		}
 
 		if (!output.length) {
-			res.json(new HearLog([]));
+			res.json(new EventStream([]));
 			return null;
 		}
 
@@ -83,9 +78,9 @@ export class TerminalRouter extends RouterBase {
 		// will be a timestamp; everything after that is stuff to be displayed to the user.
 		// Because we can end up passing back rich objects along with regular text, we need
 		// to do some sanitizing of the output before sending it back.
-		let logs: HearLogItem[] = [];
+		let logs: EventStreamItem[] = [];
 		output.forEach(l => {
-			logs.push(new HearLogItem(l.time, l.type, l.tag, l.text.map(i => {
+			logs.push(new EventStreamItem(l.time, l.type, l.tag, l.body.map(i => {
 				if (i instanceof World.NotationWrapper) {
 					let value = i.notation.value;
 					if (value instanceof World.WobRef)
@@ -97,7 +92,7 @@ export class TerminalRouter extends RouterBase {
 			})));
 		});
 
-		res.json(new HearLog(logs));
+		res.json(new EventStream(logs));
 	}
 
 	// Helper for newOutput - returns any log lines that are newer than the specified cutoff time.

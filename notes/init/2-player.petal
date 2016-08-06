@@ -2,10 +2,7 @@ var verbs = {
 	$hear: {
 		// 'what' should be an array of objects to be stored for later retrieval by a client.
 		code: function(what) {
-			if (!this.hearlog)
-				this.hearlog = [];
-			what = { type: "output", time: $.timestamp(), text: what.slice(0) };
-			this.hearlog.push(what);
+			this.$event("output", $.timestamp(), what);
 		}
 	}
 };

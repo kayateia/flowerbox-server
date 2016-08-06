@@ -155,6 +155,13 @@ export class PetalObject implements IObject, IPetalWrapper {
 		this.tag = tag;
 	}
 
+	public static FromObject(obj: any): PetalObject {
+		let po = new PetalObject();
+		for (let p of Utils.GetPropertyNames(obj))
+			po.set(p, obj[p]);
+		return po;
+	}
+
 	public notify(runtime: Runtime): void {
 		if (this.tag)
 			runtime.notifyChange(this);

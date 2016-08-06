@@ -111,6 +111,17 @@ export class WobWrapper implements Petal.IObject {
 			}, this);
 		}
 
+		if (index === "$event") {
+			return new Petal.LValue("Wob.$event", async(runtime: Petal.Runtime) => {
+				let wob = await cargo.world.getWob(this._id);
+				return Petal.Address.Function((type: string, timestamp: number, body: any[]) => {
+					wob.event(type, timestamp, body);
+				});
+			}, () => {
+				throw new WobOperationException("Can't set $event on a wob", []);
+			}, this);
+		}
+
 		return (async () => {
 			let wob = await cargo.world.getWob(this._id);
 			let member: string = index;

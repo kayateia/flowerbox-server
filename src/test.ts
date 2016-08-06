@@ -34,14 +34,14 @@ async function tester() {
 					World.executeResult(match, player, world)
 						.then(() => {
 							// Look for new output on the player.
-							let output = player.getProperty("hearlog");
+							let output = player.getProperty(World.WobProperties.EventStream);
 							if (output)
 								output = Petal.ObjectWrapper.Unwrap(output);
 							if (output && output.length) {
 								output.forEach(l => {
 									let arr = [];
 									arr.push(l.time, " -- ");
-									l.text.forEach(obj => {
+									l.body.forEach(obj => {
 										if (obj instanceof World.NotationWrapper) {
 											arr.push(obj.notation.text);
 											if (obj.notation.value instanceof World.Wob) {
@@ -52,7 +52,7 @@ async function tester() {
 									});
 									console.log(arr.join(""));
 								});
-								player.setProperty("hearlog", null);
+								player.setProperty(World.WobProperties.EventStream, null);
 							}
 							nextLine();
 						})

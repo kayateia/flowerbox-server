@@ -6,16 +6,16 @@
 
 import { ModelBase } from "./ModelBase";
 
-export class HearLog extends ModelBase {
-	constructor(log: HearLogItem[]) {
+export class EventStream extends ModelBase {
+	constructor(log: EventStreamItem[]) {
 		super(true);
 		this.log = log;
 	}
 
-	public log: HearLogItem[];
+	public log: EventStreamItem[];
 }
 
-export class HearLogItem {
+export class EventStreamItem {
 	constructor(timestamp: number, type: string, tag: string, items: any[]) {
 		this.timestamp = timestamp;
 		this.type = type;
@@ -24,13 +24,9 @@ export class HearLogItem {
 	}
 
 	public timestamp: number;
-	public type: string;
+	public type: string;		// Comes from World/Wob.ts/EventType
 	public tag: string;
 	public items: any[];
-
-	// These are possible values for the "type" member.
-	public static TypeOutput = "output";
-	public static TypeCommand = "command";
 }
 
 // Rich text with a wob reference.

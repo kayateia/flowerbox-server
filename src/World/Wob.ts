@@ -39,9 +39,18 @@ export class WobProperties {
 	public static Description = "desc";			// string
 
 	// On player objects.
-	public static HearLog = "hearlog";			// [{ type, time, text }]
+	public static EventStream = "eventstream";	// [{ type, time, body, tag? }]
 	public static PasswordHash = "pwhash";		// string
 	public static LastActive = "lastactive";	// int (unix timestamp)
+}
+
+// This should be kept in sync with the API models.
+export class EventType {
+	public static Output = "output";				// General output
+	public static Command = "command";				// Command echoes
+	public static Error = "error";					// Unclassified error
+	public static ParseError = "parse_error";		// Error parsing user input
+	public static ScriptError = "script_error";		// Error from a Petal script
 }
 
 // Tags a value with what specific wob it came from.
@@ -161,6 +170,16 @@ export class Wob {
 		this.updateLastUse();
 		this._dirty = true;
 		this._properties.set(name, value);
+	}
+
+	// Record an event in the wob's event stream. 'type' should be a value
+	// from the EventType class.
+	public event(type: string, timestamp: number, body: any[], tag?: string): void {
+		let value = this.getProperty(WobProperties.EventStream);
+		if (value == null)
+			value = new Petal.PetalArray();
+		value.push(Petal.PetalObject.FromObject({ type: type, time: timestamp, body: body, tag: tag }));
+		this.setProperty(WobProperties.EventStream, value);
 	}
 
 	public getVerbNames(): string[] {
