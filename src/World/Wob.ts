@@ -51,6 +51,7 @@ export class EventType {
 	public static Error = "error";					// Unclassified error
 	public static ParseError = "parse_error";		// Error parsing user input
 	public static ScriptError = "script_error";		// Error from a Petal script
+	public static Debug = "debug";					// Debug messages
 }
 
 // Tags a value with what specific wob it came from.

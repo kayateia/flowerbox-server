@@ -40,7 +40,7 @@ async function tester() {
 							if (output && output.length) {
 								output.forEach(l => {
 									let arr = [];
-									arr.push(l.time, " -- ");
+									arr.push(l.time, " -" + l.type[0] + "- ");
 									l.body.forEach(obj => {
 										if (obj instanceof World.NotationWrapper) {
 											arr.push(obj.notation.text);

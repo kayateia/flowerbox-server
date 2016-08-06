@@ -5,7 +5,7 @@
 */
 
 import { ParseResult, ParseError } from "./InputParser";
-import { Wob, WobProperties, WobValue, WobRef } from "./Wob";
+import { Wob, WobProperties, WobValue, WobRef, EventType } from "./Wob";
 import { World } from "./World";
 import * as Petal from "../Petal/All";
 import * as Strings from "../Utils/Strings";
@@ -385,13 +385,13 @@ class RootScope implements Petal.IScopeCatcher {
 	private _injections: any;
 }
 
-function handleFailure(parse: ParseResult) {
+function handleFailure(parse: ParseResult, player: Wob) {
 	switch (parse.failure) {
 		case ParseError.NoVerb:
-			console.log("Don't understand.");
+			player.event(EventType.ParseError, Date.now(), ["Don't understand."]);
 			break;
 		case ParseError.Ambiguous:
-			console.log("Ambiguous.");
+			player.event(EventType.ParseError, Date.now(), ["Ambiguous."]);
 			break;
 	}
 }
@@ -435,17 +435,18 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 		let result: Petal.ExecuteResult = await rt.executeCodeAsync(compiled, immediateInjections, 100000);
 		console.log("Command took", result.stepsUsed, "steps");
 		if (result.outOfSteps) {
-			console.log("ERROR: Ran out of steps while running immediate command");
+			player.event(EventType.ScriptError, Date.now(), ["ERROR: Ran out of steps while running immediate command"]);
 			return;
 		}
-		if (result.returnValue)
-			console.log("Command returned:", result.returnValue);
+		if (result.returnValue) {
+			player.event(EventType.Output, Date.now(), ["Command returned: ", result.returnValue]);
+		}
 		return;
 	}
 
 	// Did we actually get any text?
 	if (parse.failure) {
-		handleFailure(parse);
+		handleFailure(parse, player);
 		return;
 	}
 
@@ -456,9 +457,9 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 		addr.thisValue = new WobWrapper(1);
 		addr.injections = injections;
 		let result: Petal.ExecuteResult = await rt.executeFunctionAsync(addr, [], dollarParseObj.player, 100000);
-		console.log("$command took", result.stepsUsed, "steps");
+		player.event(EventType.Debug, Date.now(), ["$command took ", result.stepsUsed, " steps"]);
 		if (result.outOfSteps) {
-			console.log("ERROR: Ran out of steps while running $command");
+			player.event(EventType.ScriptError, Date.now(), ["ERROR: Ran out of steps while running $command"]);
 			return;
 		}
 		if (result.returnValue)
@@ -478,12 +479,12 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 		addr.injections = injections;
 		let result: Petal.ExecuteResult = await rt.executeFunctionAsync(addr, [], dollarParseObj.player, 100000);
 
-		console.log(parse.verbName, "took", result.stepsUsed, "steps");
+		player.event(EventType.Debug, Date.now(), [parse.verbName, " took ", result.stepsUsed, " steps"]);
 		if (result.outOfSteps) {
-			console.log("ERROR: Ran out of steps while running", parse.verbName);
+			player.event(EventType.ScriptError, Date.now(), ["ERROR: Ran out of steps while running ", parse.verbName]);
 			return;
 		}
 	} else {
-		handleFailure(parse);
+		handleFailure(parse, player);
 	}
 }
