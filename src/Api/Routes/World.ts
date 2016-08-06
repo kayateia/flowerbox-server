@@ -44,7 +44,7 @@ export class WorldRouter extends RouterBase {
 		res.json(new Wob.Property(
 			prop.wob,
 			name,
-			Petal.ObjectWrapper.Unwrap(prop)
+			Petal.ObjectWrapper.Unwrap(prop.value)
 		));
 	}
 
