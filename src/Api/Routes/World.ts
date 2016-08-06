@@ -11,6 +11,7 @@ import { ModelBase } from "../Model/ModelBase";
 import * as Wob from "../Model/Wob";
 import * as Petal from "../../Petal/All";
 import * as World from "../../World/All";
+import { WobCommon } from "../WobCommon";
 
 export class WorldRouter extends RouterBase {
 	constructor() {
@@ -48,24 +49,6 @@ export class WorldRouter extends RouterBase {
 		));
 	}
 
-	// Gets all the Wob.Info data for a loaded wob.
-	private async getInfo(wob: World.Wob): Promise<Wob.Info> {
-		let base = wob.base;
-		let container = wob.container;
-
-		let name = await wob.getPropertyI(World.WobProperties.Name, this.world);
-		let desc = await wob.getPropertyI(World.WobProperties.Description, this.world);
-		let globalid = wob.getProperty(World.WobProperties.GlobalId);
-
-		let properties = await wob.getPropertyNamesI(this.world);
-		let verbs = await wob.getVerbNamesI(this.world);
-
-		let rv = new Wob.Info(wob.id, base, container, name.value, desc.value, globalid,
-			properties.map(p => new Wob.AttachedItem(p.wob, p.value)),
-			verbs.map(v => new Wob.AttachedItem(v.wob, v.value)));
-		return rv;
-	}
-
 	private async info(req, res, next): Promise<any> {
 		let id = req.params.id;
 
@@ -73,7 +56,7 @@ export class WorldRouter extends RouterBase {
 		if (!wob)
 			return;
 
-		let rv = await this.getInfo(wob);
+		let rv = await WobCommon.GetInfo(wob, this.world);
 		res.json(rv);
 	}
 
@@ -99,7 +82,7 @@ export class WorldRouter extends RouterBase {
 		// Get the properties of each sub-wob.
 		let wobinfos = [];
 		for (let w of subwobs) {
-			let info = await this.getInfo(w);
+			let info = await WobCommon.GetInfo(w, this.world);
 
 			// This is really terrible but there is no good language construct in TypeScript
 			// to deal with this situation, and I won't copy and paste the whole class.
