@@ -33,7 +33,7 @@ let petalConsole: any = Object.create(null);
 petalConsole.log = log;
 runtime.currentScope.set("console", Petal.ObjectWrapper.WrapGeneric(petalConsole, ["log"]));
 
-let compiler = new Petal.Compiler();
+let compiler = new Petal.Compiler(process.argv[2]);
 let compilems: number = Date.now();
 compiler.compile(output);
 compilems = Date.now() - compilems;

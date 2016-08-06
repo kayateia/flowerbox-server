@@ -11,11 +11,13 @@ import { Step } from "./Step";
 // snippet from which it came. Calls may happen between these, for things
 // compiled at different times, like different Wob verbs.
 export class Module {
-	constructor(program: Step[], node: AstNode) {
+	constructor(name: string, program: Step[], node: AstNode) {
+		this.name = name;
 		this.program = program;
 		this.node = node;
 	}
 
+	public name: string;
 	public program: Step[];
 	public node: AstNode;
 }

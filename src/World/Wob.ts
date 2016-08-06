@@ -270,7 +270,7 @@ export class Wob {
 
 		// Execute the code.
 		let rt = new Petal.Runtime();
-		let runresult = rt.executeCode(parsed, null, 1000);
+		let runresult = rt.executeCode("#" + this.id, parsed, null, 1000);
 
 		// Look for the variable that was set in the scope.
 		let scope = rt.currentScope;

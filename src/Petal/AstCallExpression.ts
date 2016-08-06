@@ -35,7 +35,7 @@ export class AstCallExpression extends AstNode {
 	// call into some other code. Assumes that "address" refers to a Petal function
 	// and not an external function.
 	public static Create(address: Address, param: any[], caller: any): Address {
-		let compiler = new Compiler();
+		let compiler = new Compiler("<trampoline>");
 		let newNode = new AstNode({});
 		compiler.emit("Synthetic call", newNode, (runtime: Runtime) => {
 			runtime.pushPC(new Address(0, null, null));
@@ -80,7 +80,7 @@ export class AstCallExpression extends AstNode {
 				console.log("CALLING", address);
 			}
 			if (!(address instanceof Address))
-				throw new RuntimeException("Address is not an Address", address);
+				throw new RuntimeException("Address is not an Address", runtime, address);
 
 			if (address.func) {
 				let args = [];

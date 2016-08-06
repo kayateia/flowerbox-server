@@ -114,8 +114,8 @@ export class PetalArray implements IObject, IPetalWrapper {
 				}
 				else
 					return this[name];
-			}, () => {
-				throw new RuntimeException("Can't write to read-only value");
+			}, (rt: Runtime) => {
+				throw new RuntimeException("Can't write to read-only value", rt);
 			},
 			this);
 		else if (typeof(name) === "number") {
@@ -193,12 +193,13 @@ export class PetalObject implements IObject, IPetalWrapper {
 	}
 
 	public getAccessor(name: any): any {
-		if (typeof(name) !== "string")
-			throw new RuntimeException("Can't use non-string index on Petal object", name);
-
 		return new LValue("Petal object", (runtime: Runtime) => {
+			if (typeof(name) !== "string")
+				throw new RuntimeException("Can't use non-string index on Petal object", runtime, name);
 			return this.get(name);
 		}, (runtime: Runtime, value: any) => {
+			if (typeof(name) !== "string")
+				throw new RuntimeException("Can't use non-string index on Petal object", runtime, name);
 			this.set(name, value);
 			this.notify(runtime);
 		},
@@ -277,7 +278,7 @@ export class ObjectWrapper {
 				// What's left are other generic objects. We allow read-only access to these as a convenience.
 				// These should always be created using new Object(null).
 				if (item.hasOwnProperty)
-					throw new RuntimeException("A non-empty native object made it down into the works; this is a bug.", item);
+					throw new RuntimeException("A non-empty native object made it down into the works; this is a bug.", null, item);
 
 				return {
 					getAccessor: function(name: string): LValue {
@@ -285,10 +286,10 @@ export class ObjectWrapper {
 					}
 				};
 			case "function":
-				throw new RuntimeException("Cannot access properties on a function", item);
+				throw new RuntimeException("Cannot access properties on a function", null, item);
 			default:
 				// Don't know how to wrap this object for member access.
-				throw new RuntimeException("Can't wrap this object for member access", item);
+				throw new RuntimeException("Can't wrap this object for member access", null, item);
 		}
 	}
 
@@ -311,8 +312,8 @@ export class ObjectWrapper {
 							return Address.Function(function() { return ObjectWrapper.Call(item, name, arguments); });
 						else
 							return item[name];
-					}, () => {
-						throw new RuntimeException("Can't write to read-only value");
+					}, (rt: Runtime) => {
+						throw new RuntimeException("Can't write to read-only value", rt);
 					},
 					item);
 				else if (allowNumeric && typeof(name) === "number") {

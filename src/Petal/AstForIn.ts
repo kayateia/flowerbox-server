@@ -53,7 +53,7 @@ export class AstForIn extends AstNode {
 			} else if (source instanceof PetalObject) {
 				source = source.keys;
 			} else {
-				throw new RuntimeException("Can't enumerate object", source);
+				throw new RuntimeException("Can't enumerate object", runtime, source);
 			}
 
 			// Put it back on the stack for our use as the loop goes on.

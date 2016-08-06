@@ -23,6 +23,6 @@ export class Value {
 		if (LValue.IsLValue(value))
 			return value;
 		else
-			throw new RuntimeException("Can't convert value to LValue", value);
+			throw new RuntimeException("Can't convert value to LValue", null, value);
 	}
 }

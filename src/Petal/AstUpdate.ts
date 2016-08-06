@@ -6,7 +6,6 @@
 
 import { AstNode } from "./AstNode";
 import { Runtime } from "./Runtime";
-import { RuntimeException } from "./Exceptions";
 import { parse } from "./Parser";
 import { LValue } from "./LValue";
 import { Value } from "./Value";

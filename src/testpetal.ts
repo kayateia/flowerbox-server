@@ -60,7 +60,7 @@ runtime.currentScope().set("console", Petal.ObjectWrapper.WrapGeneric(petalConso
 
 /*runtime.pushAction(Petal.Step.Node("Main program", output));
 runtime.execute(1000); */
-let compiler = new Petal.Compiler();
+let compiler = new Petal.Compiler("<test>");
 compiler.compile(output);
 let mod = compiler.module;
 let i = 0;

@@ -8,7 +8,6 @@ import { AstNode } from "./AstNode";
 import { Runtime } from "./Runtime";
 import { LValue } from "./LValue";
 import { Compiler } from "./Compiler";
-import { RuntimeException } from "./Exceptions";
 
 export class AstIdentifier extends AstNode {
 	constructor(parseTree: any) {

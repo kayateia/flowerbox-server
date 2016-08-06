@@ -49,7 +49,7 @@ export class LValue {
 	public static MakeReadOnly(value: any, thisValue?: any): LValue {
 		return new LValue("Read-only Value",
 			(rt) => value,
-			(rt) => { throw new RuntimeException("Can't write to read-only value"); },
+			(rt) => { throw new RuntimeException("Can't write to read-only value", rt); },
 			thisValue);
 	}
 

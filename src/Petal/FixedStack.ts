@@ -22,7 +22,7 @@ export class FixedStack<T> {
 
 	public pop(): T {
 		if (this._sp === 0)
-			throw new RuntimeException("Stack underflow");
+			throw new RuntimeException("Stack underflow", null);
 
 		return this._stack[--this._sp];
 	}
@@ -37,21 +37,21 @@ export class FixedStack<T> {
 
 	public popMany(count: number): void {
 		if (this._sp < count)
-			throw new RuntimeException("Stack underflow");
+			throw new RuntimeException("Stack underflow", null);
 
 		this._sp -= count;
 	}
 
 	public get(index: number): T {
 		if (this._sp < (1+index))
-			throw new RuntimeException("Stack underflow");
+			throw new RuntimeException("Stack underflow", null);
 
 		return this._stack[this._sp - (1+index)];
 	}
 
 	public set(index: number, value: T): void {
 		if (this._sp < (1+index))
-			throw new RuntimeException("Stack underflow");
+			throw new RuntimeException("Stack underflow", null);
 
 		this._stack[this._sp - (1+index)] = value;
 	}

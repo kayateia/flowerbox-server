@@ -44,7 +44,7 @@ export class AstAssignment extends AstNode {
 					break;
 				case "/=":
 					if (rhs === 0)
-						throw new RuntimeException("Divide by zero");
+						throw new RuntimeException("Divide by zero", runtime);
 					newlhs = lhs.read(runtime) / rhs;
 					break;
 			}

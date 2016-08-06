@@ -43,7 +43,7 @@ export class ConstScope implements IScope {
 
 	public set(name: string, value: any): void {
 		if (this._contents.has(name))
-			throw new RuntimeException("Can't set a value in a constant scope", name);
+			throw new RuntimeException("Can't set a value in a constant scope", null, name);
 		else if (this._parent)
 			this._parent.set(name, value);
 	}
@@ -54,7 +54,7 @@ export class ConstScope implements IScope {
 
 	public del(name: string): void {
 		if (this._contents.has(name))
-			throw new RuntimeException("Can't delete a value from a constant scope", name);
+			throw new RuntimeException("Can't delete a value from a constant scope", null, name);
 		else if (this._parent)
 			this._parent.del(name);
 	}

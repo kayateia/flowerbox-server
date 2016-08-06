@@ -34,7 +34,7 @@ let filter = function(array, func) {
 export function registerAll(scope: ConstScope): void {
 	let code = "var a = { map:" + map + ", filter:" + filter + "};";
 	let ast = Parser.parseFromSource(code);
-	let compiler = new Compiler();
+	let compiler = new Compiler("<lib>");
 	compiler.compile(ast);
 	let rt = new Runtime();
 	let tempScope = new StandardScope(rt.currentScope);

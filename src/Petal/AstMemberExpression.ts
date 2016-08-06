@@ -41,11 +41,11 @@ export class AstMemberExpression extends AstNode {
 			let obj = Value.PopAndDeref(runtime);
 
 			if (!obj)
-				throw new RuntimeException("Null reference", this.member);
+				throw new RuntimeException("Null reference", runtime, this.member);
 
 			let iobj: IObject = ObjectWrapper.WrapForMemberAccess(obj);
 			if (!iobj)
-				throw new RuntimeException("Can't wrap object for lookup", obj);
+				throw new RuntimeException("Can't wrap object for lookup", runtime, obj);
 
 			let value;
 			if (this.property)
@@ -81,57 +81,6 @@ export class AstMemberExpression extends AstNode {
 				runtime.pushOperand(value);
 		});
 	}
-
-	/*public execute(runtime: Runtime): void {
-		// See IObject.ts for more info about what's going on in here.
-		runtime.pushAction(Step.Callback("Member lookup", () => {
-			let obj = Value.PopAndDeref(runtime);
-			let property;
-			if (this.property)
-				property = Value.PopAndDeref(runtime);
-			let iobj: IObject = ObjectWrapper.Wrap(obj);
-			if (!iobj)
-				throw new RuntimeException("Can't wrap object for lookup", obj);
-
-			let value;
-			if (this.property)
-				value = iobj.getAccessor(property);
-			else
-				value = iobj.getAccessor(this.member);
-
-			function finishUp(finalValue) {
-				// If we already got a ThisValue, don't double-wrap it. Otherwise, store the object with
-				// the value so it can become the "this" value in the function call.
-				//
-				// This mess of logic here is a hack to make it easier to return ThisValues from native callbacks. FIXME.
-				if (!ThisValue.IsThisValue(finalValue) && !ThisValue.IsThisValue(Value.Deref(runtime, finalValue)))
-					finalValue = new ThisValue(obj, finalValue);
-
-				return finalValue;
-			}
-
-			// If they returned a promise, then we have to let that flow back out and pause
-			// the execution loop. When it's finished, we'll come back here and finish up with
-			// the real value.
-			//
-			// Note that this is a REALLY ugly place to put the Promise support; more ideal would
-			// be plumbing it into LValue, but then we'd have to support async all over the place.
-			// In truth, the current design of Petal is not inspiring but it should hold for
-			// another day...
-			if (value instanceof Promise)
-				return value
-					.then(finishUp)
-					.catch((err) => {
-						throw err;
-					});
-			else {
-				runtime.pushOperand(finishUp(value));
-			}
-		}));
-		runtime.pushAction(Step.Node("Member object", this.obj));
-		if (this.property)
-			runtime.pushAction(Step.Node("Member index", this.property));
-	} */
 
 	public what: string = "MemberExpression";
 	public obj: AstNode;

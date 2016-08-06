@@ -10,7 +10,7 @@ import { IActionCallback } from "./IActionCallback";
 import { IScope, IScopeCatcher } from "./IScope";
 import { StandardScope } from "./Scopes/StandardScope";
 import { ConstScope } from "./Scopes/ConstScope";
-import { RuntimeException } from "./Exceptions";
+import { RuntimeException, StackFrame } from "./Exceptions";
 import { Value } from "./Value";
 import * as CorePromises from "../Async/CorePromises";
 import { Step } from "./Step";
@@ -173,23 +173,23 @@ export class Runtime {
 		}
 	}
 
-	public executeCode(code: AstNode, injections: any, maxSteps?: number): ExecuteResult {
+	public executeCode(moduleName: string, code: AstNode, injections: any, maxSteps?: number): ExecuteResult {
 		if (injections) {
 			this.pushScope(ConstScope.FromObject(this.currentScope, injections));
 			this.pushScope(new StandardScope(this.currentScope));
 		}
-		var compiler = new Compiler();
+		var compiler = new Compiler(moduleName);
 		compiler.compile(code);
 		this.setInitialPC(new Address(0, compiler.module, code));
 		return this.execute(maxSteps);
 	}
 
-	public async executeCodeAsync(code: AstNode, injections: any, maxSteps?: number): Promise<ExecuteResult> {
+	public async executeCodeAsync(moduleName: string, code: AstNode, injections: any, maxSteps?: number): Promise<ExecuteResult> {
 		if (injections) {
 			this.pushScope(ConstScope.FromObject(this.currentScope, injections));
 			this.pushScope(new StandardScope(this.currentScope));
 		}
-		var compiler = new Compiler();
+		var compiler = new Compiler(moduleName);
 		compiler.compile(code);
 		this.setInitialPC(new Address(0, compiler.module, code));
 		return await this.executeAsync(maxSteps);
@@ -215,6 +215,30 @@ export class Runtime {
 			console.log("CHANGED", target, "TAG", target.tag);
 		if (this._changeNotification)
 			this._changeNotification(target, this);
+	}
+
+	// Returns a stack trace from the current execution state.
+	public getStackTrace(): StackFrame[] {
+		let stack = [];
+		if (this.address.node && this.address.node.loc)
+			stack.push(new StackFrame(this.address.module.name, this.address.node.loc.line, this.address.node.loc.column));
+		else
+			stack.push(new StackFrame(this.address.module.name, -1, -1));
+
+		let count = this._programStack.count;
+		for (let i=0; i<count; ++i) {
+			let frame = this._programStack.get(i);
+			if (!frame.module) {
+				// These can come from synthetic function calls.
+				continue;
+			}
+			if (frame.node && frame.node.loc)
+				stack.push(new StackFrame(frame.module.name, frame.node.loc.line, frame.node.loc.column));
+			else
+				stack.push(new StackFrame(frame.module.name, -1, -1));
+		}
+
+		return stack;
 	}
 
 	public pushPC(address?: Address): void {
@@ -343,51 +367,13 @@ export class Runtime {
 	public popBase(): void {
 		let opptr = this._baseStack.pop();
 		if (opptr > this._operandStack.count)
-			throw new RuntimeException("Base pointer is higher than the operand stack's top");
+			throw new RuntimeException("Base pointer is higher than the operand stack's top", this);
 
 		if (this.verbose)
 			console.log("POPBP down", opptr);
 
 		this._operandStack.popMany(this._operandStack.count - opptr);
 	}
-
-	/*
-
-	public pushCallerValue(value: any): void {
-		AstCallExpression.PushPreviousThisValue(this, value);
-	}
-
-	public popAction(): Step {
-		if (this._verbose)
-			console.log("STEPPOPONE:", this._pipeline[this._pipeline.length - 1]);
-		return this._pipeline.pop();
-	}
-
-	// Pops actions until the function returns false.
-	public popActionWhile(unwinder: (Step) => boolean): void {
-		while (this._pipeline.length && unwinder(this._pipeline[this._pipeline.length - 1])) {
-			let popped = this._pipeline.pop();
-			if (this._verbose)
-				console.log("STEPPOPPING:", popped);
-		}
-	}
-
-	public findAction(tester: (Step) => boolean): Step {
-		for (let i=this._pipeline.length - 1; i>=0; --i)
-			if (tester(this._pipeline[i]))
-				return this._pipeline[i];
-
-		return null;
-	}
-
-	public printActionStack(): void {
-		console.log("");
-		console.log("BEGIN ACTION STACK DUMP");
-		for (let i=0; i<this._pipeline.length; ++i)
-			console.log(this._pipeline[i]);
-		console.log("END ACTION STACK DUMP");
-		console.log("");
-	} */
 
 	public get verbose(): boolean {
 		return this._verbose;

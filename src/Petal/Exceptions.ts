@@ -5,17 +5,34 @@
 */
 
 import { Exception } from "../Exception";
+import { Runtime } from "./Runtime";
 
 // Reports some sort of problem with running the code.
 export class RuntimeException extends Exception {
-	constructor(cause: string, value?: any) {
+	constructor(cause: string, runtime: Runtime, value?: any) {
 		super();
 		this.cause = cause;
 		this.value = value;
+		if (runtime)
+			this.petalStack = runtime.getStackTrace();
 	}
 
 	public cause: string;
 	public value: any;
+	public petalStack: StackFrame[];
+}
+
+// One stack frame in a RuntimeException.
+export class StackFrame {
+	constructor(module: string, line: number, column: number) {
+		this.module = module;
+		this.line = line;
+		this.column = column;
+	}
+
+	public module: string;
+	public line: number;
+	public column: number;
 }
 
 // Reports a problem with compiling the parsed code.

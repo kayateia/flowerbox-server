@@ -61,7 +61,7 @@ export class TestSetup {
 	}
 
 	public compile() {
-		let compiler = new Petal.Compiler();
+		let compiler = new Petal.Compiler("<test>");
 		compiler.compile(this.programParsed);
 		this.module = compiler.module;
 	}

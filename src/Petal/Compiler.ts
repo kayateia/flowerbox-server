@@ -29,10 +29,12 @@ export class Compiler {
 	public program: Step[];
 	public node: AstNode;
 	private _nodeStack: NodeStackEntry[];
+	private _moduleName: string;
 
-	constructor() {
+	constructor(moduleName: string) {
 		this.program = [];
 		this._nodeStack = [];
+		this._moduleName = moduleName;
 	}
 
 	public emit(name: string, node: AstNode, callback: any): number {
@@ -59,7 +61,7 @@ export class Compiler {
 	}
 
 	public get module(): Module {
-		return new Module(this.program, this.node);
+		return new Module(this._moduleName, this.program, this.node);
 	}
 
 	// This pushes a node on the node stack, which keeps track of where we are within
