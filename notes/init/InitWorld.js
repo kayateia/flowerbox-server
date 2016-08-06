@@ -78,6 +78,18 @@ module.exports = [
 		base: 3,
 	},
 
+	// #8
+	{
+		properties: {
+			"name": "Deciare",
+			"desc": "Wielding a pillow and a blanket, she stares at you fiercely.",
+			"globalid": "deciare",
+			"pwhash": "d074bdbe9ad92dedded13262944570114043a84d"
+		},
+		container: 1,
+		base: 2
+	},
+
 	{
 		properties: {
 			"name": "ToRoom",
