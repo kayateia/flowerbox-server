@@ -166,5 +166,16 @@ module.exports = [
 		container: "@room2",
 		base: "@world",
 		verbs: "human.petal"
+	},
+
+	{
+		properties: {
+			"name": "Genesis Arch",
+			"desc": "The swirling of infinity reaches out in front of you... where does it lead?",
+			"globalid": "genesis_arch"
+		},
+		container: "@world",
+		base: "@exit",
+		verbs: "genesis_arch.petal"
 	}
 ];
