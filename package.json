@@ -12,6 +12,7 @@
   "dependencies": {
     "cors": "^2.7.1",
     "express": "^4.14.0",
+    "multer": "^1.2.0",
     "mysql": "^2.11.1",
     "sqlite3": "^3.1.4"
   },

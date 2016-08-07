@@ -16,7 +16,7 @@ export class Utils {
 	public static GetPropertyNames(a: any) {
 		let output: string[] = [];
 		for (var i in a)
-			if (a.hasOwnProperty(i))
+			if (!a.hasOwnProperty || a.hasOwnProperty(i))
 				output.push(i);
 
 		return output;

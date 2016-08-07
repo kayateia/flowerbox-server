@@ -4,6 +4,7 @@
   "globalDependencies": {
     "express": "registry:dt/express#4.0.0+20160708185218",
     "jasmine": "registry:dt/jasmine#2.2.0+20160621224255",
+    "multer": "registry:dt/multer#0.0.0+20160726135055",
     "node": "registry:dt/node#6.0.0+20160621231320"
   }
 }
