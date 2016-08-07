@@ -89,6 +89,7 @@ export function parse(parseTree: any): AstNode {
 			result = new AstFor(parseTree);
 			break;
 		case "ForInStatement":
+		case "ForOfStatement":
 			result = new AstForIn(parseTree);
 			break;
 		case "ConditionalExpression":
