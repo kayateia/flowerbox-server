@@ -180,7 +180,7 @@ export class Database {
 			// We have to special case this for now.
 			if (v instanceof Petal.PetalBlob) {
 				let blob: Petal.PetalBlob = v;
-				let json = JSON.stringify({ type: "blob", size: blob.data.size, mime: blob.mime, offset: 0, filename: blob.filename });
+				let json = JSON.stringify({ type: "blob", size: blob.length, mime: blob.mime, offset: 0, filename: blob.filename });
 				await this._sal.run(conn, "insert into properties (wobid, name, value, valueBlob) values (?, ?, ?, ?)",
 					[wob.id, p, json, blob.data]);
 			} else {
