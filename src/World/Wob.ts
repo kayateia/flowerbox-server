@@ -37,6 +37,7 @@ export class WobProperties {
 	public static GlobalId = "globalid";		// string
 	public static Name = "name";				// string
 	public static Description = "desc";			// string
+	public static Image = "image";				// blob
 
 	// On player objects.
 	public static EventStream = "eventstream";	// [{ type, time, body, tag? }]

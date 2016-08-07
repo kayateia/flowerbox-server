@@ -9,6 +9,7 @@ import { Wob, WobProperties } from "./Wob";
 import { Verb } from "./Verb";
 import * as Strings from "../Utils/Strings";
 import { Utils } from "../Petal/Utils";
+import * as Petal from "../Petal/All";
 import * as FsPromises from "../Async/FsPromises";
 import * as CorePromises from "../Async/CorePromises";
 import * as path from "path";
@@ -47,6 +48,15 @@ export class World {
 			let wob = await this.createWob();
 			for (let prop of Utils.GetPropertyNames(wobdef.properties))
 				wob.setProperty(prop, wobdef.properties[prop]);
+			if (wobdef.propertiesBinary) {
+				for (let prop of Utils.GetPropertyNames(wobdef.propertiesBinary)) {
+					let pv = wobdef.propertiesBinary[prop];
+					let fn = path.join(basePath, pv.file);
+					console.log("loading", fn, "-", pv.mime);
+					let contents = await FsPromises.readFile(fn);
+					wob.setProperty(prop, new Petal.PetalBlob(contents, pv.mime, pv.file));
+				}
+			}
 
 			if (!wobdef.verbs) {
 				// Do nothing - it gets no verbs.

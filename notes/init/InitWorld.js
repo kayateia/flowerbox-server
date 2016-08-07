@@ -39,9 +39,12 @@ module.exports = [
 	{
 		properties: {
 			"name": "Kayateia",
-			"desc": "A hacker girl stares at you from a hooded gaze...",
+			"desc": "A hacker girl stares at you from a hooded gaze... or maybe just falls asleep on her keyboard.",
 			"globalid": "kayateia",
 			"pwhash": "c9771fdacefc80d33926f5c9db42d2b839459ca2"
+		},
+		propertiesBinary: {
+			"image": { file: "kayateia.jpg", mime: "image/jpeg" }
 		},
 		container: 1,
 		base: 2

@@ -6,7 +6,7 @@
 
 import * as fs from "fs";
 
-export function readFile(path: string): Promise<string> {
+export function readFile(path: string): Promise<Buffer> {
 	return new Promise((a, r) => {
 		fs.readFile(path, (err, result) => {
 			if (err)
