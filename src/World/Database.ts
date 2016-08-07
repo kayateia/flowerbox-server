@@ -42,8 +42,17 @@ export class Database {
 
 			for (let p of props) {
 				let json = JSON.parse(p.value);
-				let unp = Persistence.unpersist(json);
-				wob.setProperty(p.name, unp);
+
+				// We have to special case this for now.
+				if (json.type === "blob") {
+					let data = p.valueBlob;
+					let mime: string = json.mime;
+					let fn: string = json.filename;
+					wob.setProperty(p.name, new Petal.PetalBlob(data, mime, fn));
+				} else {
+					let unp = Persistence.unpersist(json);
+					wob.setProperty(p.name, unp);
+				}
 			}
 
 			let contained = await this._sal.select(conn, "select wobid from wobs where container=?", [id]);
@@ -166,10 +175,20 @@ export class Database {
 
 	private async insertProperties(conn: any, wob: Wob): Promise<any> {
 		for (let p of wob.getPropertyNames()) {
-			let pers = Persistence.persist(wob.getProperty(p));
-			let json = JSON.stringify(pers);
-			await this._sal.run(conn, "insert into properties (wobid, name, value) values (?, ?, ?)",
-				[wob.id, p, json]);
+			let v = wob.getProperty(p);
+
+			// We have to special case this for now.
+			if (v instanceof Petal.PetalBlob) {
+				let blob: Petal.PetalBlob = v;
+				let json = JSON.stringify({ type: "blob", size: blob.data.size, mime: blob.mime, offset: 0, filename: blob.filename });
+				await this._sal.run(conn, "insert into properties (wobid, name, value, valueBlob) values (?, ?, ?, ?)",
+					[wob.id, p, json, blob.data]);
+			} else {
+				let pers = Persistence.persist(wob.getProperty(p));
+				let json = JSON.stringify(pers);
+				await this._sal.run(conn, "insert into properties (wobid, name, value) values (?, ?, ?)",
+					[wob.id, p, json]);
+			}
 		}
 	}
 

@@ -51,11 +51,18 @@ export class WorldRouter extends RouterBase {
 			return;
 
 		let prop = await wob.getPropertyI(name, this.world);
-		res.json(new Wob.Property(
-			prop.wob,
-			name,
-			Petal.ObjectWrapper.Unwrap(prop.value)
-		));
+
+		// We have to special case this for now.
+		if (prop.value instanceof Petal.PetalBlob) {
+			res.set("Content-Type", prop.value.mime)
+				.send(prop.value.data);
+		} else {
+			res.json(new Wob.Property(
+				prop.wob,
+				name,
+				Petal.ObjectWrapper.Unwrap(prop.value)
+			));
+		}
 	}
 
 	private async setProperty(req, res, next): Promise<any> {
@@ -63,6 +70,7 @@ export class WorldRouter extends RouterBase {
 
 		let id = req.params.id;
 		let value = req.body;
+		let files = req.files;
 
 		let wob = await this.getWob(id, res);
 		if (!wob)
@@ -71,6 +79,12 @@ export class WorldRouter extends RouterBase {
 		let names = Petal.Utils.GetPropertyNames(value);
 		for (let n of names)
 			wob.setProperty(n, Petal.ObjectWrapper.Wrap(value[n]));
+
+		for (let f of files) {
+			let n = f.fieldname;
+			let blob = new Petal.PetalBlob(f.buffer, f.mimetype, f.originalname);
+			wob.setProperty(n, blob);
+		}
 
 		res.json(new ModelBase(true));
 	}

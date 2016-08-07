@@ -138,9 +138,72 @@ export class PetalArray implements IObject, IPetalWrapper {
 		let arr = obj.map(i => Persistence.unpersist(i));
 		return new PetalArray(arr);
 	}
-
 }
 Persistence.registerType(PetalArray);
+
+// A Petal blob; this encompasses binary data like images, and allows Petal access to it.
+export class PetalBlob implements IObject {
+	private _data: Buffer;
+	private _mime: string;
+	private _filename: string;
+
+	constructor(data: Buffer, mime: string, filename?: string) {
+		this._data = data;
+		this._mime = mime;
+		this._filename = filename;
+	}
+
+	public get(index: number): any {
+		return this._data[index];
+	}
+
+	public get length(): number {
+		return this._data.byteLength;
+	}
+
+	public get mime(): string {
+		return this._mime;
+	}
+
+	public get data(): Buffer {
+		return this._data;
+	}
+
+	public get filename(): string {
+		return this._filename;
+	}
+
+	public getAccessor(name: any): any {
+		// FIXME: Probably ought to share more of this with PetalArray.
+		const names = [
+			"get", "length", "mime", "filename"
+		];
+		if (typeof(name) === "string" && Strings.stringIn(name, names))
+			return new LValue("Member access", (runtime: Runtime) => {
+				if (typeof(this[name]) === "function") {
+					let that = this;
+					return Address.Function(function() {
+						let rv = ObjectWrapper.Call(that, name, arguments);
+						return rv;
+					});
+				}
+				else
+					return this[name];
+			}, (rt: Runtime) => {
+				throw new RuntimeException("Can't write to read-only value", rt);
+			},
+			this);
+		else if (typeof(name) === "number") {
+			return new LValue("Array access", (runtime: Runtime): any => {
+				return this.get(name);
+			}, (runtime: Runtime, value: any): void => {
+				throw new RuntimeException("Can't write to a blob currently", runtime);
+			},
+			this);
+		} else
+			return LValue.MakeReadOnly(null, this);
+	}
+}
 
 // A Petal object; we wrap these to keep better control over them as well as to
 // allow for change callbacks.

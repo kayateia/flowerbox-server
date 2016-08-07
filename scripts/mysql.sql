@@ -52,6 +52,7 @@ CREATE TABLE `properties` (
   `wobid` bigint(20) DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
   `value` text,
+  `valueBlob` blob,
   PRIMARY KEY (`id`),
   KEY `wobid` (`wobid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -80,7 +81,7 @@ CREATE TABLE `wobs` (
   `base` bigint(20) DEFAULT NULL,
   `verbCode` text,
   PRIMARY KEY (`id`),
-  KEY (`wobid`)
+  KEY `wobid` (`wobid`)
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -102,4 +103,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-07-31 19:30:47
+-- Dump completed on 2016-08-07  0:28:20

@@ -19,4 +19,5 @@ create table properties (
 	wobid integer,
 	name text,
 	value text,
+	valueBinary blob,
 	foreign key(wobid) references wobs(id));
