@@ -10,7 +10,7 @@ module.exports = [
 			"desc": "This is an endless void existing outside of all other reality."
 				+ " When you stare into the void, the void stares back at you..."
 		},
-		verbs: "1-root.petal"
+		verbs: "world.petal"
 	},
 
 	{
@@ -21,7 +21,7 @@ module.exports = [
 		},
 		container: "@world",
 		base: "@world",
-		verbs: "2-player.petal"
+		verbs: "player.petal"
 	},
 
 	{
@@ -32,7 +32,7 @@ module.exports = [
 		},
 		container: "@world",
 		base: "@world",
-		verbs: "3-room.petal"
+		verbs: "room.petal"
 	},
 
 	{
@@ -57,7 +57,7 @@ module.exports = [
 		},
 		container: "@world",
 		base: "@world",
-		verbs: "5-exit.petal"
+		verbs: "exit.petal"
 	},
 
 	{
