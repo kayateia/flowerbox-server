@@ -82,12 +82,23 @@ export class World {
 			}
 
 			if (wobdef.container) {
-				let container = this.getCachedWob(wobdef.container);
-				wob.container = wobdef.container;
+				let container: Wob;
+				if (typeof(wobdef.container) === "string" && wobdef.container[0] === "@") {
+					container = (await this.getWobsByGlobalId([wobdef.container.substr(1)]))[0];
+				} else {
+					container = this.getCachedWob(wobdef.container);
+				}
+				wob.container = container.id;
 				container.contents.push(wob.id);
 			}
-			if (wobdef.base)
-				wob.base = wobdef.base;
+			if (wobdef.base) {
+				if (typeof(wobdef.base) === "string" && wobdef.base[0] === "@") {
+					let baseWob: Wob = (await this.getWobsByGlobalId([wobdef.base.substr(1)]))[0];
+					wob.base = baseWob.id;
+				} else {
+					wob.base = wobdef.base;
+				}
+			}
 		}
 
 		await this.commit();
@@ -206,7 +217,7 @@ export class World {
 		if (!wob)
 			throw new WobOperationException("Couldn't find source wob", [id]);
 
-		let container = this.getCachedWob(wob.container);
+		let container = await this.getWob(wob.container);
 		if (container) {
 			// Remove it from the original container.
 			container.removeContent(id);
@@ -214,7 +225,7 @@ export class World {
 
 		wob.container = to;
 
-		container = this.getCachedWob(to);
+		container = await this.getWob(to);
 		if (container) {
 			// Add it to the new one.
 			container.addContent(id);

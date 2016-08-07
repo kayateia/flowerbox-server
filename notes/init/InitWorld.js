@@ -13,29 +13,28 @@ module.exports = [
 		verbs: "1-root.petal"
 	},
 
-	// #2
 	{
 		properties: {
 			"name": "Player",
-			"desc": "A blank shape that says MY BURAZAA on it."
+			"desc": "A blank shape that says MY BURAZAA on it.",
+			"globalid": "player"
 		},
-		container: 1,
-		base: 1,
+		container: "@world",
+		base: "@world",
 		verbs: "2-player.petal"
 	},
 
-	// #3
 	{
 		properties: {
 			"name": "Room",
-			"desc": "A featureless room."
+			"desc": "A featureless room.",
+			"globalid": "room"
 		},
-		container: 1,
-		base: 1,
+		container: "@world",
+		base: "@world",
 		verbs: "3-room.petal"
 	},
 
-	// #4
 	{
 		properties: {
 			"name": "Kayateia",
@@ -46,42 +45,41 @@ module.exports = [
 		propertiesBinary: {
 			"image": { file: "kayateia.jpg", mime: "image/jpeg" }
 		},
-		container: 1,
-		base: 2
+		container: "@world",
+		base: "@player"
 	},
 
-	// #5
 	{
 		properties: {
 			"name": "Generic Exit",
-			"desc": "A door that doesn't seem to lead anywhere."
+			"desc": "A door that doesn't seem to lead anywhere.",
+			"globalid": "exit"
 		},
-		container: 1,
-		base: 1,
+		container: "@world",
+		base: "@world",
 		verbs: "5-exit.petal"
 	},
 
-	// #6
 	{
 		properties: {
 			"name": "Empty room 1",
-			"desc": "An empty room with #1 on the wall."
+			"desc": "An empty room with #1 on the wall.",
+			"globalid": "room1"
 		},
-		container: 1,
-		base: 3
+		container: "@world",
+		base: "@room"
 	},
 
-	// #7
 	{
 		properties: {
 			"name": "Empty room 2",
-			"desc": "An empty room with #2 on the wall."
+			"desc": "An empty room with #2 on the wall.",
+			"globalid": "room2"
 		},
-		container: 1,
-		base: 3,
+		container: "@world",
+		base: "@room"
 	},
 
-	// #8
 	{
 		properties: {
 			"name": "Deciare",
@@ -89,54 +87,44 @@ module.exports = [
 			"globalid": "deciare",
 			"pwhash": "d074bdbe9ad92dedded13262944570114043a84d"
 		},
-		container: 1,
-		base: 2
+		container: "@world",
+		base: "@player"
 	},
 
 	{
 		properties: {
 			"name": "ToRoom",
-			"target": 6
+			"target": "@room1"
 		},
-		container: 1,
-		base: 5
+		container: "@world",
+		base: "@exit"
 	},
 
 	{
 		properties: {
 			"name": "East",
-			"target": 7
+			"target": "@room2"
 		},
-		container: 6,
-		base: 5
+		container: "@room1",
+		base: "@exit"
 	},
 
 	{
 		properties: {
 			"name": "West",
-			"target": 6
+			"target": "@room1"
 		},
-		container: 7,
-		base: 5
+		container: "@room2",
+		base: "@exit"
 	},
 
 	{
 		properties: {
 			"name": "ToOne",
-			"target": 1
+			"target": "@world"
 		},
-		container: 6,
-		base: 5
-	},
-
-	{
-		properties: {
-			"name": "Door",
-			"desc": "This door leads to the room.",
-			"target": 3
-		},
-		container: 1,
-		base: 5
+		container: "@room1",
+		base: "@exit"
 	},
 
 	{
@@ -144,8 +132,8 @@ module.exports = [
 			"name": "Hammer",
 			"desc": "A silly looking hammer."
 		},
-		container: 1,
-		base: 1,
+		container: "@world",
+		base: "@world",
 		verbs: "hammer.petal"
 	},
 
@@ -154,8 +142,8 @@ module.exports = [
 			"name": "Teacup",
 			"desc": "A silly looking teacup."
 		},
-		container: 1,
-		base: 1,
+		container: "@world",
+		base: "@world",
 		verbs: "teacup.petal"
 	},
 
@@ -164,8 +152,8 @@ module.exports = [
 			"name": "Dog who was put in a kennel",
 			"desc": "A very sad dog."
 		},
-		container: 1,
-		base: 1,
+		container: "@world",
+		base: "@world",
 		verbs: "dog.petal"
 	},
 
@@ -175,8 +163,8 @@ module.exports = [
 			"desc": "Stand in the place where you are.",
 			"globalid": "human"
 		},
-		container: 3,
-		base: 1,
+		container: "@room2",
+		base: "@world",
 		verbs: "human.petal"
 	}
 ];
