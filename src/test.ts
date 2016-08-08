@@ -44,8 +44,11 @@ async function tester() {
 									l.body.forEach(obj => {
 										if (obj instanceof World.NotationWrapper) {
 											arr.push(obj.notation.text);
-											if (obj.notation.value instanceof World.Wob) {
-												arr.push("(#" + obj.notation.value.id + ")");
+											if (obj.notation.value instanceof World.WobRef) {
+												arr.push(" (#" + obj.notation.value.id + ")");
+											}
+											if (obj.notation.value instanceof World.PropertyRef) {
+												arr.push(" [" + obj.notation.value.wobid + "/" + obj.notation.value.property + "]");
 											}
 										} else
 											arr.push(obj.toString());

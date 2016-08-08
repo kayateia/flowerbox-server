@@ -5,7 +5,7 @@
 */
 
 import { ParseResult, ParseError } from "./InputParser";
-import { Wob, WobProperties, WobValue, WobRef, EventType } from "./Wob";
+import { Wob, WobProperties, WobValue, WobRef, EventType, PropertyRef } from "./Wob";
 import { World } from "./World";
 import * as Petal from "../Petal/All";
 import * as Strings from "../Utils/Strings";
@@ -281,7 +281,7 @@ class DollarObject {
 		return new WobWrapper(newWob.id);
 	}
 
-	public async notate(text: any, notation: any): Promise<any> {
+	public async notate(text: any, notation: any, property?: string): Promise<any> {
 		// Allow users to pass in only a wob and get a notation.
 		if (text instanceof WobWrapper) {
 			notation = text;
@@ -300,6 +300,10 @@ class DollarObject {
 		// Try to convert objects back out of their Petal wrappers and such, if possible.
 		if (notation instanceof WobWrapper)
 			notation = new WobRef(notation.id);
+
+		// If they passed a property, too, then turn this into a PropertyRef.
+		if (property)
+			notation = new PropertyRef(notation.id, property);
 
 		return new NotationWrapper(new Notation(text, notation));
 	}

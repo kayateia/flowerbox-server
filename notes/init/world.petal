@@ -44,7 +44,11 @@ var verbs = {
 			if (!target)
 				target = this;
 
-			$player.$hear([$.notate(target)]);
+			let nameLine = [$.notate(target)];
+			if (target.image)
+				nameLine.push($.notate(target.name, target, "image"));
+
+			$player.$hear(nameLine);
 			$player.$hear([target.desc]);
 			$player.$hear([]);
 

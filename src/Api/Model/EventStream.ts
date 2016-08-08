@@ -41,3 +41,18 @@ export class WobRef {
 	public text: string;
 	public id: number;
 }
+
+// Rich image with a wob property reference.
+export class ImageRef {
+	constructor(id: number, property: string, altText: string) {
+		this.id = id;
+		this.property = property;
+		this.text = altText;
+		this.rich = "image";
+	}
+
+	public rich: string;
+	public text: string;
+	public id: number;
+	public property: string;
+}

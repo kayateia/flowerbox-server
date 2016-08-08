@@ -30,6 +30,26 @@ export class WobRef {
 }
 Persistence.registerType(WobRef);
 
+// When we need to reference a property, one of these should be used.
+export class PropertyRef {
+	constructor(wobid: number, property: string) {
+		this.wobid = wobid;
+		this.property = property;
+	}
+
+	public persist(): any {
+		return { wobid: this.wobid, property: this.property };
+	}
+
+	public static Unpersist(obj: any): PropertyRef {
+		return new PropertyRef(obj.wobid, obj.property);
+	}
+
+	public wobid: number;
+	public property: string;
+}
+Persistence.registerType(PropertyRef);
+
 // Some well-defined properties.
 export class WobProperties {
 	// On all objects.

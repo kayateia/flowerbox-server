@@ -8,7 +8,7 @@
 
 import { RouterBase } from "./RouterBase";
 import { ModelBase } from "../Model/ModelBase";
-import { EventStream, EventStreamItem, WobRef } from "../Model/EventStream";
+import { EventStream, EventStreamItem, WobRef, ImageRef } from "../Model/EventStream";
 import * as World from "../../World/All";
 import * as CorePromises from "../../Async/CorePromises";
 import * as Petal from "../../Petal/All";
@@ -85,7 +85,14 @@ export class TerminalRouter extends RouterBase {
 					let value = i.notation.value;
 					if (value instanceof World.WobRef)
 						return new WobRef(i.notation.text, i.notation.value.id);
-					else
+					else if (value instanceof World.PropertyRef) {
+						let pr: World.PropertyRef = value;
+						if (pr.property === World.WobProperties.Image) {
+							return new ImageRef(pr.wobid, pr.property, i.notation.text);
+						} else {
+							return i.notation.text;
+						}
+					} else
 						return i.notation.text;
 				} else
 					return i;
