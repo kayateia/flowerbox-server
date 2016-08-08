@@ -16,26 +16,26 @@ export class WorldRouter extends RouterBase {
 	constructor() {
 		super();
 
-		// Get the value of a property on a wob.
+		// Get the value of a property on a wob. Returns 404 if we can't find the wob or property on the wob.
 		this.router.get("/wob/:id/property/:name", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.getProperty(rq,rs,n)); });
 
-		// Set the value of one or more properties on a wob.
+		// Set the value of one or more properties on a wob. Returns 404 if we can't find the wob.
 		this.router.put("/wob/:id/property", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.setProperty(rq,rs,n)); });
 
-		// Get a full set of info about a wob.
+		// Get a full set of info about a wob. Returns 404 if we can't find the wob.
 		this.router.get("/wob/:id/info", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.info(rq,rs,n)); });
 
-		// Get a list of wob IDs for the contents of another wob.
+		// Get a list of wob IDs for the contents of another wob. Returns 404 if we can't find the wob.
 		this.router.get("/wob/:id/content-ids", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.contentIds(rq,rs,n)); });
 
-		// Get a list of wob info for the contents of another wob.
+		// Get a list of wob info for the contents of another wob. Returns 404 if we can't find the wob.
 		this.router.get("/wob/:id/contents", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.contents(rq,rs,n)); });
 	}
 
 	private async getWob(id: string, res): Promise<World.Wob> {
 		let wob = await this.world.getWob(parseInt(id, 10));
 		if (!wob) {
-			res.json(new ModelBase(false, "Unknown wob ID"));
+			res.status(404).json(new ModelBase(false, "Unknown wob ID"));
 			return null;
 		}
 
@@ -51,6 +51,10 @@ export class WorldRouter extends RouterBase {
 			return;
 
 		let prop = await wob.getPropertyI(name, this.world);
+		if (!prop) {
+			res.status(404).json(new ModelBase(false, "Property does not exist on wob"));
+			return;
+		}
 
 		// We have to special case this for now.
 		if (prop.value instanceof Petal.PetalBlob) {
