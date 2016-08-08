@@ -45,6 +45,21 @@ export class LValue {
 		return this._this;
 	}
 
+	// Returns a new LValue based on this one, but with the specified changes. Any
+	// parameter that is non-null will be updated on the new LValue.
+	public mutate(name: string, reader: ILValueReader, writer: ILValueWriter, thisValue: any) {
+		let nlv = new LValue(this._name, this._reader, this._writer, this._this);
+		if (name)
+			nlv._name = name;
+		if (reader)
+			nlv._reader = reader;
+		if (writer)
+			nlv._writer = writer;
+		if (thisValue)
+			nlv._this = thisValue;
+		return nlv;
+	}
+
 	// Makes a simple LValue that is read-only for a constant value.
 	public static MakeReadOnly(value: any, thisValue?: any): LValue {
 		return new LValue("Read-only Value",
