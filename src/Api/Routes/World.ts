@@ -45,6 +45,7 @@ export class WorldRouter extends RouterBase {
 	private async getProperty(req, res, next): Promise<any> {
 		let id = req.params.id;
 		let name = req.params.name;
+		let base64 = req.query.base64;
 
 		let wob = await this.getWob(id, res);
 		if (!wob)
@@ -58,8 +59,11 @@ export class WorldRouter extends RouterBase {
 
 		// We have to special case this for now.
 		if (prop.value instanceof Petal.PetalBlob) {
+			let value = prop.value.data;
+			if (base64)
+				value = value.toString("base64");
 			res.set("Content-Type", prop.value.mime)
-				.send(prop.value.data);
+				.send(value);
 		} else {
 			res.json(new Wob.Property(
 				prop.wob,
