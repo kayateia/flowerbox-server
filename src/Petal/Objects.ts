@@ -98,9 +98,14 @@ export class PetalArray implements IObject, IPetalWrapper {
 		return this.slice(0);
 	}
 
+	// Returns a string of the array separated by the specified separator.
+	public join(separator: string): string {
+		return this._items.map(i => ObjectWrapper.Unwrap(i)).join(separator);
+	}
+
 	public getAccessor(name: any): any {
 		const names = [
-			"push", "pop", "length", "indexOf", "slice", "unshift", "copy"
+			"push", "pop", "length", "indexOf", "slice", "unshift", "copy", "join"
 		];
 		if (typeof(name) === "string" && Strings.stringIn(name, names))
 			return new LValue("Member access", (runtime: Runtime) => {
