@@ -502,7 +502,7 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 		addr.injections = injections;
 		let result: Petal.ExecuteResult;
 		try {
-			result = await rt.executeFunctionAsync(addr, [], dollarParseObj.player, 100000);
+			result = await rt.executeFunctionAsync(addr, [], dollarParseObj.player, 1000000);
 		} catch (err) {
 			formatPetalException(player, err);
 		}

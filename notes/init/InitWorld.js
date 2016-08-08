@@ -177,5 +177,14 @@ module.exports = [
 		container: "@world",
 		base: "@exit",
 		verbs: "genesis_arch.petal"
+	},
+
+	{
+		properties: {
+			"name": "Forest",
+			"desc": "A trail leads off into the forest..."
+		},
+		container: "@room1",
+		base: "@genesis_arch"
 	}
 ];

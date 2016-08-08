@@ -63,112 +63,12 @@ var verbs = {
 			}
 		}
 	},
-	maze: {
-		sigs: [ "maze" ],
+	teleport: {
+		sigs: [ "teleport self", "teleport none at self" ],
 		code: function() {
-			function rand(min, max) {
-				return Math.floor(Math.random() * (max - min)) + min;
-			}
-
-			var xsize = 8, ysize = 8;
-			var grid = [];
-			for (var y=0; y<ysize; ++y) {
-				var r = [];
-				grid.push(r);
-				for (var x=0; x<xsize; ++x)
-					r.push("#");
-			}
-
-			var checks = [ [-1, 0], [1, 0], [0, -1], [0, 1] ];
-
-			function next(curx, cury, first) {
-				// Unblock the current space.
-				if (first)
-					grid[cury][curx] = "+";
-				else
-					grid[cury][curx] = " ";
-
-				// Pick a random direction that is not:
-				// - Outside the map
-				// - Behind an already opened wall.
-				var dir = rand(0, 4);
-				var dirarr = [];
-				for (var i=0; i<4; ++i) {
-					dirarr.push(dir);
-					dir = (dir + 1) % 4;
-				}
-				for (var d in dirarr) {
-					var vx = 0, vy = 0;
-					switch (d) {
-						case 0: // up
-							vy = -1;
-							break;
-						case 1: // right
-							vx = 1;
-							break;
-						case 2: // down
-							vy = 1;
-							break;
-						case 3: // left
-							vx = -1;
-							break;
-					}
-
-					// Do the coordinates meet the requirements?
-					var nx = curx + vx, ny = cury + vy;
-					if (nx < 1 || ny < 1 || nx >= (xsize-1) || ny >= (ysize-1)) {
-						if (nx === 0 || ny === 0 || nx === (xsize-1) || ny === (ysize-1)) {
-							var makeExit = rand(0, 100);
-							if (makeExit < 30) {
-								// Look for nearby exits and don't put two next to each other.
-								var skipExit = false;
-								for (var check in checks) {
-									var cx = nx + check[0];
-									var cy = ny + check[1];
-									if (cx >= 0 && cy >= 0 && cx <= (xsize-1) && cy <= (ysize-1)) {
-										if (grid[cy][cx] === "+")
-											skipExit = true;
-									}
-								}
-								if (!skipExit)
-									grid[ny][nx] = "+";
-							}
-						}
-						continue;
-					}
-
-					if (grid[ny][nx] === " ")
-						continue;
-					var borked = false;
-					if (rand(0, 100) >= 3) {
-						for (var check in checks) {
-							var px = check[0];
-							var py = check[1];
-							if ( !((ny+py) === cury && (nx+px) === curx) && grid[ny+py][nx+px] === " ") {
-								borked = true;
-							}
-						}
-					}
-
-					if (!borked) {
-						next(nx, ny, false);
-					}
-				}
-			}
-
-			var x1 = 3;
-			var y1 = 0;
-			next(x1, y1, true);
-
-			$player.$hear([ "Finished with maze generation" ]);
-
-			for (var y=0; y<ysize; ++y) {
-				var o = "";
-				for (var x=0; x<xsize; ++x) {
-					o = o + grid[y][x];
-				}
-				$player.$hear([ o ]);
-			}
+			$player.$hear(["Poof! You teleported into ", $.notate(this)]);
+			$.move($player, this);
+			this.look();
 		}
 	}
 };

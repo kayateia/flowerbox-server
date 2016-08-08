@@ -6,7 +6,7 @@ var verbs = {
 				target = this.target;
 			target = $.get(target);
 			$player.$hear(["You go into ", $.notate(target)]);
-			$.move(caller, target);
+			$.move($player, target);
 			target.look();
 		}
 	}
