@@ -4,5 +4,12 @@ var verbs = {
 		code: function(what) {
 			this.$event("output", $.timestamp(), what);
 		}
+	},
+
+	$debug: {
+		// 'what' should be an array of objects to be stored for later retrieval by a client.
+		code: function(what) {
+			this.$event("debug", $.timestamp(), what);
+		}
 	}
 };
