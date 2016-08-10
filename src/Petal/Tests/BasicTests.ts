@@ -12,7 +12,7 @@ import { TestSetup } from "./TestSetup";
 // These aren't the most ideal set of tests, but they're designed to be a torture test gamut of
 // random stuff I tried while developing Petal. More formal ones coming...
 
-describe("Functional test", function() {
+describe("Basic test", function() {
 	function basicTest(code, expected) {
 		let test = new TestSetup(code);
 		test.runProgram();
@@ -27,6 +27,11 @@ describe("Functional test", function() {
 
 		// Not having an exception is good enough.
 		expect(1).toEqual(1);
+	});
+
+	it("should allow using the value of an assignment", function() {
+		basicTest("var a = 4, b = 10, c = (a = b) === 10; log(a, b, c);",
+			"10 10 true\n");
 	});
 
 	it("should have working math operators", function() {
