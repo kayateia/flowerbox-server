@@ -65,20 +65,6 @@ export class World {
 				console.log("loading", p);
 				let contents = (await FsPromises.readFile(p)).toString();
 				wob.verbCode = contents;
-			} else {
-				let verbNames = Utils.GetPropertyNames(wobdef.verbs);
-				let codePieces = [];
-				for (let vn of verbNames) {
-					let code = vn + ": { ";
-					if (wobdef.verbs[vn].sigs)
-						code += "sigs: " + JSON.stringify(wobdef.verbs[vn].sigs) + ",";
-					if (wobdef.verbs[vn].code)
-						code += "code: " + wobdef.verbs[vn].code;
-					code += " }";
-					codePieces.push(code);
-				}
-				let fullCode = "var verb = { " + codePieces.join(",") + " };";
-				wob.verbCode = fullCode;
 			}
 
 			if (wobdef.container) {

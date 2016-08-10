@@ -48,20 +48,6 @@ export class AstReturn extends AstNode {
 		});
 	}
 
-	/*public execute(runtime: Runtime): void {
-		runtime.pushAction(Step.Callback("Return unwinder", (s) => {
-			let rv = undefined;
-			if (this.argument)
-				rv = Value.PopAndDeref(runtime);
-
-			runtime.pushOperand(rv);
-
-			AstCallExpression.UnwindCurrent(runtime);
-		}));
-		if (this.argument)
-			runtime.pushAction(new Step(this.argument));
-	} */
-
 	public what: string = "Return";
 	public argument: AstNode;
 }
