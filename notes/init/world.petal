@@ -54,9 +54,9 @@ var verbs = {
 
 			var contents = target.contents;
 			if (contents.length) {
-				var exits = ["Exits: "];
-				var others = ["Also here: "];
-				var players = ["Players: "];
+				var exits = [];
+				var others = [];
+				var players = [];
 				var arr = null; // Reference to target array
 
 				map(contents, function(wob) {
@@ -69,18 +69,35 @@ var verbs = {
 					else {
 						arr = others;
 					}
-					if (arr.length > 1)
-						arr.push(", ");
 					arr.push($.notate(wob));
 				});
 
-				if (players.length > 1)
-					$player.$hear(players);
-				if (exits.length > 1)
-					$player.$hear(exits);
-				if (others.length > 1)
-					$player.$hear(others);
-			}
+				var contentsLists = [
+					{
+						arr: players,
+						label: "Players: "
+					},
+					{
+						arr: exits,
+						label: "Exits: "
+					},
+					{
+						arr: others,
+						label: "Also here: "
+					}
+				]
+				for (var i = 0; i < contentsLists.length; i++) {
+					arr = contentsLists[i].arr;
+					if (arr.length) {
+						arr.sort();
+						for (var j = arr.length - 1; j > 0; j--) {
+							arr.splice(j, 0, ", ");
+						}
+						arr.unshift(contentsLists[i].label);
+						$player.$hear(arr);
+					}
+				}
+d			}
 		}
 	},
 	teleport: {
