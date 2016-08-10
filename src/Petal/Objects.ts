@@ -109,9 +109,21 @@ export class PetalArray implements IObject, IPetalWrapper {
 		return this._items.map(i => ObjectWrapper.Unwrap(i)).join(separator);
 	}
 
+	// Shallow sort items in the array
+	// TODO: Heavier duty plumbing required to make callback function work
+	public sort(func) {
+		return this._items.sort(func);
+	}
+
+	// Starting at the given index, delete the specified number of items, then
+	// insert zero or more given items
+	public splice(start: number, deleteCount?: number, ...items: any[]) {
+		return this._items.splice(start, deleteCount, ...items);
+	}
+
 	public getAccessor(name: any): any {
 		const names = [
-			"push", "pop", "length", "indexOf", "slice", "unshift", "copy", "join"
+			"push", "pop", "length", "indexOf", "slice", "unshift", "copy", "join", "sort", "splice"
 		];
 		const thises = [
 			"map", "filter", "find"
