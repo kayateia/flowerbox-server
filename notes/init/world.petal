@@ -54,16 +54,33 @@ var verbs = {
 
 			var contents = target.contents;
 			if (contents.length) {
-				var arr = ["Here: "];
-				var first = true;
-				map(contents, function(w) {
-					if (!first)
+				var exits = ["Exits: "];
+				var others = ["Also here: "];
+				var players = ["Players: "];
+				var arr = null; // Reference to target array
+
+				map(contents, function(wob) {
+					if (wob.base.id === @player.id) {
+						arr = players;
+					}
+					else if (wob.go !== undefined) {
+						arr = exits;
+						$.log(wob.verbs);
+					}
+					else {
+						arr = others;
+					}
+					if (arr.length > 1)
 						arr.push(", ");
-					else
-						first = false;
-					arr.push($.notate(w));
+					arr.push($.notate(wob));
 				});
-				$player.$hear(arr);
+
+				if (players.length > 1)
+					$player.$hear(players);
+				if (exits.length > 1)
+					$player.$hear(exits);
+				if (others.length > 1)
+					$player.$hear(others);
 			}
 		}
 	},
