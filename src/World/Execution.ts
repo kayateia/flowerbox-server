@@ -13,6 +13,7 @@ import { WobReferenceException, WobOperationException } from "./Exceptions";
 import { Notation } from "./Notation";
 import { Utils } from "./Utils";
 import * as Persistence from "../Utils/Persistence";
+import { Perms } from "./Security";
 
 // Wraps a notation for passing around in Petal scripts. These are opaque
 // objects and you can't do anything with them but pass them around.
@@ -447,9 +448,12 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 	let dollarParseObj = new DollarParse(parse, player, world, injections);
 	let dollarParse = Petal.ObjectWrapper.WrapGeneric(dollarParseObj, DollarParse.Members, false);
 
+	let perms = Petal.ObjectWrapper.WrapGeneric(Perms, [ "r", "w", "x", "s", "group", "others" ]);
+
 	injections.$ = dollar;
 	injections.$parse = dollarParse;
 	injections.$player = dollarParseObj.player;
+	injections.$perms = perms;
 
 	// Check for a global command handler on #1. If it exists, we'll call that first.
 	let rootScope = new RootScope(world, injections);
@@ -469,6 +473,7 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 			$: injections.$,
 			$parse: injections.$parse,
 			$player: injections.$player,
+			$perms: injections.$perms,
 			caller: dollarParseObj.player,
 			this: null
 		};
