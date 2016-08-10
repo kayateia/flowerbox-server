@@ -27,7 +27,7 @@ export class AstReturn extends AstNode {
 			if (this.argument)
 				value = Value.PopAndDeref(runtime);
 			else
-				value = null;
+				value = undefined;
 			runtime.returnValue = value;
 		});
 

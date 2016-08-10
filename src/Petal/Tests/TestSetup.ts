@@ -19,8 +19,10 @@ export class TestSetup {
 		return function() {
 			let args = [];
 			for (let i=0; i<arguments.length; ++i) {
-				if (arguments[i] === undefined || arguments[i] === null)
+				if (arguments[i] === undefined)
 					args.push("undefined");
+				else if (arguments[i] === null)
+					args.push("null");
 				else if (typeof(arguments[i]) === "object")
 					args.push(JSON.stringify(Petal.ObjectWrapper.Unwrap(arguments[i])));
 				else if (typeof(arguments[i]) === "function")

@@ -29,7 +29,7 @@ export class ConstScope implements IScope {
 		else if (this._parent)
 			return this._parent.get(name);
 		else
-			return null;
+			return undefined;
 	}
 
 	public has(name: string): boolean {

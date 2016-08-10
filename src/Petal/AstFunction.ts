@@ -108,7 +108,7 @@ export class AstFunction extends AstNode {
 
 		// Compile a "just in case" default return.
 		compiler.emit("Function default return", this, (runtime: Runtime) => {
-			runtime.pushOperand(null);
+			runtime.pushOperand(undefined);
 		});
 
 		this.endLabel = compiler.newLabel(this);

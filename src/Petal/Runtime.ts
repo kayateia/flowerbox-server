@@ -22,6 +22,7 @@ import { IPetalWrapper } from "./Objects";
 
 import * as LibFunctional from "./Lib/Functional";
 import * as LibMath from "./Lib/Math";
+import * as LibConstants from "./Lib/Constants";
 
 let runtimeLib = new ConstScope(null, new Map<string, any>());
 let runtimeRegistered = false;
@@ -88,6 +89,7 @@ export class Runtime {
 			runtimeRegistered = true;
 			LibFunctional.registerAll(runtimeLib);
 			LibMath.registerAll(runtimeLib);
+			LibConstants.registerAll(runtimeLib);
 		}
 	}
 
@@ -110,14 +112,14 @@ export class Runtime {
 			}
 
 			if (stepsTotal && !steps--) {
-				return new ExecuteResult(true, stepsUsed, null);
+				return new ExecuteResult(true, stepsUsed, undefined);
 			} else
 				++stepsUsed;
 			/*if (!(this.address instanceof Address))
 				throw new RuntimeException("this.address isn't a valid Address", this.address); */
 		}
 
-		let returnValue = null;
+		let returnValue = undefined;
 		if (!this._operandStack.empty)
 			returnValue = this.popOperand();
 
@@ -150,7 +152,7 @@ export class Runtime {
 					await CorePromises.delay(1);
 					continue;
 				} else
-					return new ExecuteResult(true, stepsUsed, null);
+					return new ExecuteResult(true, stepsUsed, undefined);
 			}
 
 			// Is the return value a Promise object?

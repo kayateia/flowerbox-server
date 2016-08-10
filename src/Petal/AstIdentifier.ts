@@ -31,7 +31,7 @@ export class AstIdentifier extends AstNode {
 					else
 						runtime.pushOperand(val);
 				} else {
-					runtime.pushOperand(null);
+					runtime.pushOperand(undefined);
 				}
 			} else {
 				// We don't actually push the value itself on, but rather a reference to it that

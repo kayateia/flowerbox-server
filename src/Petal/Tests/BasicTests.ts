@@ -268,4 +268,25 @@ describe("Functional test", function() {
 
 		expect(test.output).toEqual("test foo\ntesting this\ntesting caller\n");
 	});
+
+	it("should have undefined and null", function() {
+		basicTest("log(undefined); log(null);",
+			"undefined\nnull\n");
+	});
+
+	it("undefined and null should be constants", function() {
+		try {
+			basicTest("undefined = 5;", "");
+			expect(true).toEqual(false);
+		} catch (err) {
+			expect(true).toEqual(true);
+		}
+
+		try {
+			basicTest("null = 5;", "");
+			expect(true).toEqual(false);
+		} catch (err) {
+			expect(true).toEqual(true);
+		}
+	});
 });

@@ -132,7 +132,7 @@ export class PetalArray implements IObject, IPetalWrapper {
 			},
 			this);
 		} else
-			return LValue.MakeReadOnly(null, this);
+			return LValue.MakeReadOnly(undefined, this);
 	}
 
 	public persist(): any {
@@ -206,7 +206,7 @@ export class PetalBlob implements IObject {
 			},
 			this);
 		} else
-			return LValue.MakeReadOnly(null, this);
+			return LValue.MakeReadOnly(undefined, this);
 	}
 }
 
@@ -392,7 +392,7 @@ export class ObjectWrapper {
 					},
 					item);
 				} else
-					return LValue.MakeReadOnly(null, item);
+					return LValue.MakeReadOnly(undefined, item);
 			}
 		};
 	}
