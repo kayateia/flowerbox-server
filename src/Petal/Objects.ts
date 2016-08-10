@@ -15,7 +15,7 @@
 //
 
 import { LValue } from "./LValue";
-import { Runtime } from "./Runtime";
+import { Runtime, runtimeLib } from "./Runtime";
 import { RuntimeException } from "./Exceptions";
 import * as Strings from "../Utils/Strings";
 import * as Persistence from "../Utils/Persistence";
@@ -107,7 +107,18 @@ export class PetalArray implements IObject, IPetalWrapper {
 		const names = [
 			"push", "pop", "length", "indexOf", "slice", "unshift", "copy", "join"
 		];
-		if (typeof(name) === "string" && Strings.stringIn(name, names))
+		const thises = [
+			"map", "filter", "find"
+		];
+		if (typeof(name) === "string" && Strings.stringIn(name, thises))
+			return new LValue("This-member access", (runtime: Runtime) => {
+				let methodHandler = "___" + name + "This";
+				return runtimeLib.get(methodHandler);
+			}, (rt: Runtime) => {
+				throw new RuntimeException("Can't write to read-only value", rt);
+			},
+			this);
+		else if (typeof(name) === "string" && Strings.stringIn(name, names))
 			return new LValue("Member access", (runtime: Runtime) => {
 				if (typeof(this[name]) === "function") {
 					let that = this;

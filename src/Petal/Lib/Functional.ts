@@ -41,8 +41,27 @@ let find = function(array, func) {
 	return result;
 }
 
+let mapThis = function(func) {
+	return map(this, func);
+}
+
+let filterThis = function(func) {
+	return filter(this, func);
+}
+
+let findThis = function(func) {
+	return find(this, func);
+}
+
 export function registerAll(scope: ConstScope): void {
-	let code = "var a = { map:" + map + ", filter:" + filter + ", find:" + find + " };";
+	let code = "var a = { "
+		+ "map:" + map + ", "
+		+ "filter:" + filter + ", "
+		+ "find:" + find + ", "
+		+ "___mapThis:" + mapThis + ", "
+		+ "___filterThis:" + filterThis + ", "
+		+ "___findThis:" + findThis
+		+ " };";
 	let ast = Parser.parseFromSource(code);
 	let compiler = new Compiler("<lib>");
 	compiler.compile(ast);

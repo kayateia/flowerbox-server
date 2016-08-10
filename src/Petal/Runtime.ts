@@ -24,7 +24,7 @@ import * as LibFunctional from "./Lib/Functional";
 import * as LibMath from "./Lib/Math";
 import * as LibConstants from "./Lib/Constants";
 
-let runtimeLib = new ConstScope(null, new Map<string, any>());
+export let runtimeLib = new ConstScope(null, new Map<string, any>());
 let runtimeRegistered = false;
 
 export class ExecuteResult {

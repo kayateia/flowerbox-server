@@ -238,10 +238,14 @@ describe("Functional test", function() {
 	it("should have a working map", function() {
 		basicTest("log(map([1,2,3], function(x) { return x + 1; }))",
 			"[2,3,4]\n");
+		basicTest("log([1,2,3].map(x => x+1))",
+			"[2,3,4]\n");
 	});
 
 	it("should have a working filter", function() {
 		basicTest("log(filter([1,2,3], function(x) { return x < 3; }))",
+			"[1,2]\n");
+		basicTest("log([1,2,3].filter(x => x<3))",
 			"[1,2]\n");
 	});
 
