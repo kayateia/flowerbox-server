@@ -254,6 +254,13 @@ describe("Basic test", function() {
 			"[1,2]\n");
 	});
 
+	it("should have a working find", function() {
+		basicTest("log(find([1,2,3], function(value, index, arr) { if (value === 2) { log('Found at index', index); return true; } }));",
+			"Found at index 1\n2\n");
+		basicTest("log([1,2,3].find(function(value, index, arr) { if (value === 2) { log('Found at index', index); return true; } }));",
+			"Found at index 1\n2\n");
+	});
+
 	it("should have a switch statement", function() {
 		basicTest("var a = 5; switch(a) { case 1: log(1); break; case 5: log(5); break; case 6: log(6); break; }",
 			"5\n");
