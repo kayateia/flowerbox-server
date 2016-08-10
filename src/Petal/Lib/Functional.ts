@@ -32,11 +32,10 @@ let filter = function(array, func) {
 }
 
 let find = function(array, func) {
-	var found = false;
 	var result = undefined;
 	for (var i=0; i<array.length; ++i)
-		if ((found = func(array[i], i, array)) === true) {
-			result = found;
+		if (func(array[i], i, array) === true) {
+			result = array[i];
 			break;
 		}
 	return result;
