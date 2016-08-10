@@ -68,6 +68,33 @@ export class WobWrapper implements Petal.IObject {
 		this._id = id;
 	}
 
+	public equalTo(other: any, cargo: AccessorCargo): any {
+		if (other instanceof WobWrapper)
+			return this._id === other._id;
+		else
+			return false;
+	}
+
+	public async instanceOf(other: any, cargo: AccessorCargo): Promise<boolean> {
+		let us = this._id;
+		let them = other;
+		if (them instanceof WobWrapper)
+			them = them._id;
+
+		// Load our wob.
+		let uswob = await cargo.world.getWob(us);
+
+		// Go up the inheritance chain.
+		let base = uswob.base;
+		while (base !== 0 && base !== them) {
+			uswob = await cargo.world.getWob(base);
+			base = uswob.base;
+		}
+
+		// Did we find a match?
+		return base !== 0;
+	}
+
 	public getAccessor(index: any, cargo: AccessorCargo): any {
 		if (typeof(index) !== "string")
 			throw new WobOperationException("Can't access non-string members on Wobs", []);

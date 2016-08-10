@@ -95,7 +95,11 @@ export class AstBinaryExpression extends AstNode {
 					break;
 			}
 
-			runtime.pushOperand(result);
+			// This lets the Check* functions return a Promise if needed.
+			if (result instanceof Promise)
+				return result;
+			else
+				runtime.pushOperand(result);
 		});
 
 		skipRight.pc = compiler.pc;

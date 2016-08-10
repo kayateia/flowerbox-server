@@ -26,15 +26,14 @@ import { Utils } from "./Utils";
 //
 // If runtime.accessorCargo is non-null, it will be passed along as the second parameter in these.
 export interface IObject {
-	// Get an LValue for a given index/name out of the wrapped object.
-	// This may also return a ThisValue or a Promise.
+	// Get an LValue for a given index/name out of the wrapped object. May also return a Promise.
 	getAccessor?(index: any, cargo?: any): any;
 
-	// Returns true if the second object is an instance of the called object.
-	instanceOf?(other: any, cargo?: any): boolean;
+	// Returns true if the second object is an instance of the called object. May also return a Promise.
+	instanceOf?(other: any, cargo?: any): any;
 
-	// Returns true if the second object is equal to the called object.
-	equalTo?(other: any, cargo?: any): boolean;
+	// Returns true if the second object is equal to the called object. May also return a Promise.
+	equalTo?(other: any, cargo?: any): any;
 }
 
 export interface IPetalWrapper {
