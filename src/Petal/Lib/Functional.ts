@@ -19,15 +19,26 @@ import { Address } from "../Address";
 let map = function(array, func) {
 	var result = [];
 	for (var i=0; i<array.length; ++i)
-		result.push(func(array[i]));
+		result.push(func(array[i], i, array));
 	return result;
 }
 
 let filter = function(array, func) {
 	var result = [];
 	for (var i=0; i<array.length; ++i)
-		if (func(array[i]))
+		if (func(array[i], i, array))
 			result.push(array[i]);
+	return result;
+}
+
+let find = function(array, func) {
+	var found = false;
+	var result = undefined;
+	for (var i=0; i<array.length; ++i)
+		if ((found = func(array[i], i, array)) === true) {
+			result = found;
+			break;
+		}
 	return result;
 }
 
