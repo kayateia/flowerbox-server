@@ -60,12 +60,11 @@ var verbs = {
 				var arr = null; // Reference to target array
 
 				map(contents, function(wob) {
-					if (wob.base.id === @player.id) {
+					if (wob instanceof @player) {
 						arr = players;
 					}
-					else if (wob.go !== undefined) {
+					else if (wob instanceof @exit) {
 						arr = exits;
-						$.log(wob.verbs);
 					}
 					else {
 						arr = others;
