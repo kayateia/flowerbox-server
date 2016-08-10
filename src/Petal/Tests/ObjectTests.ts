@@ -16,4 +16,24 @@ describe("Object test", function() {
 		let jsobj = Petal.ObjectWrapper.Unwrap(petalobj);
 		expect(jsobj).toEqual(testobj);
 	});
+
+	it("should be able to provide custom equality and instanceof tests", function() {
+		let test = new TestSetup("log(testobj === 5); log(5 === testobj); log (5 === 5);");
+
+		let testobj: any = { equalTo: function(o) { return o === 5; } };
+		test.runtime.currentScope.set("testobj", testobj);
+
+		test.runProgram();
+
+		expect(test.output).toEqual("true\ntrue\ntrue\n");
+
+
+		test = new TestSetup("log(testobj instanceof 5); log(5 instanceof map);");
+		testobj = { instanceOf: function(o) { return o === 5; } };
+		test.runtime.currentScope.set("testobj", testobj);
+
+		test.runProgram();
+
+		expect(test.output).toEqual("true\nfalse\n");
+	});
 });

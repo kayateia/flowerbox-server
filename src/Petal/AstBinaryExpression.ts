@@ -9,6 +9,7 @@ import { Runtime } from "./Runtime";
 import { parse } from "./Parser";
 import { Value } from "./Value";
 import { Compiler } from "./Compiler";
+import { IObject } from "./Objects";
 
 export class AstBinaryExpression extends AstNode {
 	constructor(parseTree: any) {
@@ -77,11 +78,14 @@ export class AstBinaryExpression extends AstNode {
 					break;
 				case "==":
 				case "===":
-					result = leftValue === rightValue;
+					result = AstBinaryExpression.CheckEquality(leftValue, rightValue, runtime);
 					break;
 				case "!=":
 				case "!==":
-					result = leftValue !== rightValue;
+					result = !AstBinaryExpression.CheckEquality(leftValue, rightValue, runtime);
+					break;
+				case "instanceof":
+					result = AstBinaryExpression.CheckInstanceOf(leftValue, rightValue, runtime);
 					break;
 				case "||":
 					result = leftValue || rightValue;
@@ -95,6 +99,31 @@ export class AstBinaryExpression extends AstNode {
 		});
 
 		skipRight.pc = compiler.pc;
+	}
+
+	// Attempts to massage the left and right values to get a custom equality check if possible,
+	// otherwise just uses JavaScript's equality check.
+	static CheckEquality(left: IObject, right: IObject, runtime: Runtime): boolean {
+		if (left === undefined || left === null || right === undefined || right === null)
+			return left === right;
+		else if (left.equalTo)
+			return left.equalTo(right, runtime.accessorCargo);
+		else if (right.equalTo)
+			return right.equalTo(left, runtime.accessorCargo);
+		else
+			return left === right;
+	}
+
+	// Attempts to massage the left and right values to get a custom instanceof check if possible.
+	// Otherwise we just return false - returning JavaScript's values isn't safe because
+	// it's explicitly expecting a function, which we can't give here.
+	static CheckInstanceOf(left: any, right: any, runtime: Runtime): boolean {
+		if (left === undefined || left === null)
+			return false;
+		else if (left.instanceOf)
+			return left.instanceOf(right, runtime.accessorCargo);
+		else
+			return false;
 	}
 
 	public what: string = "BinaryExpression";

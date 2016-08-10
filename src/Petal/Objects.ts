@@ -22,12 +22,19 @@ import * as Persistence from "../Utils/Persistence";
 import { Address } from "./Address";
 import { Utils } from "./Utils";
 
-// Simple interface for getting an LValue for a given index/name out of the wrapped object.
-// This may also return a ThisValue or a Promise.
+// Simple interface for plugging native objects into Petal. Any or all maybe implemented.
 //
-// If runtime.accessorCargo is non-null, it will be passed along as the second parameter here.
+// If runtime.accessorCargo is non-null, it will be passed along as the second parameter in these.
 export interface IObject {
-	getAccessor(index: any, cargo?: any): any;
+	// Get an LValue for a given index/name out of the wrapped object.
+	// This may also return a ThisValue or a Promise.
+	getAccessor?(index: any, cargo?: any): any;
+
+	// Returns true if the second object is an instance of the called object.
+	instanceOf?(other: any, cargo?: any): boolean;
+
+	// Returns true if the second object is equal to the called object.
+	equalTo?(other: any, cargo?: any): boolean;
 }
 
 export interface IPetalWrapper {
