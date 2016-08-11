@@ -6,18 +6,34 @@
 
 import { ModelBase } from "./ModelBase";
 
-// For returning properties on a wob.
+// For returning one property on a wob.
 export class Property extends ModelBase {
-	constructor(id: number, property: string, value: any) {
+	constructor(id: number, name: string, value: any) {
 		super(true);
 		this.id = id;
-		this.property = property;
+		this.name = name;
 		this.value = value;
 	}
 
 	public id: number;
-	public property: string;
+	public name: string;
 	public value: any;
+}
+
+// For returning one verb on a wob.
+export class Verb extends ModelBase {
+	constructor(id: number, verb: string, sigs: string[], code: string) {
+		super(true);
+		this.id = id;
+		this.verb = verb;
+		this.sigs = sigs;
+		this.code = code;
+	}
+
+	public id: number;
+	public verb: string;
+	public sigs: string[];
+	public code: string;
 }
 
 // For returning the basic info about a wob.
