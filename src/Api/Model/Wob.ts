@@ -64,16 +64,19 @@ export class AttachedItem {
 	public value: string;
 }
 
-export class IdList {
+export class IdList extends ModelBase {
 	constructor(list: number[]) {
+		super(true);
+
 		this.list = list;
 	}
 
 	public list: number[];
 }
 
-export class InfoList {
+export class InfoList extends ModelBase {
 	constructor(list: Info[]) {
+		super(true);
 		this.list = list;
 	}
 
