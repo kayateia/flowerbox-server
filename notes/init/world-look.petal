@@ -1,0 +1,65 @@
+var look = {
+	sigs: [ "look none at self", "look self" ],
+	code: function(target) {
+		if (!$player.$hear)
+			return;
+
+		if (!target)
+			target = this;
+
+		let descLine = [target.desc];
+		if (target.image)
+			descLine.push($.notate(target.name, target, "image"));
+
+		$player.$hear([$.notate(target)]);
+		$player.$hear(descLine);
+		$player.$hear([]);
+
+		var contents = target.contents;
+		if (contents.length) {
+			var exits = [];
+			var others = [];
+			var players = [];
+			var arr = null; // Reference to target array
+
+			map(contents, function(wob) {
+				if (wob instanceof @player) {
+					arr = players;
+				}
+				else if (wob instanceof @exit) {
+					arr = exits;
+				}
+				else {
+					arr = others;
+				}
+				arr.push($.notate(wob));
+			});
+
+			var contentsLists = [
+				{
+					arr: players,
+					label: "Players: "
+				},
+				{
+					arr: exits,
+					label: "Exits: "
+				},
+				{
+					arr: others,
+					label: "Also here: "
+				}
+			]
+			for (var i = 0; i < contentsLists.length; i++) {
+				arr = contentsLists[i].arr;
+				if (arr.length) {
+					arr.sort();
+					for (var j = arr.length - 1; j > 0; j--) {
+						arr.splice(j, 0, ", ");
+					}
+					arr.unshift(contentsLists[i].label);
+					$player.$hear(arr);
+				}
+			}
+		}
+	}
+};

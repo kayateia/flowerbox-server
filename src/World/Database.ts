@@ -34,11 +34,11 @@ export class Database {
 				return null;
 
 			let props = await this._sal.select(conn, "select * from properties where wobid=?", [id]);
+			let verbs = await this._sal.select(conn, "select * from verbs where wobid=?", [id]);
 
 			let wob = new Wob(id);
 			wob.container = wobrows[0].container;
 			wob.base = wobrows[0].base;
-			wob.verbCode = wobrows[0].verbCode;
 
 			for (let p of props) {
 				let json = JSON.parse(p.value);
@@ -53,6 +53,10 @@ export class Database {
 					let unp = Persistence.unpersist(json);
 					wob.setProperty(p.name, unp);
 				}
+			}
+
+			for (let v of verbs) {
+				wob.setVerbCode(v.name, v.code);
 			}
 
 			let contained = await this._sal.select(conn, "select wobid from wobs where container=?", [id]);
@@ -161,12 +165,14 @@ export class Database {
 		let conn = await this.connect();
 		try {
 			await this._sal.transact(conn, async () => {
-				await this._sal.run(conn,"update wobs set container=?, base=?, verbCode=? where wobid=?",
-					[wob.container, wob.base, wob.verbCode, wob.id]);
+				await this._sal.run(conn,"update wobs set container=?, base=? where wobid=?",
+					[wob.container, wob.base, wob.id]);
 
 				await this._sal.run(conn, "delete from properties where wobid=?", [wob.id]);
+				await this._sal.run(conn, "delete from verbs where wobid=?", [wob.id]);
 
 				await this.insertProperties(conn, wob);
+				await this.insertVerbs(conn, wob);
 			});
 		} finally {
 			this.close(conn);
@@ -192,11 +198,21 @@ export class Database {
 		}
 	}
 
+	private async insertVerbs(conn: any, wob: Wob): Promise<any> {
+		for (let p of wob.getVerbNames()) {
+			let v = wob.getVerb(p);
+
+			await this._sal.run(conn, "insert into verbs (wobid, name, code) values (?, ?, ?)",
+				[wob.id, p, v.code]);
+		}
+	}
+
 	public async deleteWob(id: number): Promise<void> {
 		let conn = await this.connect();
 		try {
 			await this._sal.transact(conn, async () => {
 				await this._sal.run(conn, "delete from properties where wobid=?", [id]);
+				await this._sal.run(conn, "delete from verbs where wobid=?", [id]);
 				await this._sal.run(conn, "delete from wobs where wobid=?", [id]);
 			});
 		} finally {
@@ -207,10 +223,11 @@ export class Database {
 	public async createWob(wob: Wob): Promise<void> {
 		let conn = await this.connect();
 		try {
-			await this._sal.run(conn, "insert into wobs (wobid, container, base, verbCode) values (?,?,?,?)",
-				[wob.id, wob.container, wob.base, wob.verbCode]);
+			await this._sal.run(conn, "insert into wobs (wobid, container, base) values (?,?,?)",
+				[wob.id, wob.container, wob.base]);
 
 			await this.insertProperties(conn, wob);
+			await this.insertVerbs(conn, wob);
 		} finally {
 			this.close(conn);
 		}

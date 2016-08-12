@@ -212,7 +212,7 @@ export class Wob {
 	// This version searches up the inheritance chain for answers.
 	public async getVerbNamesI(world: World): Promise<WobValue<string>[]> {
 		let allVerbs = await this.getVerbsI(world);
-		return allVerbs.map(v => new WobValue<string>(v.wob, v.value.verb));
+		return allVerbs.map(v => new WobValue<string>(v.wob, v.value.word));
 	}
 
 	// IMPORTANT NOTE: Don't just getVerb() and modify the Verb object. This will
@@ -250,8 +250,8 @@ export class Wob {
 
 	private async mapVerbsI(world: World, map: CaseMap<WobValue<Verb>>): Promise<void> {
 		this.getVerbs().forEach(v => {
-			if (!map.has(v.verb)) {
-				map.set(v.verb, new WobValue<Verb>(this.id, v));
+			if (!map.has(v.word)) {
+				map.set(v.word, new WobValue<Verb>(this.id, v));
 			}
 		});
 		if (this.base) {
@@ -263,27 +263,24 @@ export class Wob {
 	public setVerb(name: string, value: Verb): void {
 		this.updateLastUse();
 		this._dirty = true;
-		this._verbs.set(name, value);
+		if (value)
+			this._verbs.set(name, value);
+		else
+			this._verbs.delete(name);
 	}
 
-
-	public get verbCode(): string {
-		return this._verbCode;
-	}
-
-	public set verbCode(v: string) {
-		if (!v) {
-			this._verbCode = null;
-			this._verbs = new CaseMap<Verb>();
+	public setVerbCode(name: string, text: string): void {
+		if (!text) {
+			this.setVerb(name, null);
 			return;
 		}
 
 		// Eat CRLFs.
-		if (v.indexOf("\r") >= 0)
-			v = v.replace("\r\n", "\n");
+		if (text.indexOf("\r") >= 0)
+			text = text.replace("\r\n", "\n");
 
 		// Parse the code.
-		let parsed: any = Petal.parseFromSource(v);
+		let parsed: any = Petal.parseFromSource(text);
 
 		// Verify that it is, in fact, just an object definition.
 		if (!Petal.Check.IsSingleObjectDef(parsed))
@@ -291,7 +288,7 @@ export class Wob {
 
 		// Execute the code.
 		let rt = new Petal.Runtime();
-		let runresult = rt.executeCode("#" + this.id, parsed, null, 1000);
+		let runresult = rt.executeCode("#" + this.id + "." + name, parsed, null, 10000);
 
 		// Look for the variable that was set in the scope.
 		let scope = rt.currentScope;
@@ -300,19 +297,12 @@ export class Wob {
 		// This should be a dictionary of verb name -> verb object, where each verb object
 		// contains "sigs" (an array) and "code" (a function object). The code may mutate this scope
 		// later, but we split it up for verbs here.
-		let verbsObj: any = Petal.ObjectWrapper.Unwrap(scope.get(varnames[0]));
-		let verbNames = Petal.Utils.GetPropertyNames(verbsObj);
-		for (let vn of verbNames) {
-			let verbObj = verbsObj[vn];
-			let sigs: string[] = verbObj.sigs;
-			if (sigs === undefined || sigs === null)
-				sigs = [];
-			let code: Petal.Address = verbObj.code;
-			this.setVerb(vn, new Verb(vn, new VerbCode(sigs, code.node, code)));
-		}
-
-		// And set the original data for later.
-		this._verbCode = v;
+		let verbObj: any = Petal.ObjectWrapper.Unwrap(scope.get(varnames[0]));
+		let sigs: string[] = verbObj.sigs;
+		if (sigs === undefined || sigs === null)
+			sigs = [];
+		let code: Petal.Address = verbObj.code;
+		this.setVerb(name, new Verb(name, new VerbCode(sigs, text, code.node, code)));
 	}
 
 
@@ -339,9 +329,6 @@ export class Wob {
 	private _contents: number[];
 	private _properties: CaseMap<any>;
 	private _verbs: CaseMap<Verb>;
-
-	// The verb code for the whole wob. Individual verbs will be peeled out of this.
-	private _verbCode: string;
 
 	private _dirty: boolean;
 	private _lastUse: number;

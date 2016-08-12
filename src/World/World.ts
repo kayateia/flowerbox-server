@@ -58,13 +58,13 @@ export class World {
 				}
 			}
 
-			if (!wobdef.verbs) {
-				// Do nothing - it gets no verbs.
-			} else if (typeof(wobdef.verbs) === "string") {
-				let p = path.join(basePath, wobdef.verbs);
-				console.log("loading", p);
-				let contents = (await FsPromises.readFile(p)).toString();
-				wob.verbCode = contents;
+			if (wobdef.verbs) {
+				for (let vinfo of wobdef.verbs) {
+					let p = path.join(basePath, vinfo.fn);
+					console.log("loading", p, "->", vinfo.name);
+					let contents = (await FsPromises.readFile(p)).toString();
+					wob.setVerbCode(vinfo.name, contents);
+				}
 			}
 
 			if (wobdef.container) {

@@ -10,7 +10,12 @@ module.exports = [
 			"desc": "This is an endless void existing outside of all other reality."
 				+ " When you stare into the void, the void stares back at you..."
 		},
-		verbs: "world.petal"
+		verbs: [
+			{ fn: "world-command.petal", name: "$command" },
+			{ fn: "world-look.petal", name: "look" },
+			{ fn: "world-sayinto.petal", name: "$sayinto" },
+			{ fn: "world-teleport.petal", name: "teleport" }
+		]
 	},
 
 	{
@@ -21,7 +26,10 @@ module.exports = [
 		},
 		container: "@world",
 		base: "@world",
-		verbs: "player.petal"
+		verbs: [
+			{ fn: "player-debug.petal", name: "$debug" },
+			{ fn: "player-hear.petal", name: "$hear" }
+		]
 	},
 
 	{
@@ -32,7 +40,9 @@ module.exports = [
 		},
 		container: "@world",
 		base: "@world",
-		verbs: "room.petal"
+		verbs: [
+			{ fn: "room-look.petal", name: "look" }
+		]
 	},
 
 	{
@@ -57,7 +67,9 @@ module.exports = [
 		},
 		container: "@world",
 		base: "@world",
-		verbs: "exit.petal"
+		verbs: [
+			{ fn: "exit-go.petal", name: "go" }
+		]
 	},
 
 	{
@@ -134,7 +146,10 @@ module.exports = [
 		},
 		container: "@world",
 		base: "@world",
-		verbs: "hammer.petal"
+		verbs: [
+			{ fn: "hammer-use.petal", name: "use" },
+			{ fn: "hammer-throw.petal", name: "throw" }
+		]
 	},
 
 	{
@@ -144,7 +159,10 @@ module.exports = [
 		},
 		container: "@world",
 		base: "@world",
-		verbs: "teacup.petal"
+		verbs: [
+			{ fn: "teacup-drink.petal", name: "drink" },
+			{ fn: "teacup-drop.petal", name: "drop" }
+		]
 	},
 
 	{
@@ -154,7 +172,10 @@ module.exports = [
 		},
 		container: "@world",
 		base: "@world",
-		verbs: "dog.petal"
+		verbs: [
+			{ fn: "dog-put.petal", name: "put" },
+			{ fn: "dog-release.petal", name: "release" }
+		]
 	},
 
 	{
@@ -165,7 +186,7 @@ module.exports = [
 		},
 		container: "@room2",
 		base: "@world",
-		verbs: "human.petal"
+		verbs: [ { fn: "human-pet.petal", name: "pet" } ]
 	},
 
 	{
@@ -176,7 +197,7 @@ module.exports = [
 		},
 		container: "@world",
 		base: "@exit",
-		verbs: "genesis_arch.petal"
+		verbs: [ { fn: "genesis_arch-go.petal", name: "go" } ]
 	},
 
 	{

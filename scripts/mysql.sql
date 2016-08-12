@@ -51,8 +51,8 @@ CREATE TABLE `properties` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `wobid` bigint(20) DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
-  `value` text,
-  `valueBlob` blob,
+  `value` longtext,
+  `valueBlob` longblob,
   PRIMARY KEY (`id`),
   KEY `wobid` (`wobid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -68,6 +68,31 @@ LOCK TABLES `properties` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `verbs`
+--
+
+DROP TABLE IF EXISTS `verbs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `verbs` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `wobid` bigint(20) DEFAULT NULL,
+  `name` varchar(255) DEFAULT NULL,
+  `code` longtext,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `verbs`
+--
+
+LOCK TABLES `verbs` WRITE;
+/*!40000 ALTER TABLE `verbs` DISABLE KEYS */;
+/*!40000 ALTER TABLE `verbs` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `wobs`
 --
 
@@ -79,7 +104,6 @@ CREATE TABLE `wobs` (
   `wobid` bigint(20) DEFAULT NULL,
   `container` bigint(20) DEFAULT NULL,
   `base` bigint(20) DEFAULT NULL,
-  `verbCode` text,
   PRIMARY KEY (`id`),
   KEY `wobid` (`wobid`)
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8;
@@ -103,4 +127,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-08-07  0:28:20
+-- Dump completed on 2016-08-10 23:50:20

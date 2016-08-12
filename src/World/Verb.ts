@@ -8,31 +8,39 @@ import * as Petal from "../Petal/All";
 import { World } from "./World";
 import { LanguageParseException } from "./Exceptions";
 
+// Code for a single verb; note that more than one VerbCode might share a single parsed/address.
 export class VerbCode {
-	constructor(sigs: string[], parsed: Petal.AstNode, address: Petal.Address) {
+	constructor(sigs: string[], code: string, parsed: Petal.AstNode, address: Petal.Address) {
 		this.signatures = sigs;
+		this.code = code;
 		this.parsed = parsed;
 		this.address = address;
 	}
 
 	public signatures: string[];
+	public code: string;
 	public parsed: Petal.AstNode;
 	public address: Petal.Address;
 }
 
+// This class is used to store a set of verbforms directly on Wob.
 export class Verb {
-	constructor(verb: string, code: VerbCode) {
-		this._verb = verb;
+	constructor(word: string, code: VerbCode) {
+		this._word = word;
 		this._code = code;
-		this.parseForSignatures();
+		this._signatures = code.signatures.map(s => new VerbSig(s));
 	}
 
-	public get verb(): string {
-		return this._verb;
+	public get word(): string {
+		return this._word;
 	}
 
 	public get signatures(): VerbSig[] {
 		return this._signatures;
+	}
+
+	public get code(): string {
+		return this._code.code;
 	}
 
 	public get parsed(): Petal.AstNode {
@@ -43,17 +51,7 @@ export class Verb {
 		return this._code.address;
 	}
 
-	private parseForSignatures(): void {
-		let newSigs: VerbSig[] = [];
-		this._code.signatures.forEach((verbLine: string) => {
-			let sig = new VerbSig(verbLine);
-			newSigs.push(sig);
-		});
-
-		this._signatures = newSigs;
-	}
-
-	private _verb: string;
+	private _word: string;
 	private _code: VerbCode;
 	private _signatures: VerbSig[];
 }
@@ -80,4 +78,24 @@ export class VerbSig {
 	public indobj: string;
 	public prep2: string;
 	public indobj2: string;
+}
+
+// This is what you'll get back by requesting inhertance-powered verbs from a Wob.
+//
+export class VerbComposite {
+	constructor(word: string, forms: Verb[]) {
+		this._word = word;
+		this._forms = forms;
+	}
+
+	public get word(): string {
+		return this._word;
+	}
+
+	public get forms(): Verb[] {
+		return this._forms;
+	}
+
+	private _word: string;
+	private _forms: Verb[];
 }

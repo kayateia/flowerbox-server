@@ -1,0 +1,4 @@
+var drop = {
+	sigs: [ "drop self" ],
+	code: function() {}
+};

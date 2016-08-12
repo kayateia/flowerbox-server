@@ -1,0 +1,6 @@
+var put = {
+	sigs: [ "put self in any" ],
+	code: function() {
+		$player.$hear(["Noooes, ", $.notate($parse.player), ", why did you put me in the ", $.notate($parse.indirect), "?"]);
+	}
+};

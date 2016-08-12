@@ -1,8 +1,0 @@
-var verbs = {
-	look: {
-		sigs: [ "look" ],
-		code: function() {
-			#1.look(this);
-		}
-	}
-};

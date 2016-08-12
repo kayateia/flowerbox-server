@@ -1,0 +1,6 @@
+var pet = {
+	sigs: [ "pet self" ],
+	code: function() {
+		#1.$sayinto(this.location, [$.notate(this), " says, Ahhh!!"]);
+	}
+};

@@ -1,0 +1,4 @@
+var use = {
+	sigs: [ "use self on any" ],
+	code: function() {}
+};

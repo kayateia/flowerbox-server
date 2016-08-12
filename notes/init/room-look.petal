@@ -1,0 +1,6 @@
+var look = {
+	sigs: [ "look" ],
+	code: function() {
+		#1.look(this);
+	}
+};

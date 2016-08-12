@@ -21,3 +21,10 @@ create table properties (
 	value text,
 	valueBinary blob,
 	foreign key(wobid) references wobs(id));
+
+create table verbs (
+	id integer primary key,
+	wobid integer,
+	name text,
+	code text,
+	foreign key(wobid) references wobs(id));

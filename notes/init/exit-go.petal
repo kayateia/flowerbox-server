@@ -1,0 +1,11 @@
+var go = {
+	sigs: [ "go self", "go none in self", "go none at self", "go none through self" ],
+	code: function(target) {
+		if (!target)
+			target = this.target;
+		target = $.get(target);
+		$player.$hear(["You go into ", $.notate(target)]);
+		$.move($player, target);
+		target.look();
+	}
+};

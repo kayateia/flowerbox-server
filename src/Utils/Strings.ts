@@ -39,6 +39,10 @@ export class CaseMap<T> {
 		return this._map.has(key.toLowerCase());
 	}
 
+	public delete(key: string): void {
+		this._map.delete(key.toLowerCase());
+	}
+
 	public keys(): string[] {
 		let ret: string[] = [];
 		for (let pair of this._map)

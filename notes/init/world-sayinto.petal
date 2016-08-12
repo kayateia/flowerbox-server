@@ -1,0 +1,8 @@
+var $sayinto = {
+	code: function(into, what) {
+		for (var o in into.contents) {
+			if (o.$hear)
+				o.$hear(what);
+		}
+	}
+};
