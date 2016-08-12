@@ -7,6 +7,7 @@
 import { WobReferenceException, WobOperationException } from "./Exceptions";
 import { Wob, WobProperties } from "./Wob";
 import { Verb } from "./Verb";
+import { Property } from "./Property";
 import * as Strings from "../Utils/Strings";
 import { Utils } from "../Petal/Utils";
 import * as Petal from "../Petal/All";
@@ -47,14 +48,14 @@ export class World {
 		for (let wobdef of init) {
 			let wob = await this.createWob();
 			for (let prop of Utils.GetPropertyNames(wobdef.properties))
-				wob.setProperty(prop, wobdef.properties[prop]);
+				wob.setProperty(prop, new Property(wobdef.properties[prop]));
 			if (wobdef.propertiesBinary) {
 				for (let prop of Utils.GetPropertyNames(wobdef.propertiesBinary)) {
 					let pv = wobdef.propertiesBinary[prop];
 					let fn = path.join(basePath, pv.file);
 					console.log("loading", fn, "-", pv.mime);
 					let contents = await FsPromises.readFile(fn);
-					wob.setProperty(prop, new Petal.PetalBlob(contents, pv.mime, pv.file));
+					wob.setProperty(prop, new Property(new Petal.PetalBlob(contents, pv.mime, pv.file)));
 				}
 			}
 
@@ -163,7 +164,13 @@ export class World {
 	public async getWobsByGlobalId(ids: string[]): Promise<Wob[]> {
 		// Start off getting the in-memory results.
 		let resultMap = new Map<number, boolean>();
-		let results = [...this._wobCache.values()].filter((w) => Strings.caseIn(w.getProperty(WobProperties.GlobalId), ids));
+		let results = [...this._wobCache.values()].filter(w => {
+			let prop = w.getProperty(WobProperties.GlobalId);
+			if (!prop)
+				return false;
+
+			return Strings.caseIn(prop.value, ids);
+		});
 		results.forEach(w => resultMap.set(w.id, true));
 
 		// Look for results in the database as well.
@@ -179,10 +186,11 @@ export class World {
 		return results;
 	}
 
+	// FIXME: This doesn't work for complex objects - need a JSON comparator.
 	public async getWobsByPropertyMatch(property: string, value: any): Promise<Wob[]> {
 		// Start off getting the in-memory results.
 		let resultMap = new Map<number, boolean>();
-		let results = [...this._wobCache.values()].filter((w) => w.getProperty(property) === value);
+		let results = [...this._wobCache.values()].filter((w) => w.getProperty(property) && w.getProperty(property).value === value);
 		results.forEach(w => resultMap.set(w.id, true));
 
 		// Look for results in the database as well.

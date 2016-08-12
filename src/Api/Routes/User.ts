@@ -38,7 +38,7 @@ export class UserRouter extends RouterBase {
 		let player = players[0];
 
 		let pwhash = player.getProperty(World.WobProperties.PasswordHash);
-		if (!pwhash || pwhash != password)
+		if (!pwhash || pwhash.value != password)
 			return new ModelBase(false, "Username or password was invalid.");
 
 		let tokenContents = new Token(userId, player.id, password);

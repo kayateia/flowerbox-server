@@ -5,7 +5,7 @@
 */
 
 import { ParseResult, ParseError } from "./InputParser";
-import { Wob, WobProperties, WobValue, WobRef, EventType, PropertyRef } from "./Wob";
+import { Wob, WobProperties, WobValue, WobRef, EventType } from "./Wob";
 import { World } from "./World";
 import * as Petal from "../Petal/All";
 import * as Strings from "../Utils/Strings";
@@ -13,6 +13,7 @@ import { WobReferenceException, WobOperationException } from "./Exceptions";
 import { Notation } from "./Notation";
 import { Utils } from "./Utils";
 import * as Persistence from "../Utils/Persistence";
+import { Property, PropertyRef } from "./Property";
 import { Perms } from "./Security";
 
 // Wraps a notation for passing around in Petal scripts. These are opaque
@@ -171,19 +172,19 @@ export class WobWrapper implements Petal.IObject {
 				let prop = await wob.getPropertyI(member, cargo.world);
 				return new Petal.LValue("Wob." + member, (runtime: Petal.Runtime) => {
 					if (prop && prop.wob !== this._id) {
-						let rv = Utils.Duplicate(prop.value);
+						let rv = Utils.Duplicate(prop.value.value);
 						Petal.ObjectWrapper.SetTag(rv, new WobPropertyTag(this, member));
 						return rv;
 					} else {
 						if (prop) {
-							Petal.ObjectWrapper.SetTag(prop.value, new WobPropertyTag(this, member));
-							return prop.value;
+							Petal.ObjectWrapper.SetTag(prop.value.value, new WobPropertyTag(this, member));
+							return prop.value.value;
 						} else
 							return null;
 					}
 				}, (runtime: Petal.Runtime, value: any) => {
 					Petal.ObjectWrapper.SetTag(value, new WobPropertyTag(this, member));
-					wob.setProperty(member, value);
+					wob.setPropertyKeepingPerms(member, value);
 				}, this);
 			}
 		})();
@@ -198,7 +199,7 @@ export class WobWrapper implements Petal.IObject {
 			// This may not be necessary, but:
 			// a) it sets the dirty flag for us,
 			// b) if this came to us through inheritance, it will set the local copy.
-			wob.setProperty((<WobPropertyTag>item.tag).property, item);
+			wob.setPropertyKeepingPerms((<WobPropertyTag>item.tag).property, item);
 		}
 	}
 
@@ -316,11 +317,10 @@ class DollarObject {
 			let wob = await this._world.getWob(notation.id);
 			text = await wob.getPropertyI(WobProperties.Name, this._world);
 			if (text)
-				text = text.value;
+				text = text.value.value;
 		}
 
 		if (typeof(text) !== "string") {
-			console.log(text);
 			// Don't think this is quite the right exception...
 			throw new WobReferenceException("Received a non-string for notation", 0);
 		}
@@ -433,7 +433,7 @@ function formatPetalException(player: Wob, err: any) : void {
 	if (err.petalStack)
 		output = [err.cause, " ", JSON.stringify(err.petalStack)];
 	else
-		output = [err.toString()];
+		output = [err.toString(), err.stack];
 	player.event(EventType.ScriptError, Date.now(), output);
 }
 

@@ -74,16 +74,17 @@ export class WorldRouter extends RouterBase {
 
 		// We have to special case this for now.
 		if (prop.value instanceof Petal.PetalBlob) {
-			let value = prop.value.data;
+			let value: any = prop.value.value.data;
 			if (base64)
 				value = value.toString("base64");
-			res.set("Content-Type", prop.value.mime)
+			res.set("Content-Type", prop.value.value.mime)
 				.send(value);
 		} else {
 			res.json(new Wob.Property(
 				prop.wob,
 				name,
-				Petal.ObjectWrapper.Unwrap(prop.value)
+				Petal.ObjectWrapper.Unwrap(prop.value.value),
+				prop.value.perms
 			));
 		}
 	}
@@ -103,13 +104,13 @@ export class WorldRouter extends RouterBase {
 		for (let n of names) {
 			// Multer processes this, not the JSON body middleware, so we have
 			// to do our own JSON handling on it.
-			wob.setProperty(n, Petal.ObjectWrapper.Wrap(JSON.parse(value[n])));
+			wob.setPropertyKeepingPerms(n, Petal.ObjectWrapper.Wrap(JSON.parse(value[n])));
 		}
 
 		for (let f of files) {
 			let n = f.fieldname;
 			let blob = new Petal.PetalBlob(f.buffer, f.mimetype, f.originalname);
-			wob.setProperty(n, blob);
+			wob.setPropertyKeepingPerms(n, blob);
 		}
 
 		res.json(new ModelBase(true));

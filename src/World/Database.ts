@@ -5,6 +5,7 @@
 */
 
 import { Wob, WobProperties } from "./Wob";
+import { Property } from "./Property";
 import * as Petal from "../Petal/All";
 import * as DB from "../Database/All";
 import * as Persistence from "../Utils/Persistence";
@@ -48,10 +49,10 @@ export class Database {
 					let data = p.valueBlob;
 					let mime: string = json.mime;
 					let fn: string = json.filename;
-					wob.setProperty(p.name, new Petal.PetalBlob(data, mime, fn));
+					wob.setProperty(p.name, new Property(new Petal.PetalBlob(data, mime, fn), p.perms));
 				} else {
 					let unp = Persistence.unpersist(json);
-					wob.setProperty(p.name, unp);
+					wob.setProperty(p.name, new Property(unp, p.perms));
 				}
 			}
 
@@ -104,7 +105,7 @@ export class Database {
 			let json = JSON.stringify(pers);
 			let wobs = await this._sal.select(conn, "select wobs.wobid from wobs " +
 												"inner join properties on wobs.wobid=properties.wobid " +
-												"where properties.name=? and properties.value =?",
+												"where properties.name=? and properties.value=?",
 												[ key, json ]);
 
 			this.close(conn); conn = null;
@@ -184,16 +185,16 @@ export class Database {
 			let v = wob.getProperty(p);
 
 			// We have to special case this for now.
-			if (v instanceof Petal.PetalBlob) {
-				let blob: Petal.PetalBlob = v;
+			if (v.value instanceof Petal.PetalBlob) {
+				let blob: Petal.PetalBlob = v.value;
 				let json = JSON.stringify({ type: "blob", size: blob.length, mime: blob.mime, offset: 0, filename: blob.filename });
-				await this._sal.run(conn, "insert into properties (wobid, name, value, valueBlob) values (?, ?, ?, ?)",
-					[wob.id, p, json, blob.data]);
+				await this._sal.run(conn, "insert into properties (wobid, name, perms, value, valueBlob) values (?, ?, ?, ?, ?)",
+					[wob.id, p, v.perms, json, blob.data]);
 			} else {
-				let pers = Persistence.persist(wob.getProperty(p));
+				let pers = Persistence.persist(wob.getProperty(p).value);
 				let json = JSON.stringify(pers);
-				await this._sal.run(conn, "insert into properties (wobid, name, value) values (?, ?, ?)",
-					[wob.id, p, json]);
+				await this._sal.run(conn, "insert into properties (wobid, name, perms, value) values (?, ?, ?, ?)",
+					[wob.id, p, v.perms, json]);
 			}
 		}
 	}
@@ -202,8 +203,8 @@ export class Database {
 		for (let p of wob.getVerbNames()) {
 			let v = wob.getVerb(p);
 
-			await this._sal.run(conn, "insert into verbs (wobid, name, code) values (?, ?, ?)",
-				[wob.id, p, v.code]);
+			await this._sal.run(conn, "insert into verbs (wobid, name, perms, code) values (?, ?, ?, ?)",
+				[wob.id, p, v.perms, v.code]);
 		}
 	}
 

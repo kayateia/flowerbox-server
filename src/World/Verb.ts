@@ -25,10 +25,11 @@ export class VerbCode {
 
 // This class is used to store a set of verbforms directly on Wob.
 export class Verb {
-	constructor(word: string, code: VerbCode) {
+	constructor(word: string, code: VerbCode, perms?: number) {
 		this._word = word;
 		this._code = code;
 		this._signatures = code.signatures.map(s => new VerbSig(s));
+		this._perms = perms;
 	}
 
 	public get word(): string {
@@ -55,9 +56,14 @@ export class Verb {
 		return this._code.address;
 	}
 
+	public get perms(): number {
+		return this._perms;
+	}
+
 	private _word: string;
 	private _code: VerbCode;
 	private _signatures: VerbSig[];
+	private _perms: number;
 }
 
 export class VerbSig {

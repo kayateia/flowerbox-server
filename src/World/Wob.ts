@@ -76,7 +76,7 @@ export class Wob {
 		this._container = 0;
 		this._base = 0;
 		this._contents = [];
-		this._properties = new CaseMap<any>();
+		this._properties = new CaseMap<Property>();
 		this._verbs = new CaseMap<Verb>();
 
 		this._dirty = true;
@@ -154,16 +154,16 @@ export class Wob {
 		}
 	}
 
-	public getProperty(name: string): any {
+	public getProperty(name: string): Property {
 		this.updateLastUse();
 		return this._properties.get(name);
 	}
 
 	// This version searches up the inheritance chain for answers.
-	public async getPropertyI(name: string, world: World): Promise<WobValue<any>> {
+	public async getPropertyI(name: string, world: World): Promise<WobValue<Property>> {
 		let ours = this._properties.get(name);
 		if (ours)
-			return new WobValue<any>(this.id, ours);
+			return new WobValue<Property>(this.id, ours);
 
 		if (this.base) {
 			let baseWob = await world.getWob(this.base);
@@ -172,20 +172,28 @@ export class Wob {
 			return null;
 	}
 
-	public setProperty(name: string, value: any): void {
+	public setProperty(name: string, value: Property): void {
 		this.updateLastUse();
 		this._dirty = true;
 		this._properties.set(name, value);
 	}
 
+	// Sets a new property value, keeping the old permissions, or using new defaults
+	// if there was no property value before.
+	public setPropertyKeepingPerms(name: string, value: any): void {
+		let oldProperty = this.getProperty(name);
+		let newProperty = Property.CopyPerms(oldProperty, value);
+		this.setProperty(name, newProperty);
+	}
+
 	// Record an event in the wob's event stream. 'type' should be a value
 	// from the EventType class.
 	public event(type: string, timestamp: number, body: any[], tag?: string): void {
-		let value = this.getProperty(WobProperties.EventStream);
-		if (value == null)
-			value = new Petal.PetalArray();
-		value.push(Petal.PetalObject.FromObject({ type: type, time: timestamp, body: body, tag: tag }));
-		this.setProperty(WobProperties.EventStream, value);
+		let prop = this.getProperty(WobProperties.EventStream);
+		if (prop === null || prop.value === null)
+			prop = new Property(new Petal.PetalArray());
+		prop.value.push(Petal.PetalObject.FromObject({ type: type, time: timestamp, body: body, tag: tag }));
+		this.setProperty(WobProperties.EventStream, prop);
 	}
 
 	public getVerbNames(): string[] {

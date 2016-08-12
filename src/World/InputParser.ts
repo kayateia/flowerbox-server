@@ -54,7 +54,7 @@ function createTargetRegex(target: string): string {
 function createTargetsRegex(objs: Wob[], extras: string[]): string {
 	let repieces: string[] = [];
 	objs.forEach((obj) => {
-		repieces.push(createTargetRegex(obj.getProperty(WobProperties.Name)));
+		repieces.push(createTargetRegex(obj.getProperty(WobProperties.Name).value));
 	});
 	extras.forEach((name) => {
 		repieces.push(createTargetRegex(name));
@@ -80,7 +80,7 @@ export class ReMatch {
 async function parseVerbLines(world: World, obj: Wob, roomObjects: Wob[], extras: string[], selfRef?: string): Promise<ReMatch[]> {
 	let parsedLines: ReMatch[] = [];
 	if (!selfRef)
-		selfRef = obj.getProperty(WobProperties.Name);
+		selfRef = obj.getProperty(WobProperties.Name).value;
 	let allVerbs = await obj.getVerbsI(world);
 	allVerbs.forEach((v) => {
 		v.value.signatures.forEach((parsed) => {
@@ -119,7 +119,7 @@ function findObjectByPartialName(name: string, roomObjs: Wob[], atObjs: Wob[], h
 	if (name[0] === "@") {
 		let subname = name.substr(1);
 		for (let obj of atObjs) {
-			if (Strings.caseEqual(obj.getProperty(WobProperties.GlobalId), subname))
+			if (obj.getProperty(WobProperties.GlobalId) && Strings.caseEqual(obj.getProperty(WobProperties.GlobalId).value, subname))
 				return obj;
 		}
 		return null;
@@ -134,7 +134,7 @@ function findObjectByPartialName(name: string, roomObjs: Wob[], atObjs: Wob[], h
 		let possibles: Wob[] = [];
 		name = name.toLowerCase();
 		for (let obj of roomObjs) {
-			if (obj.getProperty(WobProperties.Name).toLowerCase().startsWith(name))
+			if (obj.getProperty(WobProperties.Name).value.toLowerCase().startsWith(name))
 				possibles.push(obj);
 		}
 

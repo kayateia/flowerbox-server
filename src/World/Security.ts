@@ -75,14 +75,14 @@ export class Security {
 		if (!owner)
 			return false;
 
-		if (owner === user.id)
+		if (owner.value === user.id)
 			return true;
 
 		let perms = wob.getProperty(WobProperties.PermBits);
 		if (!perms)
 			return false;
 
-		let others = Perms.others(perms);
+		let others = Perms.others(perms.value);
 		if (others & mask)
 			return true;
 
@@ -103,7 +103,7 @@ export class Security {
 		if (!owner)
 			return false;
 
-		if (owner === user.id)
+		if (owner.value === user.id)
 			return true;
 
 		let prop = wob.getProperty(property);

@@ -8,12 +8,21 @@ import * as Persistence from "../Utils/Persistence";
 
 // A property on a Wob; this covers both its value and its permission bits.
 export class Property {
-	constructor(value: any, perms: number) {
+	constructor(value: any, perms?: number) {
 		this.value = value;
 		this.perms = perms;
 	}
 
-	// Permission bits (r/w).
+	// Copies the permissions from another object, if it's non-null, but sets a new value.
+	public static CopyPerms(other: Property, newValue: any) {
+		let newProperty = new Property(newValue);
+		if (other)
+			newProperty.perms = other.perms;
+		return newProperty;
+	}
+
+	// Permission bits (r/w). This may also be undefined, in which case we use the
+	// default permissions for properties (rwr-r-).
 	public perms: number;
 
 	// The value of the property.

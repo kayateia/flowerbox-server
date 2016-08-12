@@ -8,16 +8,18 @@ import { ModelBase } from "./ModelBase";
 
 // For returning one property on a wob.
 export class Property extends ModelBase {
-	constructor(id: number, name: string, value: any) {
+	constructor(id: number, name: string, value: any, perms: number) {
 		super(true);
 		this.id = id;
 		this.name = name;
 		this.value = value;
+		this.perms = perms;
 	}
 
 	public id: number;
 	public name: string;
 	public value: any;
+	public perms: number;
 }
 
 // For returning one verb on a wob.
@@ -51,7 +53,7 @@ export class VerbSetErrors extends ModelBase {
 // For returning the basic info about a wob.
 export class Info extends ModelBase {
 	constructor(id: number, base: number, container: number,
-			name: string, desc: string, globalid: string,
+			name: string, desc: string, globalid: string, perms: number,
 			properties?: AttachedItem[], verbs?: AttachedItem[]) {
 		super(true);
 
@@ -62,6 +64,7 @@ export class Info extends ModelBase {
 		this.name = name;
 		this.desc = desc;
 		this.globalid = globalid;
+		this.perms = perms;
 
 		this.properties = properties;
 		this.verbs = verbs;
@@ -76,6 +79,7 @@ export class Info extends ModelBase {
 	public name: string;
 	public desc: string;
 	public globalid: string;
+	public perms: number;
 
 	// List of properties and verbs, by wob ID.
 	public properties: AttachedItem[];

@@ -34,9 +34,9 @@ async function tester() {
 					World.executeResult(match, player, world)
 						.then(() => {
 							// Look for new output on the player.
-							let output = player.getProperty(World.WobProperties.EventStream);
+							let output: any = player.getProperty(World.WobProperties.EventStream);
 							if (output)
-								output = Petal.ObjectWrapper.Unwrap(output);
+								output = Petal.ObjectWrapper.Unwrap(output.value);
 							if (output && output.length) {
 								output.forEach(l => {
 									let arr = [];
@@ -55,7 +55,7 @@ async function tester() {
 									});
 									console.log(arr.join(""));
 								});
-								player.setProperty(World.WobProperties.EventStream, null);
+								player.setPropertyKeepingPerms(World.WobProperties.EventStream, null);
 							}
 							nextLine();
 						})
