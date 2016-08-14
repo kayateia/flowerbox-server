@@ -39,7 +39,16 @@ export class WorldRouter extends RouterBase {
 	}
 
 	private async getWob(id: string, res): Promise<World.Wob> {
-		let wob = await this.world.getWob(parseInt(id, 10));
+		let wob: World.Wob;
+		if (id.startsWith("@")) {
+			let wobs = await this.world.getWobsByGlobalId([id.substr(1)]);
+			wob = wobs[0];
+		} else if (id.startsWith("#")) {
+			wob = await this.world.getWob(parseInt(id.substr(1), 10));
+		} else {
+			// Assume it's a number.
+			wob = await this.world.getWob(parseInt(id, 10));
+		}
 		if (!wob) {
 			res.status(404).json(new ModelBase(false, "Unknown wob ID"));
 			return null;
