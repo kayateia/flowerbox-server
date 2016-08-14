@@ -9,12 +9,12 @@ import { Wob, WobProperties, WobValue, WobRef, EventType } from "./Wob";
 import { World } from "./World";
 import * as Petal from "../Petal/All";
 import * as Strings from "../Utils/Strings";
-import { WobReferenceException, WobOperationException } from "./Exceptions";
+import { WobReferenceException, WobOperationException, SecurityException } from "./Exceptions";
 import { Notation } from "./Notation";
 import { Utils } from "./Utils";
 import * as Persistence from "../Utils/Persistence";
 import { Property, PropertyRef } from "./Property";
-import { Perms } from "./Security";
+import { Perms, Security } from "./Security";
 
 // Wraps a notation for passing around in Petal scripts. These are opaque
 // objects and you can't do anything with them but pass them around.
@@ -57,10 +57,12 @@ class WobPropertyTag {
 class AccessorCargo {
 	public world: World;
 	public injections: any;
+	public player: Wob;
 
-	constructor(world: World, injections: any) {
+	constructor(world: World, injections: any, player: Wob) {
 		this.world = world;
 		this.injections = injections;
+		this.player = player;
 	}
 }
 
@@ -160,7 +162,15 @@ export class WobWrapper implements Petal.IObject {
 			// Check verbs first, but if it's not there, assume it's a property so that new properties can be written.
 			if (Strings.caseIn(member, verbs)) {
 				let verb = await wob.getVerbI(member, cargo.world);
+				let verbSrc = verb ? (await cargo.world.getWob(verb.wob)) : null;
 				return new Petal.LValue("Wob." + member, (runtime: Petal.Runtime) => {
+					if (!verb) {
+						// FIXME: Is this a security info leak?
+						return null;
+					}
+
+					if (!Security.CheckVerb(verbSrc, member, cargo.player.id, Perms.x))
+						throw new SecurityException("Can't execute that verb", member);
 					let addr = verb.value.address.copy();
 					addr.thisValue = this;
 					addr.injections = cargo.injections;
@@ -170,7 +180,16 @@ export class WobWrapper implements Petal.IObject {
 				}, this);
 			} else /*if (Strings.caseIn(member, props))*/ {
 				let prop = await wob.getPropertyI(member, cargo.world);
+				let propSrc = prop ? (await cargo.world.getWob(prop.wob)) : null;
 				return new Petal.LValue("Wob." + member, (runtime: Petal.Runtime) => {
+					if (!prop) {
+						// FIXME: Is this a security info leak?
+						return null;
+					}
+
+					if (!Security.CheckProperty(propSrc, member, cargo.player.id, Perms.r))
+						throw new SecurityException("Can't read that property", member);
+
 					if (prop && prop.wob !== this._id) {
 						let rv = Utils.Duplicate(prop.value.value);
 						Petal.ObjectWrapper.SetTag(rv, new WobPropertyTag(this, member));
@@ -183,6 +202,10 @@ export class WobWrapper implements Petal.IObject {
 							return null;
 					}
 				}, (runtime: Petal.Runtime, value: any) => {
+					// FIXME: Should check here for sticky bits.
+					if (!Security.CheckWobWrite(wob, cargo.player))
+						throw new SecurityException("Can't add properties to that wob", member);
+
 					Petal.ObjectWrapper.SetTag(value, new WobPropertyTag(this, member));
 					wob.setPropertyKeepingPerms(member, value);
 				}, this);
@@ -440,7 +463,7 @@ function formatPetalException(player: Wob, err: any) : void {
 export async function executeResult(parse: ParseResult, player: Wob, world: World): Promise<void> {
 	// Get the environment ready.
 	let injections: any = {};
-	let cargo = new AccessorCargo(world, injections);
+	let cargo = new AccessorCargo(world, injections, player);
 
 	let dollarObj = new DollarObject(world, injections);
 	let dollar = Petal.ObjectWrapper.WrapGeneric(dollarObj, DollarObject.Members, false);

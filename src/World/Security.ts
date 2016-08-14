@@ -134,19 +134,53 @@ export class Security {
 		return Security.CheckWob(wob, user, Perms.w);
 	}
 
-	public static async CheckProperty(wob: Wob, property: string, user: Wob, mask: number): Promise<boolean> {
+	public static CheckProperty(wob: Wob, property: string, userId: number, mask: number): boolean {
 		// We ignore group for now.
 		let owner = wob.owner;
 		if (!owner)
 			return false;
 
-		if (owner === user.id)
+		if (owner === userId)
 			return true;
 
 		let prop = wob.getProperty(property);
+		if (!prop) {
+			// FIXME: Some logic here about creating properties.
+			return false;
+		}
 
-		// FIXME: Unfinished
+		let perms = prop.perms;
+		if (!perms)
+			perms = Perms.parse("rw-r--r--");
+		let others = Perms.others(perms);
+		if (others & mask)
+			return true;
 
-		return true;
+		return false;
+	}
+
+	public static CheckVerb(wob: Wob, verbWord: string, userId: number, mask: number): boolean {
+		// We ignore group for now.
+		let owner = wob.owner;
+		if (!owner)
+			return false;
+
+		if (owner === userId)
+			return true;
+
+		let verb = wob.getVerb(verbWord);
+		if (!verb) {
+			// FIXME: Some logic here about creating verbs.
+			return false;
+		}
+
+		let perms = verb.perms;
+		if (!perms)
+			perms = Perms.parse("rwxr-xr-x");
+		let others = Perms.others(perms);
+		if (others & mask)
+			return true;
+
+		return false;
 	}
 }
