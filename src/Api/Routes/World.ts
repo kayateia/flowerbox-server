@@ -97,6 +97,59 @@ export class WorldRouter extends RouterBase {
 		res.json(new ModelBase(true));
 	}
 
+	private async getVerb(req, res, next): Promise<any> {
+		let id = req.params.id;
+		let name = req.params.name;
+
+		let wob = await this.getWob(id, res);
+		if (!wob)
+			return;
+
+		let verb = await wob.getVerbI(name, this.world);
+		if (!verb) {
+			res.status(404).json(new ModelBase(false, "Verb does not exist on wob"));
+			return;
+		}
+
+		res.json(new Wob.Verb(
+				verb.wob,
+				name,
+				verb.value.signatureStrings,
+				verb.value.code
+			));
+	}
+
+	private async setVerb(req, res, next): Promise<any> {
+		// We aren't going to have any file uploads, but this allows us to make
+		// use of multi-part form submissions for multiple verb setting at once.
+		await Multer.upload(req, res);
+
+		let id = req.params.id;
+		let value = req.body;
+
+		let wob = await this.getWob(id, res);
+		if (!wob)
+			return;
+
+		let names = Petal.Utils.GetPropertyNames(value);
+		let errors = {};
+		let anyErrors = false;
+		for (let n of names) {
+			try {
+				wob.setVerbCode(n, value[n]);
+			} catch (err) {
+				anyErrors = true;
+				errors[n] = err;
+			}
+		}
+
+		if (anyErrors)
+			res.status(500);
+		else
+			errors = undefined;
+		res.json(new Wob.VerbSetErrors(errors));
+	}
+
 	private async info(req, res, next): Promise<any> {
 		let id = req.params.id;
 

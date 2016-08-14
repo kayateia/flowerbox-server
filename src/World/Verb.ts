@@ -39,6 +39,10 @@ export class Verb {
 		return this._signatures;
 	}
 
+	public get signatureStrings(): string[] {
+		return this._code.signatures;
+	}
+
 	public get code(): string {
 		return this._code.code;
 	}
