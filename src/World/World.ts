@@ -15,6 +15,7 @@ import * as FsPromises from "../Async/FsPromises";
 import * as CorePromises from "../Async/CorePromises";
 import * as path from "path";
 import { Database } from "./Database";
+import { Perms } from "./Security";
 
 // Zaa Warudo
 export class World {
@@ -68,24 +69,44 @@ export class World {
 				}
 			}
 
-			if (wobdef.container) {
-				let container: Wob;
-				if (typeof(wobdef.container) === "string" && wobdef.container[0] === "@") {
-					container = (await this.getWobsByGlobalId([wobdef.container.substr(1)]))[0];
+			// Does name resolution for referenced wobs.
+			let findWob = async (inputWob: Wob, id: any): Promise<Wob> => {
+				let wob: Wob;
+				if (typeof(id) === "string") {
+					if (id[0] === "@") {
+						wob = (await this.getWobsByGlobalId([id.substr(1)]))[0];
+					} else if (id === "self") {
+						wob = inputWob;
+					} else {
+						throw new Error("Invalid string " + id + "to identify wob");
+					}
 				} else {
-					container = this.getCachedWob(wobdef.container);
+					wob = this.getCachedWob(id);
 				}
+				return wob;
+			};
+
+			if (wobdef.container) {
+				let container: Wob = await findWob(wob, wobdef.container);
 				wob.container = container.id;
 				container.contents.push(wob.id);
 			}
 			if (wobdef.base) {
-				if (typeof(wobdef.base) === "string" && wobdef.base[0] === "@") {
-					let baseWob: Wob = (await this.getWobsByGlobalId([wobdef.base.substr(1)]))[0];
-					wob.base = baseWob.id;
-				} else {
-					wob.base = wobdef.base;
-				}
+				let base: Wob = await findWob(wob, wobdef.base);
+				wob.base = base.id;
 			}
+			if (wobdef.owner) {
+				let owner: Wob = await findWob(wob, wobdef.owner);
+				wob.owner = owner.id;
+			}
+			if (wobdef.group) {
+				let group: Wob = await findWob(wob, wobdef.group);
+				wob.group = group.id;
+			}
+			if (wobdef.perms)
+				wob.perms = wobdef.perms;
+			else
+				wob.perms = Perms.parse("rw-r--r--");
 		}
 
 		await this.commit();

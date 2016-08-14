@@ -12,6 +12,7 @@ import * as Persistence from "../Utils/Persistence";
 import { World } from "./World";
 import * as Petal from "../Petal/All";
 import { Utils } from "./Utils";
+import { Perms } from "./Security";
 
 // When a wob wants to reference another wob in its properties, one of these should be used.
 export class WobRef {
@@ -39,9 +40,6 @@ export class WobProperties {
 	public static Name = "name";				// string
 	public static Description = "desc";			// string
 	public static Image = "image";				// blob
-	public static Owner = "owner";				// number
-	public static Group = "group";				// number
-	public static PermBits = "perms";			// number
 
 	// On player objects.
 	public static EventStream = "eventstream";	// [{ type, time, body, tag? }]
@@ -78,6 +76,10 @@ export class Wob {
 		this._contents = [];
 		this._properties = new CaseMap<Property>();
 		this._verbs = new CaseMap<Verb>();
+
+		this._owner = 1;
+		this._group = undefined;
+		this._perms = Perms.parse("rw-r--r--");
 
 		this._dirty = true;
 		this.updateLastUse();
@@ -129,6 +131,30 @@ export class Wob {
 		this.updateLastUse();
 		this._dirty = true;
 		this._base = v;
+	}
+
+	public get owner(): number {
+		return this._owner;
+	}
+
+	public set owner(o: number) {
+		this._owner = o;
+	}
+
+	public get group(): number {
+		return this._group;
+	}
+
+	public set group(g: number) {
+		this._group = g;
+	}
+
+	public get perms(): number {
+		return this._perms;
+	}
+
+	public set perms(p: number) {
+		this._perms = p;
 	}
 
 	public getPropertyNames(): string[] {
@@ -325,6 +351,7 @@ export class Wob {
 	private _dirty: boolean;
 	private _lastUse: number;
 
-	/*private _owner: number;
-	private _group: number;*/
+	private _owner: number;
+	private _group: number;
+	private _perms: number;
 }

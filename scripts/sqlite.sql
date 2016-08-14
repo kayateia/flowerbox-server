@@ -12,6 +12,9 @@ create table wobs (
 	wobid integer,
 	container integer,
 	base integer,
+	owner integer,
+	group integer,
+	perms integer,
 	verbCode text);
 
 create table properties (

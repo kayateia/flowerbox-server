@@ -16,14 +16,18 @@ export class WobCommon {
 		let name = await wob.getPropertyI(World.WobProperties.Name, world);
 		let desc = await wob.getPropertyI(World.WobProperties.Description, world);
 		let globalid = wob.getProperty(World.WobProperties.GlobalId);
-		let perms = wob.getProperty(World.WobProperties.PermBits);
+		let owner = wob.owner;
+		let group = wob.group;
+		let perms = wob.perms;
 
 		let properties = await wob.getPropertyNamesI(world);
 		let verbs = await wob.getVerbNamesI(world);
 
 		let rv = new Wob.Info(wob.id, base, container, name.value.value, desc.value.value,
 			globalid ? globalid.value : null,
-			perms ? perms.value : null,
+			owner,
+			group,
+			perms,
 			properties.map(p => new Wob.AttachedItem(p.wob, p.value)),
 			verbs.map(v => new Wob.AttachedItem(v.wob, v.value)));
 		return rv;

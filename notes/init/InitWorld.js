@@ -56,7 +56,8 @@ module.exports = [
 			"image": { file: "kayateia.jpg", mime: "image/jpeg" }
 		},
 		container: "@world",
-		base: "@player"
+		base: "@player",
+		owner: "self"
 	},
 
 	{
@@ -100,7 +101,8 @@ module.exports = [
 			"pwhash": "d074bdbe9ad92dedded13262944570114043a84d"
 		},
 		container: "@world",
-		base: "@player"
+		base: "@player",
+		owner: "self"
 	},
 
 	{

@@ -53,7 +53,8 @@ export class VerbSetErrors extends ModelBase {
 // For returning the basic info about a wob.
 export class Info extends ModelBase {
 	constructor(id: number, base: number, container: number,
-			name: string, desc: string, globalid: string, perms: number,
+			name: string, desc: string, globalid: string,
+			owner: number, group: number, perms: number,
 			properties?: AttachedItem[], verbs?: AttachedItem[]) {
 		super(true);
 
@@ -64,6 +65,8 @@ export class Info extends ModelBase {
 		this.name = name;
 		this.desc = desc;
 		this.globalid = globalid;
+		this.owner = owner;
+		this.group = group;
 		this.perms = perms;
 
 		this.properties = properties;
@@ -74,12 +77,14 @@ export class Info extends ModelBase {
 	public id: number;
 	public base: number;
 	public container: number;
+	public owner: number;
+	public group: number;
+	public perms: number;
 
 	// Common named properties
 	public name: string;
 	public desc: string;
 	public globalid: string;
-	public perms: number;
 
 	// List of properties and verbs, by wob ID.
 	public properties: AttachedItem[];

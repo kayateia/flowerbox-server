@@ -40,6 +40,9 @@ export class Database {
 			let wob = new Wob(id);
 			wob.container = wobrows[0].container;
 			wob.base = wobrows[0].base;
+			wob.owner = wobrows[0].owner;
+			wob.group = wobrows[0].group;
+			wob.perms = wobrows[0].perms;
 
 			for (let p of props) {
 				let json = JSON.parse(p.value);
@@ -166,8 +169,8 @@ export class Database {
 		let conn = await this.connect();
 		try {
 			await this._sal.transact(conn, async () => {
-				await this._sal.run(conn,"update wobs set container=?, base=? where wobid=?",
-					[wob.container, wob.base, wob.id]);
+				await this._sal.run(conn,"update wobs set container=?, base=?, owner=?, `group`=?, perms=? where wobid=?",
+					[wob.container, wob.base, wob.owner, wob.group, wob.perms, wob.id]);
 
 				await this._sal.run(conn, "delete from properties where wobid=?", [wob.id]);
 				await this._sal.run(conn, "delete from verbs where wobid=?", [wob.id]);
@@ -224,8 +227,8 @@ export class Database {
 	public async createWob(wob: Wob): Promise<void> {
 		let conn = await this.connect();
 		try {
-			await this._sal.run(conn, "insert into wobs (wobid, container, base) values (?,?,?)",
-				[wob.id, wob.container, wob.base]);
+			await this._sal.run(conn, "insert into wobs (wobid, container, base, owner, `group`, perms) values (?,?,?,?,?,?)",
+				[wob.id, wob.container, wob.base, wob.owner, wob.group, wob.perms]);
 
 			await this.insertProperties(conn, wob);
 			await this.insertVerbs(conn, wob);

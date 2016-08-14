@@ -106,6 +106,9 @@ CREATE TABLE `wobs` (
   `wobid` bigint(20) DEFAULT NULL,
   `container` bigint(20) DEFAULT NULL,
   `base` bigint(20) DEFAULT NULL,
+  `owner` bigint(20) DEFAULT NULL,
+  `group` bigint(20) DEFAULT NULL,
+  `perms` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `wobid` (`wobid`)
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8;
