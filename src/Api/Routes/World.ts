@@ -22,6 +22,12 @@ export class WorldRouter extends RouterBase {
 		// Set the value of one or more properties on a wob. Returns 404 if we can't find the wob.
 		this.router.put("/wob/:id/property", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.setProperty(rq,rs,n)); });
 
+		// Get the code of a verb on a wob. Returns 404 if we can't find the wob or verb on the wob.
+		this.router.get("/wob/:id/verb/:name", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.getVerb(rq,rs,n)); });
+
+		// Set the code of one or more verbs on a wob. Returns 404 if we can't find the wob.
+		this.router.put("/wob/:id/verb", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.setVerb(rq,rs,n)); });
+
 		// Get a full set of info about a wob. Returns 404 if we can't find the wob.
 		this.router.get("/wob/:id/info", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.info(rq,rs,n)); });
 
@@ -85,8 +91,11 @@ export class WorldRouter extends RouterBase {
 			return;
 
 		let names = Petal.Utils.GetPropertyNames(value);
-		for (let n of names)
-			wob.setProperty(n, Petal.ObjectWrapper.Wrap(value[n]));
+		for (let n of names) {
+			// Multer processes this, not the JSON body middleware, so we have
+			// to do our own JSON handling on it.
+			wob.setProperty(n, Petal.ObjectWrapper.Wrap(JSON.parse(value[n])));
+		}
 
 		for (let f of files) {
 			let n = f.fieldname;
