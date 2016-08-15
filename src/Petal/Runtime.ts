@@ -203,14 +203,26 @@ export class Runtime {
 	public executeFunction(func: Address, param: any[], caller: any, maxSteps?: number): ExecuteResult {
 		let address = AstCallExpression.Create(func, param, caller);
 		this.setInitialPC(address);
-		return this.execute(maxSteps);
+		let rv = this.execute(maxSteps);
+
+		// The return value actually comes off the returnValue for the Runtime, because that's
+		// where the synthetic function call would leave it.
+		rv.returnValue = Value.Deref(this, this.returnValue);
+
+		return rv;
 	}
 
 	// Same as executeFunction(), but allows for async callbacks to happen down in code execution.
 	public async executeFunctionAsync(func: Address, param: any[], caller: any, maxSteps?: number): Promise<ExecuteResult> {
 		let address = AstCallExpression.Create(func, param, caller);
 		this.setInitialPC(address);
-		return await this.executeAsync(maxSteps);
+		let rv = await this.executeAsync(maxSteps);
+
+		// The return value actually comes off the returnValue for the Runtime, because that's
+		// where the synthetic function call would leave it.
+		rv.returnValue = Value.Deref(this, this.returnValue);
+
+		return rv;
 	}
 
 	// Called by IPetalWrappers when changes are made inside themselves.
