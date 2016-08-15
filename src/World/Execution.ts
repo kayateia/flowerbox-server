@@ -84,15 +84,7 @@ export class WobWrapper implements Petal.IObject {
 		// Load our wob.
 		let uswob = await cargo.world.getWob(us);
 
-		// Go up the inheritance chain.
-		let base = uswob.base;
-		while (base !== 0 && base !== them) {
-			uswob = await cargo.world.getWob(base);
-			base = uswob.base;
-		}
-
-		// Did we find a match?
-		return base !== 0;
+		return await uswob.instanceOf(them, cargo.world);
 	}
 
 	public getAccessor(index: any, cargo: AccessorCargo): any {
@@ -272,7 +264,21 @@ class DollarObject {
 		if (typeof(objOrId) !== "number" || typeof(intoOrId) !== "number")
 			throw new WobReferenceException("Received a non-wob object in move()", 0);
 
+		// FIXME: Need to ask the wob itself if it's okay to move it.
+
+		let wob: Wob = await this._world.getWob(objOrId);
+		let oldLocationId = wob.container;
+
 		await this._world.moveWob(objOrId, intoOrId);
+
+		let playerBase: Wob = await this._world.getWobByGlobalId("player");
+		if (playerBase && await wob.instanceOf(playerBase.id, this._world)) {
+			wob.event(EventType.MoveNotification, Date.now(), [
+				await this.notate(new WobWrapper(objOrId), null),
+				await this.notate(new WobWrapper(oldLocationId), null),
+				await this.notate(new WobWrapper(intoOrId), null)
+			]);
+		}
 	}
 
 	public async contents(objOrId: any /*WobWrapper | number*/): Promise<WobWrapper[]> {

@@ -73,6 +73,8 @@ export class EventType {
 	public static ParseError = "parse_error";		// Error parsing user input
 	public static ScriptError = "script_error";		// Error from a Petal script
 	public static Debug = "debug";					// Debug messages
+	public static MoveNotification = "move_notification";	// Notify when an object (including the player) moves
+															// object id, from, and to are passed as notations.
 }
 
 // Tags a value with what specific wob it came from.
@@ -145,6 +147,21 @@ export class Wob {
 		this.updateLastUse();
 		this._dirty = true;
 		this._base = v;
+	}
+
+	// If the current wob is an instance of the other wob (i.e. if "other" is somewhere
+	// in our base inheritance chain), then this returns true.
+	public async instanceOf(otherId: number, world: World): Promise<boolean> {
+		// Go up the inheritance chain.
+		let uswob: Wob = this;
+		let base = uswob.base;
+		while (base !== 0 && base !== otherId) {
+			uswob = await world.getWob(base);
+			base = uswob.base;
+		}
+
+		// Did we find a match?
+		return base !== 0;
 	}
 
 	public getPropertyNames(): string[] {
