@@ -141,6 +141,26 @@ export class WobWrapper implements Petal.IObject {
 			}, this);
 		}
 
+		if (index === "properties") {
+			return new Petal.LValue("Wob.properties", async (runtime: Petal.Runtime) => {
+				let wob = await cargo.world.getWob(this._id);
+				let props = await wob.getPropertyNamesI(cargo.world);
+				return Petal.ObjectWrapper.Wrap(props.map(wv => ({ wobid: wv.wob, name: wv.value })));
+			}, () => {
+				throw new WobOperationException("Can't set 'properties' on a wob", []);
+			}, this);
+		}
+
+		if (index === "verbs") {
+			return new Petal.LValue("Wob.verbs", async (runtime: Petal.Runtime) => {
+				let wob = await cargo.world.getWob(this._id);
+				let verbs = await wob.getVerbNamesI(cargo.world);
+				return Petal.ObjectWrapper.Wrap(verbs.map(wv => ({ wobid: wv.wob, name: wv.value })));
+			}, () => {
+				throw new WobOperationException("Can't set 'verbs' on a wob", []);
+			}, this);
+		}
+
 		return (async () => {
 			let wob = await cargo.world.getWob(this._id);
 			let member: string = index;
