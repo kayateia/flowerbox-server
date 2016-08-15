@@ -45,7 +45,13 @@ export interface IChangeNotification {
 
 export class Runtime {
 	public address: Address;
+
+	// This stores the last value returned by a called Petal function.
 	public returnValue: any;
+
+	// This stores the any value leftover from the last ExpressionStatement, which is any
+	// statement that is not a block (for loop, etc).
+	public lastStatementValue: any;
 
 	// This is data passed to the getAccessor method in IObject. It lets you customize
 	// the actions of your IObjects if needed.
@@ -185,7 +191,12 @@ export class Runtime {
 		var compiler = new Compiler(moduleName);
 		compiler.compile(code);
 		this.setInitialPC(new Address(0, compiler.module, code));
-		return this.execute(maxSteps);
+
+		// The return value actually comes off the lastStatementValue for the Runtime, because that's
+		// where the AstStatement handler would leave it.
+		let rv = this.execute(maxSteps);
+		rv.returnValue = this.lastStatementValue;
+		return rv;
 	}
 
 	public async executeCodeAsync(moduleName: string, code: AstNode, injections: any, maxSteps?: number): Promise<ExecuteResult> {
@@ -196,7 +207,12 @@ export class Runtime {
 		var compiler = new Compiler(moduleName);
 		compiler.compile(code);
 		this.setInitialPC(new Address(0, compiler.module, code));
-		return await this.executeAsync(maxSteps);
+
+		// The return value actually comes off the lastStatementValue for the Runtime, because that's
+		// where the AstStatement handler would leave it.
+		let rv = await this.executeAsync(maxSteps);
+		rv.returnValue = this.lastStatementValue;
+		return rv;
 	}
 
 	// This executes an arbitrary (pre-parsed) function.
