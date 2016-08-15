@@ -132,8 +132,10 @@ export class Runtime {
 		while (!this._programStack.empty)
 			console.log("LEFTOVER PG", this._programStack.pop());
 
-		while (!this._scopeStack.empty)
-			console.log("LEFTOVER SC", this._scopeStack.pop());
+		// Disable this one by default -- we have some well known and accepted places
+		// where scopes may be left over at the end of an execution run.
+		/*while (!this._scopeStack.empty)
+			console.log("LEFTOVER SC", this._scopeStack.pop()); */
 
 		return new ExecuteResult(false, stepsUsed, returnValue);
 	}
