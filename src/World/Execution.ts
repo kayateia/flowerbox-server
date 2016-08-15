@@ -514,7 +514,7 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 				return;
 			}
 			if (result.returnValue) {
-				player.event(EventType.Output, Date.now(), ["Command returned: ", result.returnValue]);
+				player.event(EventType.Output, Date.now(), ["Command returned: ", JSON.stringify(Petal.ObjectWrapper.Unwrap(result.returnValue))]);
 			}
 		}
 		return;
