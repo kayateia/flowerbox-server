@@ -520,12 +520,6 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 		return;
 	}
 
-	// Did we actually get any text?
-	if (parse.failure) {
-		handleFailure(parse, player);
-		return;
-	}
-
 	let root = await world.getWob(1);
 	let parserVerb = root.getVerb("$command");
 	if (parserVerb) {
@@ -552,6 +546,13 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 				rt = new Petal.Runtime(false, rootScope, changeRouter, cargo);
 			}
 		}
+	}
+
+	// Did we actually get any text? We do this here instead of above $command handling, because
+	// $command can make use of some things that we don't recognise as properly formatted commands.
+	if (parse.failure) {
+		handleFailure(parse, player);
+		return;
 	}
 
 	// We'll only continue here if we actually found a verb.
