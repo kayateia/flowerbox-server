@@ -153,7 +153,7 @@ export class WorldRouter extends RouterBase {
 		let id = req.params.id;
 		let name = req.params.name;
 		let sub = req.params.sub;
-		let value = req.body;
+		let value = req.body.value;
 
 		let wob = await this.getWob(id, res);
 		if (!wob)
@@ -161,8 +161,8 @@ export class WorldRouter extends RouterBase {
 
 		let prop = wob.getProperty(name);
 		if (!prop) {
-			res.status(404).json(new ModelBase(false, "Property does not exist on wob"));
-			return;
+			// If property doesn't currently exist, create one.
+			prop = Petal.ObjectWrapper.Wrap({});
 		}
 
 		if (!(prop instanceof Petal.PetalObject)) {
