@@ -22,6 +22,14 @@ export class WorldRouter extends RouterBase {
 		// Set the value of one or more properties on a wob. Returns 404 if we can't find the wob.
 		this.router.put("/wob/:id/property", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.setProperty(rq,rs,n)); });
 
+		// Get a sub-value of a property on a wob. Returns 404 if we can't find the wob, the property on the wob,
+		// or the sub-property on the property. Note that this does not work on inherited properties.
+		this.router.get("/wob/:id/property/:name/:sub", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.getPropertySub(rq,rs,n)); });
+
+		// Set a sub-value of a property on a wob. Returns 404 if we can't find the wob or the property on the wob.
+		// Note that this does not work on inherited properties.
+		this.router.put("/wob/:id/property/:name/:sub", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.setPropertySub(rq,rs,n)); });
+
 		// Get the code of a verb on a wob. Returns 404 if we can't find the wob or verb on the wob.
 		this.router.get("/wob/:id/verb/:name", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.getVerb(rq,rs,n)); });
 
@@ -114,6 +122,56 @@ export class WorldRouter extends RouterBase {
 			let blob = new Petal.PetalBlob(f.buffer, f.mimetype, f.originalname);
 			wob.setProperty(n, blob);
 		}
+
+		res.json(new ModelBase(true));
+	}
+
+	private async getPropertySub(req, res, next): Promise<any> {
+		let id = req.params.id;
+		let name = req.params.name;
+		let sub = req.params.sub;
+
+		let wob = await this.getWob(id, res);
+		if (!wob)
+			return;
+
+		let prop = wob.getProperty(name);
+		if (!prop) {
+			res.status(404).json(new ModelBase(false, "Property does not exist on wob"));
+			return;
+		}
+
+		if (!(prop instanceof Petal.PetalObject)) {
+			res.status(500).json(new ModelBase(false, "Property is not an object"));
+			return;
+		}
+
+		res.json(new Wob.Property(wob.id, name, prop.get(sub), sub));
+	}
+
+	private async setPropertySub(req, res, next): Promise<any> {
+		let id = req.params.id;
+		let name = req.params.name;
+		let sub = req.params.sub;
+		let value = req.body;
+
+		let wob = await this.getWob(id, res);
+		if (!wob)
+			return;
+
+		let prop = wob.getProperty(name);
+		if (!prop) {
+			res.status(404).json(new ModelBase(false, "Property does not exist on wob"));
+			return;
+		}
+
+		if (!(prop instanceof Petal.PetalObject)) {
+			res.status(500).json(new ModelBase(false, "Property is not an object"));
+			return;
+		}
+
+		prop.set(sub, value);
+		wob.setProperty(name, prop);
 
 		res.json(new ModelBase(true));
 	}

@@ -8,16 +8,18 @@ import { ModelBase } from "./ModelBase";
 
 // For returning one property on a wob.
 export class Property extends ModelBase {
-	constructor(id: number, name: string, value: any) {
+	constructor(id: number, name: string, value: any, sub?: string) {
 		super(true);
 		this.id = id;
 		this.name = name;
 		this.value = value;
+		this.sub = sub;
 	}
 
 	public id: number;
 	public name: string;
 	public value: any;
+	public sub: string;
 }
 
 // For returning one verb on a wob.
