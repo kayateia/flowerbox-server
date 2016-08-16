@@ -27,8 +27,11 @@ export class RouterBase {
 			})
 			.catch(err => {
 				console.log(err, err.stack);
-				if (!(err instanceof ModelBase))
+				if (!(err instanceof ModelBase)) {
+					if ((err instanceof Error) && !this.config.includeStackTraces)
+						err = err.message;
 					err = new ModelBase(false, err);
+				}
 				res.json(err);
 			});
 	}
@@ -58,6 +61,14 @@ export class RouterBase {
 		this._world = world;
 	}
 
+	public get config(): any {
+		return this._config;
+	}
+
+	public set config(config: any) {
+		this._config = config;
+	}
+
 	public get token(): Token {
 		return this._token;
 	}
@@ -65,4 +76,5 @@ export class RouterBase {
 	private _router: any;
 	private _world: World.World;
 	private _token: Token;
+	private _config: any;
 }

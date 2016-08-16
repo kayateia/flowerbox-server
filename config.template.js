@@ -18,5 +18,10 @@ module.exports = {
 	mysqlDatabase: "flowerbox",
 
 	// SQLite information, if needed.
-	sqliteFile: ":memory:"
+	sqliteFile: ":memory:",
+
+	// True if we want to include stack traces with API failures.
+	// Note that this may be considered a security issue because Node stack
+	// traces include full path info for scripts.
+	includeStackTraces: true
 };
