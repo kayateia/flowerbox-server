@@ -29,7 +29,10 @@ export class WorldRouter extends RouterBase {
 		this.router.put("/wob/:id/verb", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.setVerb(rq,rs,n)); });
 
 		// Get a full set of info about a wob. Returns 404 if we can't find the wob.
-		this.router.get("/wob/:id/info", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.info(rq,rs,n)); });
+		this.router.get("/wob/:id/info", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.getInfo(rq,rs,n)); });
+
+		// Set a (potentially) full set of info about a wob. This doesn't deal with properties or verbs, just intrinsic wob info like the base and location.
+		this.router.put("/wob/:id/info", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.setInfo(rq,rs,n)); });
 
 		// Get a list of wob IDs for the contents of another wob. Returns 404 if we can't find the wob.
 		this.router.get("/wob/:id/content-ids", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.contentIds(rq,rs,n)); });
@@ -168,7 +171,7 @@ export class WorldRouter extends RouterBase {
 		res.json(new Wob.VerbSetErrors(errors));
 	}
 
-	private async info(req, res, next): Promise<any> {
+	private async getInfo(req, res, next): Promise<any> {
 		let id = req.params.id;
 
 		let wob = await this.getWob(id, res);
@@ -177,6 +180,26 @@ export class WorldRouter extends RouterBase {
 
 		let rv = await WobCommon.GetInfo(wob, this.world);
 		res.json(rv);
+	}
+
+	private async setInfo(req, res, next): Promise<any> {
+		let id = req.params.id;
+		let body: Wob.Info = req.body;
+
+		let wob = await this.getWob(id, res);
+		if (!wob)
+			return;
+
+		if (body.base)
+			wob.base = body.base;
+		if (body.container && wob.container != body.container) {
+			// FIXME: Move notifications.
+			await this.world.moveWob(wob.id, body.container);
+		}
+
+		// TODO: Security bits.
+
+		res.json(new ModelBase(true));
 	}
 
 	private async contentIds(req, res, next): Promise<any> {
