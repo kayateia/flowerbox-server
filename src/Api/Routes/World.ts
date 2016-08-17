@@ -20,15 +20,16 @@ export class WorldRouter extends RouterBase {
 		this.router.get("/wob/:id/property/:name", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.getProperty(rq,rs,n)); });
 
 		// Set the value of one or more properties on a wob. Returns 404 if we can't find the wob.
-		this.router.put("/wob/:id/property", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.setProperty(rq,rs,n)); });
+		this.router.put("/wob/:id/properties", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.setProperty(rq,rs,n)); });
 
 		// Get a sub-value of a property on a wob. Returns 404 if we can't find the wob, the property on the wob,
 		// or the sub-property on the property. Note that this does not work on inherited properties.
-		this.router.get("/wob/:id/property/:name/:sub", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.getPropertySub(rq,rs,n)); });
+		this.router.get("/wob/:id/property/:name/sub/:sub", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.getPropertySub(rq,rs,n)); });
 
-		// Set a sub-value of a property on a wob. Returns 404 if we can't find the wob or the property on the wob.
+		// Set one or more sub-values of a property on a wob. Returns 404 if we can't find the wob.
+		// If the property doesn't exist, we create it on the fly.
 		// Note that this does not work on inherited properties.
-		this.router.put("/wob/:id/property/:name/:sub", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.setPropertySub(rq,rs,n)); });
+		this.router.put("/wob/:id/property/:name/subs", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.setPropertySub(rq,rs,n)); });
 
 		// Get the code of a verb on a wob. Returns 404 if we can't find the wob or verb on the wob.
 		this.router.get("/wob/:id/verb/:name", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.getVerb(rq,rs,n)); });
@@ -152,8 +153,6 @@ export class WorldRouter extends RouterBase {
 	private async setPropertySub(req, res, next): Promise<any> {
 		let id = req.params.id;
 		let name = req.params.name;
-		let sub = req.params.sub;
-		let value = req.body.value;
 
 		let wob = await this.getWob(id, res);
 		if (!wob)
@@ -170,7 +169,10 @@ export class WorldRouter extends RouterBase {
 			return;
 		}
 
-		prop.set(sub, value);
+		for (let sub of Petal.Utils.GetPropertyNames(req.body)) {
+			prop.set(sub, req.body[sub]);
+		}
+
 		wob.setProperty(name, prop);
 
 		res.json(new ModelBase(true));
