@@ -112,3 +112,22 @@ export class InfoList extends ModelBase {
 
 	public list: Info[];
 }
+
+export class InstanceOfResult {
+	constructor(id: number, isInstance: boolean) {
+		this.id = id;
+		this.isInstance = isInstance;
+	}
+
+	public id: number;
+	public isInstance: boolean;
+}
+
+export class InstanceOfList extends ModelBase {
+	constructor(list: InstanceOfResult[]) {
+		super(true);
+		this.list = list;
+	}
+
+	public list: InstanceOfResult[];
+}

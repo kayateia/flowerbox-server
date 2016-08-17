@@ -48,6 +48,22 @@ export class WorldRouter extends RouterBase {
 
 		// Get a list of wob info for the contents of another wob. Returns 404 if we can't find the wob.
 		this.router.get("/wob/:id/contents", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.contents(rq,rs,n)); });
+
+		// Check whether a given wob or wobs is descended from a given other
+		// wob.
+		//
+		// :ids may be a comma-separated list of wob IDs
+		// :ancestorid is the ID of the wob we are testing against
+		//
+		// Returns an array of results of the form:
+		//   [
+		//     {
+		//       id: A wob ID passed in from :ids
+		//       isInstance: true if this wob is descended from :ancestorid
+		//     },
+		//     ...
+		//   ]
+		this.router.get("/wob/:ids/instanceof/:ancestorid", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.instanceOf(rq,rs,n)); });
 	}
 
 	private async getWob(id: string, res): Promise<World.Wob> {
@@ -297,6 +313,35 @@ export class WorldRouter extends RouterBase {
 		}
 
 		res.json(new Wob.InfoList(wobinfos));
+	}
+
+	private async instanceOf(req, res, next) {
+		// If the ancestor wob can't be found, the whole request fails.
+		let ancestorWob = await this.getWob(req.params.ancestorid, res);
+		if (!ancestorWob) {
+			return;
+		}
+
+		// Test each ID in the list to see if it's descended from the given
+		// ancestor ID.
+		let ids = req.params.ids.split(",");
+		let results: Wob.InstanceOfResult[] = [];
+		for (let i = 0; i < ids.length; i++) {
+			let wob = await this.getWob(ids[i], res);
+
+			// If any wob in the provided list of IDs is not found, the whole
+			// request fails.
+			if (!wob) {
+				return;
+			}
+			let instance = await wob.instanceOf(ancestorWob.id, this.world);
+
+			// Push the result of this test into the result set.
+			results.push(new Wob.InstanceOfResult(ids[i], instance));
+		}
+
+		// If we got here, all wobs were found and tested without issue.
+		res.json(new Wob.InstanceOfList(results));
 	}
 }
 
