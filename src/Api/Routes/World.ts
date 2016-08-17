@@ -35,7 +35,7 @@ export class WorldRouter extends RouterBase {
 		this.router.get("/wob/:id/verb/:name", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.getVerb(rq,rs,n)); });
 
 		// Set the code of one or more verbs on a wob. Returns 404 if we can't find the wob.
-		this.router.put("/wob/:id/verb", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.setVerb(rq,rs,n)); });
+		this.router.put("/wob/:id/verbs", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.setVerb(rq,rs,n)); });
 
 		// Get a full set of info about a wob. Returns 404 if we can't find the wob.
 		this.router.get("/wob/:id/info", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.getInfo(rq,rs,n)); });
