@@ -211,6 +211,12 @@ export class Wob {
 		this._properties.set(name, value);
 	}
 
+	public deleteProperty(name: string): void {
+		this.updateLastUse();
+		this._dirty = true;
+		this._properties.delete(name);
+	}
+
 	// Record an event in the wob's event stream. 'type' should be a value
 	// from the EventType class.
 	public event(type: string, timestamp: number, body: any[], tag?: string): void {

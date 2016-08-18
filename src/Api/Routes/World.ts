@@ -27,9 +27,16 @@ export class WorldRouter extends RouterBase {
 		// Note that this does not allow setting binary properties, only JSON.
 		this.router.put("/wob/:id/properties", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.setProperty(rq,rs,n)); });
 
+		// Delete a property on a wob. Returns 404 if we can't find the wob.
+		this.router.delete("/wob/:id/property/:name", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.deleteProperty(rq,rs,n)); });
+
 		// Get a sub-value of a property on a wob. Returns 404 if we can't find the wob, the property on the wob,
 		// or the sub-property on the property. Note that this does not work on inherited properties.
 		this.router.get("/wob/:id/property/:name/sub/:sub", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.getPropertySub(rq,rs,n)); });
+
+		// Delete a sub-value of a property on a wob. Returns 404 if we can't find the wob, the property on the wob,
+		// or the sub-property on the property.
+		this.router.delete("/wob/:id/property/:name/sub/:sub", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.deletePropertySub(rq,rs,n)); });
 
 		// Set one or more sub-values of a property on a wob. Returns 404 if we can't find the wob.
 		// If the property doesn't exist, we create it on the fly.
@@ -128,6 +135,19 @@ export class WorldRouter extends RouterBase {
 		res.json(new ModelBase(true));
 	}
 
+	private async deleteProperty(req, res, next): Promise<any> {
+		let id = req.params.id;
+		let name = req.params.name;
+
+		let wob = await this.getWob(id, res);
+		if (!wob)
+			return;
+
+		wob.deleteProperty(name);
+
+		res.json(new ModelBase(true));
+	}
+
 	private async setPropertyBinary(req, res, next): Promise<any> {
 		await Multer.upload(req, res);
 
@@ -200,6 +220,33 @@ export class WorldRouter extends RouterBase {
 		for (let sub of Petal.Utils.GetPropertyNames(req.body)) {
 			prop.set(sub, req.body[sub]);
 		}
+
+		wob.setProperty(name, prop);
+
+		res.json(new ModelBase(true));
+	}
+
+	private async deletePropertySub(req, res, next): Promise<any> {
+		let id = req.params.id;
+		let name = req.params.name;
+		let sub = req.params.sub;
+
+		let wob = await this.getWob(id, res);
+		if (!wob)
+			return;
+
+		let prop: Petal.PetalObject = wob.getProperty(name);
+		if (!prop) {
+			res.status(404).json(new ModelBase(false, "Property does not exist"));
+			return;
+		}
+
+		if (!(prop instanceof Petal.PetalObject)) {
+			res.status(500).json(new ModelBase(false, "Property is not an object"));
+			return;
+		}
+
+		prop.delete(sub);
 
 		wob.setProperty(name, prop);
 

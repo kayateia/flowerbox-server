@@ -277,6 +277,10 @@ export class PetalObject implements IObject, IPetalWrapper {
 		this._items.set(index, value);
 	}
 
+	public delete(index: string): void {
+		this._items.delete(index);
+	}
+
 	public get keys(): string[] {
 		return [...this._items.keys()];
 	}
