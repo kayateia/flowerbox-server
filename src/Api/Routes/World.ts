@@ -55,14 +55,7 @@ export class WorldRouter extends RouterBase {
 		// :ids may be a comma-separated list of wob IDs
 		// :ancestorid is the ID of the wob we are testing against
 		//
-		// Returns an array of results of the form:
-		//   [
-		//     {
-		//       id: A wob ID passed in from :ids
-		//       isInstance: true if this wob is descended from :ancestorid
-		//     },
-		//     ...
-		//   ]
+		// Returns a Wob.InstanceOfList.
 		this.router.get("/wob/:ids/instanceof/:ancestorid", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.instanceOf(rq,rs,n)); });
 	}
 
