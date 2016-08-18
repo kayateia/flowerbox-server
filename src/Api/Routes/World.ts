@@ -19,7 +19,12 @@ export class WorldRouter extends RouterBase {
 		// Get the value of a property on a wob. Returns 404 if we can't find the wob or property on the wob.
 		this.router.get("/wob/:id/property/:name", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.getProperty(rq,rs,n)); });
 
+		// Set the value of one or more binary properties on a wob. Returns 404 if we can't find the wob.
+		// Note that you can set non-binary properties, too, as JSON, but the other interface is probably simpler.
+		this.router.put("/wob/:id/properties/binary", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.setPropertyBinary(rq,rs,n)); });
+
 		// Set the value of one or more properties on a wob. Returns 404 if we can't find the wob.
+		// Note that this does not allow setting binary properties, only JSON.
 		this.router.put("/wob/:id/properties", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.setProperty(rq,rs,n)); });
 
 		// Get a sub-value of a property on a wob. Returns 404 if we can't find the wob, the property on the wob,
@@ -110,6 +115,20 @@ export class WorldRouter extends RouterBase {
 	}
 
 	private async setProperty(req, res, next): Promise<any> {
+		let id = req.params.id;
+
+		let wob = await this.getWob(id, res);
+		if (!wob)
+			return;
+
+		for (let prop of Petal.Utils.GetPropertyNames(req.body)) {
+			wob.setProperty(prop, req.body[prop]);
+		}
+
+		res.json(new ModelBase(true));
+	}
+
+	private async setPropertyBinary(req, res, next): Promise<any> {
 		await Multer.upload(req, res);
 
 		let id = req.params.id;
