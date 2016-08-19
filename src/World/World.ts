@@ -207,6 +207,14 @@ export class World {
 		return results;
 	}
 
+	public async getWobByGlobalId(id: string): Promise<Wob> {
+		let wobs = await this.getWobsByGlobalId([id]);
+		if (wobs.length)
+			return wobs[0];
+		else
+			return null;
+	}
+
 	// FIXME: This doesn't work for complex objects - need a JSON comparator.
 	public async getWobsByPropertyMatch(property: string, value: any): Promise<Wob[]> {
 		// Start off getting the in-memory results.

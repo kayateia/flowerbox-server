@@ -8,6 +8,7 @@ import { AstNode } from "./AstNode";
 import { parse } from "./Parser";
 import { Runtime } from "./Runtime";
 import { Compiler } from "./Compiler";
+import { Value } from "./Value";
 
 export class AstStatement extends AstNode {
 	constructor(parseTree: any) {
@@ -21,6 +22,7 @@ export class AstStatement extends AstNode {
 			runtime.pushBase();
 		});
 		compiler.pushNode("Post-statement bp restore", this, (runtime: Runtime) => {
+			runtime.lastStatementValue = Value.Deref(runtime, runtime.popOperand());
 			runtime.popBase();
 		});
 

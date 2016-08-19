@@ -55,6 +55,8 @@ export class EventType {
 	public static ParseError = "parse_error";		// Error parsing user input
 	public static ScriptError = "script_error";		// Error from a Petal script
 	public static Debug = "debug";					// Debug messages
+	public static MoveNotification = "move_notification";	// Notify when an object (including the player) moves
+															// object id, from, and to are passed as notations.
 }
 
 // Tags a value with what specific wob it came from.
@@ -157,6 +159,21 @@ export class Wob {
 		this._perms = p;
 	}
 
+	// If the current wob is an instance of the other wob (i.e. if "other" is somewhere
+	// in our base inheritance chain), then this returns true.
+	public async instanceOf(otherId: number, world: World): Promise<boolean> {
+		// Go up the inheritance chain.
+		let uswob: Wob = this;
+		let base = uswob.base;
+		while (base !== 0 && base !== otherId) {
+			uswob = await world.getWob(base);
+			base = uswob.base;
+		}
+
+		// Did we find a match?
+		return base !== 0;
+	}
+
 	public getPropertyNames(): string[] {
 		this.updateLastUse();
 		return [...this._properties.keys()];
@@ -210,6 +227,12 @@ export class Wob {
 		let oldProperty = this.getProperty(name);
 		let newProperty = Property.CopyPerms(oldProperty, value);
 		this.setProperty(name, newProperty);
+	}
+
+	public deleteProperty(name: string): void {
+		this.updateLastUse();
+		this._dirty = true;
+		this._properties.delete(name);
 	}
 
 	// Record an event in the wob's event stream. 'type' should be a value
@@ -281,10 +304,13 @@ export class Wob {
 	public setVerb(name: string, value: Verb): void {
 		this.updateLastUse();
 		this._dirty = true;
-		if (value)
-			this._verbs.set(name, value);
-		else
-			this._verbs.delete(name);
+		this._verbs.set(name, value);
+	}
+
+	public deleteVerb(name: string): void {
+		this.updateLastUse();
+		this._dirty = true;
+		this._verbs.delete(name);
 	}
 
 	public setVerbCode(name: string, text: string): void {

@@ -89,6 +89,7 @@ export class AstCallExpression extends AstNode {
 
 				let result = address.func(...args);
 				if (result instanceof Promise) {
+					// FIXME: Need to do something with catch() here.
 					return result.then((val: any) => {
 						runtime.returnValue = val;
 					});

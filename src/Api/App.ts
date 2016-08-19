@@ -29,8 +29,10 @@ let cors = require("cors");
 async function worldStartup() {
 	// Create a small in-world "game world" to test with.
 	await world.createDefault(InitWorld, "./notes/init");
-	for (let r of [indexRouter, terminalRouter, userRouter, worldRouter])
+	for (let r of [indexRouter, terminalRouter, userRouter, worldRouter]) {
 		r.world = world;
+		r.config = config;
+	}
 }
 
 worldStartup()

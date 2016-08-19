@@ -45,7 +45,13 @@ export interface IChangeNotification {
 
 export class Runtime {
 	public address: Address;
+
+	// This stores the last value returned by a called Petal function.
 	public returnValue: any;
+
+	// This stores the any value leftover from the last ExpressionStatement, which is any
+	// statement that is not a block (for loop, etc).
+	public lastStatementValue: any;
 
 	// This is data passed to the getAccessor method in IObject. It lets you customize
 	// the actions of your IObjects if needed.
@@ -132,8 +138,10 @@ export class Runtime {
 		while (!this._programStack.empty)
 			console.log("LEFTOVER PG", this._programStack.pop());
 
-		while (!this._scopeStack.empty)
-			console.log("LEFTOVER SC", this._scopeStack.pop());
+		// Disable this one by default -- we have some well known and accepted places
+		// where scopes may be left over at the end of an execution run.
+		/*while (!this._scopeStack.empty)
+			console.log("LEFTOVER SC", this._scopeStack.pop()); */
 
 		return new ExecuteResult(false, stepsUsed, returnValue);
 	}
@@ -183,7 +191,12 @@ export class Runtime {
 		var compiler = new Compiler(moduleName);
 		compiler.compile(code);
 		this.setInitialPC(new Address(0, compiler.module, code));
-		return this.execute(maxSteps);
+
+		// The return value actually comes off the lastStatementValue for the Runtime, because that's
+		// where the AstStatement handler would leave it.
+		let rv = this.execute(maxSteps);
+		rv.returnValue = this.lastStatementValue;
+		return rv;
 	}
 
 	public async executeCodeAsync(moduleName: string, code: AstNode, injections: any, maxSteps?: number): Promise<ExecuteResult> {
@@ -194,21 +207,38 @@ export class Runtime {
 		var compiler = new Compiler(moduleName);
 		compiler.compile(code);
 		this.setInitialPC(new Address(0, compiler.module, code));
-		return await this.executeAsync(maxSteps);
+
+		// The return value actually comes off the lastStatementValue for the Runtime, because that's
+		// where the AstStatement handler would leave it.
+		let rv = await this.executeAsync(maxSteps);
+		rv.returnValue = this.lastStatementValue;
+		return rv;
 	}
 
 	// This executes an arbitrary (pre-parsed) function.
 	public executeFunction(func: Address, param: any[], caller: any, maxSteps?: number): ExecuteResult {
 		let address = AstCallExpression.Create(func, param, caller);
 		this.setInitialPC(address);
-		return this.execute(maxSteps);
+		let rv = this.execute(maxSteps);
+
+		// The return value actually comes off the returnValue for the Runtime, because that's
+		// where the synthetic function call would leave it.
+		rv.returnValue = Value.Deref(this, this.returnValue);
+
+		return rv;
 	}
 
 	// Same as executeFunction(), but allows for async callbacks to happen down in code execution.
 	public async executeFunctionAsync(func: Address, param: any[], caller: any, maxSteps?: number): Promise<ExecuteResult> {
 		let address = AstCallExpression.Create(func, param, caller);
 		this.setInitialPC(address);
-		return await this.executeAsync(maxSteps);
+		let rv = await this.executeAsync(maxSteps);
+
+		// The return value actually comes off the returnValue for the Runtime, because that's
+		// where the synthetic function call would leave it.
+		rv.returnValue = Value.Deref(this, this.returnValue);
+
+		return rv;
 	}
 
 	// Called by IPetalWrappers when changes are made inside themselves.

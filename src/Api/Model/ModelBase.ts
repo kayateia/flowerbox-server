@@ -5,11 +5,17 @@
 */
 
 export class ModelBase {
-	constructor(success: boolean, errorMessage?: string) {
+	constructor(success: boolean, error?: any) {
 		this.success = success;
-		this.error = errorMessage;
+		if (error instanceof Error) {
+			let ei: Error = error;
+			this.error = ei.message;
+			this.errorStack = ei.stack;
+		} else
+			this.error = error;
 	}
 
 	public success: boolean;
 	public error: string;
+	public errorStack: string;
 }

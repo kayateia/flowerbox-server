@@ -19,23 +19,59 @@ export class WorldRouter extends RouterBase {
 		// Get the value of a property on a wob. Returns 404 if we can't find the wob or property on the wob.
 		this.router.get("/wob/:id/property/:name", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.getProperty(rq,rs,n)); });
 
+		// Set the value of one or more binary properties on a wob. Returns 404 if we can't find the wob.
+		// Note that you can set non-binary properties, too, as JSON, but the other interface is probably simpler.
+		this.router.put("/wob/:id/properties/binary", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.setPropertyBinary(rq,rs,n)); });
+
 		// Set the value of one or more properties on a wob. Returns 404 if we can't find the wob.
-		this.router.put("/wob/:id/property", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.setProperty(rq,rs,n)); });
+		// Note that this does not allow setting binary properties, only JSON.
+		this.router.put("/wob/:id/properties", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.setProperty(rq,rs,n)); });
+
+		// Delete a property on a wob. Returns 404 if we can't find the wob.
+		this.router.delete("/wob/:id/property/:name", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.deleteProperty(rq,rs,n)); });
+
+		// Get a sub-value of a property on a wob. Returns 404 if we can't find the wob, the property on the wob,
+		// or the sub-property on the property. Note that this does not work on inherited properties.
+		this.router.get("/wob/:id/property/:name/sub/:sub", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.getPropertySub(rq,rs,n)); });
+
+		// Delete a sub-value of a property on a wob. Returns 404 if we can't find the wob, the property on the wob,
+		// or the sub-property on the property.
+		this.router.delete("/wob/:id/property/:name/sub/:sub", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.deletePropertySub(rq,rs,n)); });
+
+		// Set one or more sub-values of a property on a wob. Returns 404 if we can't find the wob.
+		// If the property doesn't exist, we create it on the fly.
+		// Note that this does not work on inherited properties.
+		this.router.put("/wob/:id/property/:name/subs", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.setPropertySub(rq,rs,n)); });
 
 		// Get the code of a verb on a wob. Returns 404 if we can't find the wob or verb on the wob.
 		this.router.get("/wob/:id/verb/:name", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.getVerb(rq,rs,n)); });
 
+		// Delete a verb on a wob. Returns 404 if we can't find the wob.
+		this.router.delete("/wob/:id/verb/:name", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.deleteVerb(rq,rs,n)); });
+
 		// Set the code of one or more verbs on a wob. Returns 404 if we can't find the wob.
-		this.router.put("/wob/:id/verb", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.setVerb(rq,rs,n)); });
+		this.router.put("/wob/:id/verbs", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.setVerbs(rq,rs,n)); });
 
 		// Get a full set of info about a wob. Returns 404 if we can't find the wob.
-		this.router.get("/wob/:id/info", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.info(rq,rs,n)); });
+		this.router.get("/wob/:id/info", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.getInfo(rq,rs,n)); });
+
+		// Set a (potentially) full set of info about a wob. This doesn't deal with properties or verbs, just intrinsic wob info like the base and location.
+		this.router.put("/wob/:id/info", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.setInfo(rq,rs,n)); });
 
 		// Get a list of wob IDs for the contents of another wob. Returns 404 if we can't find the wob.
 		this.router.get("/wob/:id/content-ids", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.contentIds(rq,rs,n)); });
 
 		// Get a list of wob info for the contents of another wob. Returns 404 if we can't find the wob.
 		this.router.get("/wob/:id/contents", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.contents(rq,rs,n)); });
+
+		// Check whether a given wob or wobs is descended from a given other
+		// wob.
+		//
+		// :ids may be a comma-separated list of wob IDs
+		// :ancestorid is the ID of the wob we are testing against
+		//
+		// Returns a Wob.InstanceOfList.
+		this.router.get("/wob/:ids/instanceof/:ancestorid", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.instanceOf(rq,rs,n)); });
 	}
 
 	private async getWob(id: string, res): Promise<World.Wob> {
@@ -90,6 +126,33 @@ export class WorldRouter extends RouterBase {
 	}
 
 	private async setProperty(req, res, next): Promise<any> {
+		let id = req.params.id;
+
+		let wob = await this.getWob(id, res);
+		if (!wob)
+			return;
+
+		for (let prop of Petal.Utils.GetPropertyNames(req.body)) {
+			wob.setProperty(prop, req.body[prop]);
+		}
+
+		res.json(new ModelBase(true));
+	}
+
+	private async deleteProperty(req, res, next): Promise<any> {
+		let id = req.params.id;
+		let name = req.params.name;
+
+		let wob = await this.getWob(id, res);
+		if (!wob)
+			return;
+
+		wob.deleteProperty(name);
+
+		res.json(new ModelBase(true));
+	}
+
+	private async setPropertyBinary(req, res, next): Promise<any> {
 		await Multer.upload(req, res);
 
 		let id = req.params.id;
@@ -116,6 +179,84 @@ export class WorldRouter extends RouterBase {
 		res.json(new ModelBase(true));
 	}
 
+	private async getPropertySub(req, res, next): Promise<any> {
+		let id = req.params.id;
+		let name = req.params.name;
+		let sub = req.params.sub;
+
+		let wob = await this.getWob(id, res);
+		if (!wob)
+			return;
+
+		let prop = wob.getProperty(name);
+		if (!prop) {
+			res.status(404).json(new ModelBase(false, "Property does not exist on wob"));
+			return;
+		}
+
+		if (!(prop instanceof Petal.PetalObject)) {
+			res.status(500).json(new ModelBase(false, "Property is not an object"));
+			return;
+		}
+
+		res.json(new Wob.Property(wob.id, name, prop.get(sub), sub));
+	}
+
+	private async setPropertySub(req, res, next): Promise<any> {
+		let id = req.params.id;
+		let name = req.params.name;
+
+		let wob = await this.getWob(id, res);
+		if (!wob)
+			return;
+
+		let prop = wob.getProperty(name);
+		if (!prop) {
+			// If property doesn't currently exist, create one.
+			prop = Petal.ObjectWrapper.Wrap({});
+		}
+
+		if (!(prop instanceof Petal.PetalObject)) {
+			res.status(500).json(new ModelBase(false, "Property is not an object"));
+			return;
+		}
+
+		for (let sub of Petal.Utils.GetPropertyNames(req.body)) {
+			prop.set(sub, req.body[sub]);
+		}
+
+		wob.setProperty(name, prop);
+
+		res.json(new ModelBase(true));
+	}
+
+	private async deletePropertySub(req, res, next): Promise<any> {
+		let id = req.params.id;
+		let name = req.params.name;
+		let sub = req.params.sub;
+
+		let wob = await this.getWob(id, res);
+		if (!wob)
+			return;
+
+		let prop: Petal.PetalObject = wob.getProperty(name);
+		if (!prop) {
+			res.status(404).json(new ModelBase(false, "Property does not exist"));
+			return;
+		}
+
+		if (!(prop instanceof Petal.PetalObject)) {
+			res.status(500).json(new ModelBase(false, "Property is not an object"));
+			return;
+		}
+
+		prop.delete(sub);
+
+		wob.setProperty(name, prop);
+
+		res.json(new ModelBase(true));
+	}
+
 	private async getVerb(req, res, next): Promise<any> {
 		let id = req.params.id;
 		let name = req.params.name;
@@ -138,24 +279,33 @@ export class WorldRouter extends RouterBase {
 			));
 	}
 
-	private async setVerb(req, res, next): Promise<any> {
-		// We aren't going to have any file uploads, but this allows us to make
-		// use of multi-part form submissions for multiple verb setting at once.
-		await Multer.upload(req, res);
-
+	private async deleteVerb(req, res, next): Promise<any> {
 		let id = req.params.id;
-		let value = req.body;
+		let name = req.params.name;
 
 		let wob = await this.getWob(id, res);
 		if (!wob)
 			return;
 
-		let names = Petal.Utils.GetPropertyNames(value);
+		wob.deleteVerb(name);
+
+		res.json(new ModelBase(true));
+	}
+
+	private async setVerbs(req, res, next): Promise<any> {
+		let id = req.params.id;
+		let values = req.body;
+
+		let wob = await this.getWob(id, res);
+		if (!wob)
+			return;
+
+		let names = Petal.Utils.GetPropertyNames(values);
 		let errors = {};
 		let anyErrors = false;
 		for (let n of names) {
 			try {
-				wob.setVerbCode(n, value[n]);
+				wob.setVerbCode(n, values[n]);
 			} catch (err) {
 				anyErrors = true;
 				errors[n] = err;
@@ -169,7 +319,7 @@ export class WorldRouter extends RouterBase {
 		res.json(new Wob.VerbSetErrors(errors));
 	}
 
-	private async info(req, res, next): Promise<any> {
+	private async getInfo(req, res, next): Promise<any> {
 		let id = req.params.id;
 
 		let wob = await this.getWob(id, res);
@@ -178,6 +328,26 @@ export class WorldRouter extends RouterBase {
 
 		let rv = await WobCommon.GetInfo(wob, this.world);
 		res.json(rv);
+	}
+
+	private async setInfo(req, res, next): Promise<any> {
+		let id = req.params.id;
+		let body: Wob.Info = req.body;
+
+		let wob = await this.getWob(id, res);
+		if (!wob)
+			return;
+
+		if (body.base)
+			wob.base = body.base;
+		if (body.container && wob.container != body.container) {
+			// FIXME: Move notifications.
+			await this.world.moveWob(wob.id, body.container);
+		}
+
+		// TODO: Security bits.
+
+		res.json(new ModelBase(true));
 	}
 
 	private async contentIds(req, res, next): Promise<any> {
@@ -215,6 +385,35 @@ export class WorldRouter extends RouterBase {
 		}
 
 		res.json(new Wob.InfoList(wobinfos));
+	}
+
+	private async instanceOf(req, res, next) {
+		// If the ancestor wob can't be found, the whole request fails.
+		let ancestorWob = await this.getWob(req.params.ancestorid, res);
+		if (!ancestorWob) {
+			return;
+		}
+
+		// Test each ID in the list to see if it's descended from the given
+		// ancestor ID.
+		let ids = req.params.ids.split(",");
+		let results: Wob.InstanceOfResult[] = [];
+		for (let i = 0; i < ids.length; i++) {
+			let wob = await this.getWob(ids[i], res);
+
+			// If any wob in the provided list of IDs is not found, the whole
+			// request fails.
+			if (!wob) {
+				return;
+			}
+			let instance = await wob.instanceOf(ancestorWob.id, this.world);
+
+			// Push the result of this test into the result set.
+			results.push(new Wob.InstanceOfResult(ids[i], instance));
+		}
+
+		// If we got here, all wobs were found and tested without issue.
+		res.json(new Wob.InstanceOfList(results));
 	}
 }
 

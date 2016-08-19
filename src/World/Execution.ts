@@ -88,15 +88,7 @@ export class WobWrapper implements Petal.IObject {
 		// Load our wob.
 		let uswob = await cargo.world.getWob(us);
 
-		// Go up the inheritance chain.
-		let base = uswob.base;
-		while (base !== 0 && base !== them) {
-			uswob = await cargo.world.getWob(base);
-			base = uswob.base;
-		}
-
-		// Did we find a match?
-		return base !== 0;
+		return await uswob.instanceOf(them, cargo.world);
 	}
 
 	public getAccessor(index: any, cargo: AccessorCargo): any {
@@ -150,6 +142,26 @@ export class WobWrapper implements Petal.IObject {
 				});
 			}, () => {
 				throw new WobOperationException("Can't set $event on a wob", []);
+			}, this);
+		}
+
+		if (index === "properties") {
+			return new Petal.LValue("Wob.properties", async (runtime: Petal.Runtime) => {
+				let wob = await cargo.world.getWob(this._id);
+				let props = await wob.getPropertyNamesI(cargo.world);
+				return Petal.ObjectWrapper.Wrap(props.map(wv => ({ wobid: wv.wob, name: wv.value })));
+			}, () => {
+				throw new WobOperationException("Can't set 'properties' on a wob", []);
+			}, this);
+		}
+
+		if (index === "verbs") {
+			return new Petal.LValue("Wob.verbs", async (runtime: Petal.Runtime) => {
+				let wob = await cargo.world.getWob(this._id);
+				let verbs = await wob.getVerbNamesI(cargo.world);
+				return Petal.ObjectWrapper.Wrap(verbs.map(wv => ({ wobid: wv.wob, name: wv.value })));
+			}, () => {
+				throw new WobOperationException("Can't set 'verbs' on a wob", []);
 			}, this);
 		}
 
@@ -297,7 +309,44 @@ class DollarObject {
 		if (typeof(objOrId) !== "number" || typeof(intoOrId) !== "number")
 			throw new WobReferenceException("Received a non-wob object in move()", 0);
 
-		await this._world.moveWob(objOrId, intoOrId);
+		// FIXME: Need to ask the wob itself if it's okay to move it.
+
+		let wob: Wob = await this._world.getWob(objOrId);
+		let oldLocation = await this._world.getWob(wob.container);
+		let newLocation = await this._world.getWob(intoOrId);
+
+		let playerBase: Wob = await this._world.getWobByGlobalId("player");
+		if (!playerBase)
+			throw new WobReferenceException("Can't find the @player object", 0);
+
+		// Notify all the player objects in the old room that something is moving.
+		await Promise.all(oldLocation.contents.map(async c => {
+			if (c === wob.id)
+				return;
+			let cwob = await this._world.getWob(c);
+			if (cwob && await cwob.instanceOf(playerBase.id, this._world)) {
+				cwob.event(EventType.MoveNotification, Date.now(), [
+					await this.notate(new WobWrapper(wob.id), null),
+					await this.notate(new WobWrapper(oldLocation.id), null),
+					await this.notate(new WobWrapper(newLocation.id), null)
+				]);
+			}
+		}));
+
+		await this._world.moveWob(wob.id, newLocation.id);
+
+		// Notify all the player objects in the new room (including the moved object, if
+		// it's a player) that something is moving.
+		await Promise.all(newLocation.contents.map(async c => {
+			let cwob = await this._world.getWob(c);
+			if (cwob && await cwob.instanceOf(playerBase.id, this._world)) {
+				cwob.event(EventType.MoveNotification, Date.now(), [
+					await this.notate(new WobWrapper(wob.id), null),
+					await this.notate(new WobWrapper(oldLocation.id), null),
+					await this.notate(new WobWrapper(newLocation.id), null)
+				]);
+			}
+		}));
 	}
 
 	public async contents(objOrId: any /*WobWrapper | number*/): Promise<WobWrapper[]> {
@@ -513,15 +562,9 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 				return;
 			}
 			if (result.returnValue) {
-				player.event(EventType.Output, Date.now(), ["Command returned: ", result.returnValue]);
+				player.event(EventType.Output, Date.now(), ["Command returned: ", JSON.stringify(Petal.ObjectWrapper.Unwrap(result.returnValue))]);
 			}
 		}
-		return;
-	}
-
-	// Did we actually get any text?
-	if (parse.failure) {
-		handleFailure(parse, player);
 		return;
 	}
 
@@ -551,6 +594,13 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 				rt = new Petal.Runtime(false, rootScope, changeRouter, cargo);
 			}
 		}
+	}
+
+	// Did we actually get any text? We do this here instead of above $command handling, because
+	// $command can make use of some things that we don't recognise as properly formatted commands.
+	if (parse.failure) {
+		handleFailure(parse, player);
+		return;
 	}
 
 	// We'll only continue here if we actually found a verb.

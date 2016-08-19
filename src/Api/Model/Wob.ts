@@ -8,18 +8,20 @@ import { ModelBase } from "./ModelBase";
 
 // For returning one property on a wob.
 export class Property extends ModelBase {
-	constructor(id: number, name: string, value: any, perms: number) {
+	constructor(id: number, name: string, value: any, perms: number, sub?: string) {
 		super(true);
 		this.id = id;
 		this.name = name;
 		this.value = value;
 		this.perms = perms;
+		this.sub = sub;
 	}
 
 	public id: number;
 	public name: string;
 	public value: any;
 	public perms: number;
+	public sub: string;
 }
 
 // For returning one verb on a wob.
@@ -118,4 +120,23 @@ export class InfoList extends ModelBase {
 	}
 
 	public list: Info[];
+}
+
+export class InstanceOfResult {
+	constructor(id: number, isInstance: boolean) {
+		this.id = id;
+		this.isInstance = isInstance;
+	}
+
+	public id: number;
+	public isInstance: boolean;
+}
+
+export class InstanceOfList extends ModelBase {
+	constructor(list: InstanceOfResult[]) {
+		super(true);
+		this.list = list;
+	}
+
+	public list: InstanceOfResult[];
 }
