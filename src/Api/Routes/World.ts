@@ -46,6 +46,9 @@ export class WorldRouter extends RouterBase {
 		// Get the code of a verb on a wob. Returns 404 if we can't find the wob or verb on the wob.
 		this.router.get("/wob/:id/verb/:name", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.getVerb(rq,rs,n)); });
 
+		// Delete a verb on a wob. Returns 404 if we can't find the wob.
+		this.router.delete("/wob/:id/verb/:name", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.deleteVerb(rq,rs,n)); });
+
 		// Set the code of one or more verbs on a wob. Returns 404 if we can't find the wob.
 		this.router.put("/wob/:id/verbs", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.setVerb(rq,rs,n)); });
 
@@ -273,6 +276,19 @@ export class WorldRouter extends RouterBase {
 				verb.value.signatureStrings,
 				verb.value.code
 			));
+	}
+
+	private async deleteVerb(req, res, next): Promise<any> {
+		let id = req.params.id;
+		let name = req.params.name;
+
+		let wob = await this.getWob(id, res);
+		if (!wob)
+			return;
+
+		wob.deleteVerb(name);
+
+		res.json(new ModelBase(true));
 	}
 
 	private async setVerb(req, res, next): Promise<any> {

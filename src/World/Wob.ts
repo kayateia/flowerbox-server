@@ -286,10 +286,13 @@ export class Wob {
 	public setVerb(name: string, value: Verb): void {
 		this.updateLastUse();
 		this._dirty = true;
-		if (value)
-			this._verbs.set(name, value);
-		else
-			this._verbs.delete(name);
+		this._verbs.set(name, value);
+	}
+
+	public deleteVerb(name: string): void {
+		this.updateLastUse();
+		this._dirty = true;
+		this._verbs.delete(name);
 	}
 
 	public setVerbCode(name: string, text: string): void {
