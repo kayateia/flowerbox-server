@@ -50,7 +50,7 @@ export class WorldRouter extends RouterBase {
 		this.router.delete("/wob/:id/verb/:name", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.deleteVerb(rq,rs,n)); });
 
 		// Set the code of one or more verbs on a wob. Returns 404 if we can't find the wob.
-		this.router.put("/wob/:id/verbs", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.setVerb(rq,rs,n)); });
+		this.router.put("/wob/:id/verbs", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n, ()=>this.setVerbs(rq,rs,n)); });
 
 		// Get a full set of info about a wob. Returns 404 if we can't find the wob.
 		this.router.get("/wob/:id/info", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.getInfo(rq,rs,n)); });
@@ -291,24 +291,20 @@ export class WorldRouter extends RouterBase {
 		res.json(new ModelBase(true));
 	}
 
-	private async setVerb(req, res, next): Promise<any> {
-		// We aren't going to have any file uploads, but this allows us to make
-		// use of multi-part form submissions for multiple verb setting at once.
-		await Multer.upload(req, res);
-
+	private async setVerbs(req, res, next): Promise<any> {
 		let id = req.params.id;
-		let value = req.body;
+		let values = req.body;
 
 		let wob = await this.getWob(id, res);
 		if (!wob)
 			return;
 
-		let names = Petal.Utils.GetPropertyNames(value);
+		let names = Petal.Utils.GetPropertyNames(values);
 		let errors = {};
 		let anyErrors = false;
 		for (let n of names) {
 			try {
-				wob.setVerbCode(n, value[n]);
+				wob.setVerbCode(n, values[n]);
 			} catch (err) {
 				anyErrors = true;
 				errors[n] = err;
