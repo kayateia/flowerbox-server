@@ -116,6 +116,8 @@ describe("World API", function() {
 					secondProp: "second value"
 				}
 			}).on("complete", function(result) {
+				if (!result.success)
+					console.log(result);
 				expect(result).toEqual({
 					success: true,
 				});
@@ -123,6 +125,8 @@ describe("World API", function() {
 				rest.get(baseUrl + "/world/wob/@kayateia/property/subSetTest/sub/subProp", {
 					headers: headers
 				}).on("complete", function(result) {
+					if (!result.success)
+						console.log(result);
 					expect(result.success).toEqual(true);
 					expect(result.value).toEqual("test value");
 					done();

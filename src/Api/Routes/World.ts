@@ -133,7 +133,7 @@ export class WorldRouter extends RouterBase {
 			return;
 
 		for (let prop of Petal.Utils.GetPropertyNames(req.body)) {
-			wob.setProperty(prop, req.body[prop]);
+			wob.setPropertyKeepingPerms(prop, req.body[prop]);
 		}
 
 		res.json(new ModelBase(true));
@@ -194,13 +194,13 @@ export class WorldRouter extends RouterBase {
 			return;
 		}
 
-		if (!(prop instanceof Petal.PetalObject)) {
+		if (!(prop.value instanceof Petal.PetalObject)) {
 			res.status(500).json(new ModelBase(false, "Property is not an object"));
 			return;
 		}
 
-		if (prop.has(sub))
-			res.json(new Wob.Property(wob.id, name, prop.get(sub), sub));
+		if (prop.value.has(sub))
+			res.json(new Wob.Property(wob.id, name, prop.value.get(sub), sub));
 		else
 			res.status(404).json(new ModelBase(false, "Sub-property does not exist"));
 	}
