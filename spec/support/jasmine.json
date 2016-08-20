@@ -1,6 +1,7 @@
 {
 	"spec_dir": "js",
 	"spec_files": [
+		"Api/Tests/*.js",
 		"Petal/Tests/*.js",
 		"Utils/Tests/*.js"
 	],
