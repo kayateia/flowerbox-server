@@ -41,7 +41,7 @@ export class TerminalRouter extends RouterBase {
 
 		// Execute the command.
 		let match = await World.parseInput(command, player, this.world);
-		await World.executeResult(match, player, this.world);
+		await World.executeResult(match, player, this.token.admin, this.world);
 
 		res.json(new ModelBase(true));
 

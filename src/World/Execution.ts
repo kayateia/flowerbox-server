@@ -58,11 +58,13 @@ class AccessorCargo {
 	public world: World;
 	public injections: any;
 	public player: Wob;
+	public playerIsAdmin: boolean;
 
-	constructor(world: World, injections: any, player: Wob) {
+	constructor(world: World, injections: any, player: Wob, playerIsAdmin: boolean) {
 		this.world = world;
 		this.injections = injections;
 		this.player = player;
+		this.playerIsAdmin = playerIsAdmin;
 	}
 }
 
@@ -148,6 +150,12 @@ export class WobWrapper implements Petal.IObject {
 		if (index === "properties") {
 			return new Petal.LValue("Wob.properties", async (runtime: Petal.Runtime) => {
 				let wob = await cargo.world.getWob(this._id);
+
+				if (!(runtime.currentSecurityContext === cargo.player.id && cargo.playerIsAdmin)
+						&& !Security.CheckWobRead(wob, runtime.currentSecurityContext)) {
+					throw new SecurityException("Access denied reading wob", "properties");
+				}
+
 				let props = await wob.getPropertyNamesI(cargo.world);
 				return Petal.ObjectWrapper.Wrap(props.map(wv => ({ wobid: wv.wob, name: wv.value })));
 			}, () => {
@@ -158,6 +166,12 @@ export class WobWrapper implements Petal.IObject {
 		if (index === "verbs") {
 			return new Petal.LValue("Wob.verbs", async (runtime: Petal.Runtime) => {
 				let wob = await cargo.world.getWob(this._id);
+
+				if (!(runtime.currentSecurityContext === cargo.player.id && cargo.playerIsAdmin)
+						&& !Security.CheckWobRead(wob, runtime.currentSecurityContext)) {
+					throw new SecurityException("Access denied reading wob", "verbs");
+				}
+
 				let verbs = await wob.getVerbNamesI(cargo.world);
 				return Petal.ObjectWrapper.Wrap(verbs.map(wv => ({ wobid: wv.wob, name: wv.value })));
 			}, () => {
@@ -181,8 +195,10 @@ export class WobWrapper implements Petal.IObject {
 						return null;
 					}
 
-					if (!Security.CheckVerb(verbSrc, member, runtime.currentSecurityContext, Perms.x))
-						throw new SecurityException("Can't execute that verb", member);
+					if (!(runtime.currentSecurityContext === cargo.player.id && cargo.playerIsAdmin)
+							&& !Security.CheckVerb(verbSrc, member, runtime.currentSecurityContext, Perms.x))
+						throw new SecurityException("Access denied executing verb", member);
+
 					let addr = verb.value.address.copy();
 					addr.thisValue = this;
 					addr.injections = cargo.injections;
@@ -199,8 +215,9 @@ export class WobWrapper implements Petal.IObject {
 						return null;
 					}
 
-					if (!Security.CheckProperty(propSrc, member, runtime.currentSecurityContext, Perms.r))
-						throw new SecurityException("Can't read that property", member);
+					if (!(runtime.currentSecurityContext === cargo.player.id && cargo.playerIsAdmin)
+							&& !Security.CheckPropertyRead(propSrc, member, runtime.currentSecurityContext))
+						throw new SecurityException("Access denied reading property", member);
 
 					if (prop && prop.wob !== this._id) {
 						let rv = Utils.Duplicate(prop.value.value);
@@ -215,8 +232,15 @@ export class WobWrapper implements Petal.IObject {
 					}
 				}, (runtime: Petal.Runtime, value: any) => {
 					// FIXME: Should check here for sticky bits.
-					if (!Security.CheckWobWrite(wob, runtime.currentSecurityContext))
-						throw new SecurityException("Can't add properties to that wob", member);
+					if (!(runtime.currentSecurityContext === cargo.player.id && cargo.playerIsAdmin)) {
+						if (!prop) {
+							if (!Security.CheckWobWrite(wob, runtime.currentSecurityContext))
+								throw new SecurityException("Access denied adding properties", member);
+						} else {
+							if (!Security.CheckPropertyWrite(wob, member, runtime.currentSecurityContext))
+								throw new SecurityException("Access denied setting property", member);
+						}
+					}
 
 					Petal.ObjectWrapper.SetTag(value, new WobPropertyTag(this, member));
 					wob.setPropertyKeepingPerms(member, value);
@@ -231,10 +255,16 @@ export class WobWrapper implements Petal.IObject {
 		let cargo: AccessorCargo = runtime.accessorCargo;
 		let wob = cargo.world.getCachedWob(this._id);
 		if (wob) {
+			let name = (<WobPropertyTag>item.tag).property;
+			if (!(runtime.currentSecurityContext === cargo.player.id && cargo.playerIsAdmin)
+					&& !Security.CheckPropertyWrite(wob, name, runtime.currentSecurityContext)) {
+				throw new SecurityException("Access denied setting property", name);
+			}
+
 			// This may not be necessary, but:
 			// a) it sets the dirty flag for us,
 			// b) if this came to us through inheritance, it will set the local copy.
-			wob.setPropertyKeepingPerms((<WobPropertyTag>item.tag).property, item);
+			wob.setPropertyKeepingPerms(name, item);
 		}
 	}
 
@@ -509,10 +539,10 @@ function formatPetalException(player: Wob, err: any) : void {
 	player.event(EventType.ScriptError, Date.now(), output);
 }
 
-export async function executeResult(parse: ParseResult, player: Wob, world: World): Promise<void> {
+export async function executeResult(parse: ParseResult, player: Wob, playerIsAdmin: boolean, world: World): Promise<void> {
 	// Get the environment ready.
 	let injections: any = {};
-	let cargo = new AccessorCargo(world, injections, player);
+	let cargo = new AccessorCargo(world, injections, player, playerIsAdmin);
 
 	let dollarObj = new DollarObject(world, injections);
 	let dollar = Petal.ObjectWrapper.WrapGeneric(dollarObj, DollarObject.Members, false);

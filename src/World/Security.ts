@@ -191,4 +191,12 @@ export class Security {
 
 		return false;
 	}
+
+	public static CheckVerbRead(wob: Wob, property: string, userId: number): boolean {
+		return Security.CheckVerb(wob, property, userId, Perms.r);
+	}
+
+	public static CheckVerbWrite(wob: Wob, property: string, userId: number): boolean {
+		return Security.CheckVerb(wob, property, userId, Perms.w);
+	}
 }
