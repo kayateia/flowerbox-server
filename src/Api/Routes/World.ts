@@ -213,16 +213,16 @@ export class WorldRouter extends RouterBase {
 		let prop = wob.getProperty(name);
 		if (!prop) {
 			// If property doesn't currently exist, create one.
-			prop = Petal.ObjectWrapper.Wrap({});
+			prop = new World.Property(Petal.ObjectWrapper.Wrap({}));
 		}
 
-		if (!(prop instanceof Petal.PetalObject)) {
+		if (!(prop.value instanceof Petal.PetalObject)) {
 			res.status(500).json(new ModelBase(false, "Property is not an object"));
 			return;
 		}
 
 		for (let sub of Petal.Utils.GetPropertyNames(req.body)) {
-			prop.set(sub, req.body[sub]);
+			prop.value.set(sub, req.body[sub]);
 		}
 
 		wob.setProperty(name, prop);
@@ -239,18 +239,18 @@ export class WorldRouter extends RouterBase {
 		if (!wob)
 			return;
 
-		let prop: Petal.PetalObject = wob.getProperty(name);
+		let prop = wob.getProperty(name);
 		if (!prop) {
 			res.status(404).json(new ModelBase(false, "Property does not exist"));
 			return;
 		}
 
-		if (!(prop instanceof Petal.PetalObject)) {
+		if (!(prop.value instanceof Petal.PetalObject)) {
 			res.status(500).json(new ModelBase(false, "Property is not an object"));
 			return;
 		}
 
-		prop.delete(sub);
+		prop.value.delete(sub);
 
 		wob.setProperty(name, prop);
 
