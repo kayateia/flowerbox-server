@@ -543,12 +543,15 @@ function handleFailure(parse: ParseResult, player: Wob): void {
 	}
 }
 
-function formatPetalException(player: Wob, err: any) : void {
+function formatPetalException(runtime: Petal.Runtime, player: Wob, err: any) : void {
 	let output;
+
+	// Try to pull the official Petal stack off the error, if it has one. If not,
+	// go to the runtime and try to pull one anyway.
 	if (err.petalStack)
 		output = [err.cause, " ", JSON.stringify(err.petalStack)];
 	else
-		output = [err.toString(), err.stack];
+		output = [err.toString(), err.stack, JSON.stringify(runtime.getStackTrace())];
 	player.event(EventType.ScriptError, Date.now(), output);
 }
 
@@ -597,7 +600,7 @@ export async function executeResult(parse: ParseResult, player: Wob, playerIsAdm
 		try {
 			result = await rt.executeCodeAsync("<immediate>", compiled, immediateInjections, player.id, 100000);
 		} catch (err) {
-			formatPetalException(player, err);
+			formatPetalException(rt, player, err);
 		}
 		if (result) {
 			console.log("Command took", result.stepsUsed, "steps");
@@ -622,7 +625,7 @@ export async function executeResult(parse: ParseResult, player: Wob, playerIsAdm
 		try {
 			result = await rt.executeFunctionAsync(addr, [], dollarParseObj.player, 100000);
 		} catch (err) {
-			formatPetalException(player, err);
+			formatPetalException(rt, player, err);
 		}
 		if (result) {
 			player.event(EventType.Debug, Date.now(), ["$command took ", result.stepsUsed, " steps"]);
@@ -658,7 +661,7 @@ export async function executeResult(parse: ParseResult, player: Wob, playerIsAdm
 		try {
 			result = await rt.executeFunctionAsync(addr, [], dollarParseObj.player, 1000000);
 		} catch (err) {
-			formatPetalException(player, err);
+			formatPetalException(rt, player, err);
 		}
 
 		if (result) {
