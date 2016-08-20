@@ -5,6 +5,8 @@
   "main": "bin/www",
   "scripts": {
     "start": "node ./bin/www",
+    "tsc": "tsc",
+    "tsc:w": "tsc -w",
     "test": "jasmine"
   },
   "author": "",
@@ -23,6 +25,7 @@
     "grunt-newer": "^1.2.0",
     "grunt-typescript": "^0.8.0",
     "jasmine": "^2.4.1",
-    "typescript": "^1.8.10"
+    "restler": "^3.4.0",
+    "typescript": "^2.0.0"
   }
 }
