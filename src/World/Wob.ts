@@ -142,6 +142,10 @@ export class Wob {
 
 	public set owner(o: number) {
 		this._owner = o;
+
+		// We also have to go through and set the security context on all our verbs.
+		for (let v of this.getVerbs())
+			v.address.module.securityContext = o;
 	}
 
 	public get group(): number {
