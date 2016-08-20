@@ -181,7 +181,7 @@ export class WobWrapper implements Petal.IObject {
 						return null;
 					}
 
-					if (!Security.CheckVerb(verbSrc, member, cargo.player.id, Perms.x))
+					if (!Security.CheckVerb(verbSrc, member, runtime.currentSecurityContext, Perms.x))
 						throw new SecurityException("Can't execute that verb", member);
 					let addr = verb.value.address.copy();
 					addr.thisValue = this;
@@ -199,7 +199,7 @@ export class WobWrapper implements Petal.IObject {
 						return null;
 					}
 
-					if (!Security.CheckProperty(propSrc, member, cargo.player.id, Perms.r))
+					if (!Security.CheckProperty(propSrc, member, runtime.currentSecurityContext, Perms.r))
 						throw new SecurityException("Can't read that property", member);
 
 					if (prop && prop.wob !== this._id) {
@@ -215,7 +215,7 @@ export class WobWrapper implements Petal.IObject {
 					}
 				}, (runtime: Petal.Runtime, value: any) => {
 					// FIXME: Should check here for sticky bits.
-					if (!Security.CheckWobWrite(wob, cargo.player))
+					if (!Security.CheckWobWrite(wob, runtime.currentSecurityContext))
 						throw new SecurityException("Can't add properties to that wob", member);
 
 					Petal.ObjectWrapper.SetTag(value, new WobPropertyTag(this, member));
@@ -551,7 +551,7 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 		};
 		let result: Petal.ExecuteResult;
 		try {
-			result = await rt.executeCodeAsync("<immediate>", compiled, immediateInjections, 100000);
+			result = await rt.executeCodeAsync("<immediate>", compiled, immediateInjections, player.id, 100000);
 		} catch (err) {
 			formatPetalException(player, err);
 		}

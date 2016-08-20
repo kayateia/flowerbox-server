@@ -183,14 +183,17 @@ export class Runtime {
 		}
 	}
 
-	public executeCode(moduleName: string, code: AstNode, injections: any, maxSteps?: number): ExecuteResult {
+	public executeCode(moduleName: string, code: AstNode, injections: any,
+			securityContext: number, maxSteps?: number): ExecuteResult {
 		if (injections) {
 			this.pushScope(ConstScope.FromObject(this.currentScope, injections));
 			this.pushScope(new StandardScope(this.currentScope));
 		}
 		var compiler = new Compiler(moduleName);
 		compiler.compile(code);
-		this.setInitialPC(new Address(0, compiler.module, code));
+		let module = compiler.module;
+		module.securityContext = securityContext;
+		this.setInitialPC(new Address(0, module, code));
 
 		// The return value actually comes off the lastStatementValue for the Runtime, because that's
 		// where the AstStatement handler would leave it.
@@ -199,14 +202,17 @@ export class Runtime {
 		return rv;
 	}
 
-	public async executeCodeAsync(moduleName: string, code: AstNode, injections: any, maxSteps?: number): Promise<ExecuteResult> {
+	public async executeCodeAsync(moduleName: string, code: AstNode, injections: any,
+			securityContext: number, maxSteps?: number): Promise<ExecuteResult> {
 		if (injections) {
 			this.pushScope(ConstScope.FromObject(this.currentScope, injections));
 			this.pushScope(new StandardScope(this.currentScope));
 		}
 		var compiler = new Compiler(moduleName);
 		compiler.compile(code);
-		this.setInitialPC(new Address(0, compiler.module, code));
+		let module = compiler.module;
+		module.securityContext = securityContext;
+		this.setInitialPC(new Address(0, module, code));
 
 		// The return value actually comes off the lastStatementValue for the Runtime, because that's
 		// where the AstStatement handler would leave it.
@@ -271,6 +277,14 @@ export class Runtime {
 		}
 
 		return stack;
+	}
+
+	// Returns the security context the current code is running under, if any. Otherwise, returns 0.
+	public get currentSecurityContext(): number {
+		if (this.address.module)
+			return this.address.module.securityContext;
+		else
+			return 0;
 	}
 
 	public pushPC(address?: Address): void {

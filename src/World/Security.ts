@@ -109,13 +109,13 @@ export class Perms {
 
 // Static methods for verifying various security actions against the permissions on a wob.
 export class Security {
-	public static CheckWob(wob: Wob, user: Wob, mask: number): boolean {
+	public static CheckWob(wob: Wob, userId: number, mask: number): boolean {
 		// We ignore group for now.
-		let owner = wob.owner;
-		if (!owner)
+		let ownerId = wob.owner;
+		if (!ownerId)
 			return false;
 
-		if (owner === user.id)
+		if (ownerId === userId)
 			return true;
 
 		let perms = wob.perms;
@@ -126,12 +126,12 @@ export class Security {
 		return false;
 	}
 
-	public static CheckWobRead(wob: Wob, user: Wob): boolean {
-		return Security.CheckWob(wob, user, Perms.r);
+	public static CheckWobRead(wob: Wob, userId: number): boolean {
+		return Security.CheckWob(wob, userId, Perms.r);
 	}
 
-	public static CheckWobWrite(wob: Wob, user: Wob): boolean {
-		return Security.CheckWob(wob, user, Perms.w);
+	public static CheckWobWrite(wob: Wob, userId: number): boolean {
+		return Security.CheckWob(wob, userId, Perms.w);
 	}
 
 	public static CheckProperty(wob: Wob, property: string, userId: number, mask: number): boolean {

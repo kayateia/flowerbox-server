@@ -330,9 +330,10 @@ export class Wob {
 		if (!Petal.Check.IsSingleObjectDef(parsed))
 			throw new InvalidCodeException("Verb code is not a single variable declaration with an object value.", parsed);
 
-		// Execute the code.
+		// Execute the code. Note that we want the resulting code to run under this wob's security
+		// context, so we pass it here.
 		let rt = new Petal.Runtime();
-		let runresult = rt.executeCode("#" + this.id + "." + name, parsed, null, 10000);
+		let runresult = rt.executeCode("#" + this.id + "." + name, parsed, null, this._id, 10000);
 
 		// Look for the variable that was set in the scope.
 		let scope = rt.currentScope;
