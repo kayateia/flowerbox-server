@@ -409,6 +409,9 @@ class DollarObject {
 		let newWob = await this._world.createWob(intoOrId);
 		newWob.base = 1;
 
+		// Also default to the ownership being the object who created it.
+		newWob.owner = this._runtime.currentSecurityContext;
+
 		return new WobWrapper(newWob.id);
 	}
 
@@ -442,8 +445,18 @@ class DollarObject {
 		"log", "logArray", "timestamp", "get", "move", "contents", "create", "notate"
 	];
 
+	// Each time a new Runtime is created to deal with this object, set this value so we
+	// have it to use in our methods.
+	//
+	// It would've been better to have this passed down into the methods, but then we'd have
+	// to do the whole getAccessor thing here, and that's even uglier.
+	public set runtime(runtime: Petal.Runtime) {
+		this._runtime = runtime;
+	}
+
 	private _world: World;
 	private _injections: any;
+	private _runtime: Petal.Runtime;
 }
 
 // Wraps the ParseResult object for $parse inside Petal.
@@ -566,6 +579,7 @@ export async function executeResult(parse: ParseResult, player: Wob, playerIsAdm
 		}
 	};
 	let rt = new Petal.Runtime(false, rootScope, changeRouter, cargo);
+	dollarObj.runtime = rt;
 
 	// If it's a literal code line, skip the rest of this.
 	let trimmedLine = parse.text.trim();
@@ -622,6 +636,7 @@ export async function executeResult(parse: ParseResult, player: Wob, playerIsAdm
 			if (parse.verb) {
 				// Reset the runtime.
 				rt = new Petal.Runtime(false, rootScope, changeRouter, cargo);
+				dollarObj.runtime = rt;
 			}
 		}
 	}
