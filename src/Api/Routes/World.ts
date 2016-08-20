@@ -198,7 +198,10 @@ export class WorldRouter extends RouterBase {
 			return;
 		}
 
-		res.json(new Wob.Property(wob.id, name, prop.get(sub), sub));
+		if (prop.has(sub))
+			res.json(new Wob.Property(wob.id, name, prop.get(sub), sub));
+		else
+			res.status(404).json(new ModelBase(false, "Sub-property does not exist"));
 	}
 
 	private async setPropertySub(req, res, next): Promise<any> {
