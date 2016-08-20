@@ -96,6 +96,9 @@ export class WorldRouter extends RouterBase {
 	// Checks to see if the user has the ability to write to the specified property on the specified wob.
 	// This is async because we look up the wob (it is often not the same wob that was read).
 	private async checkPropertyRead(srcWobId: number, prop: string, res: any): Promise<boolean> {
+		if (this.token.admin)
+			return true;
+
 		let srcWob = await this.world.getWob(srcWobId);
 		if (!srcWob) {
 			res.status(500).json(new ModelBase(false, "Can't find property's wob to test security"));
@@ -113,6 +116,9 @@ export class WorldRouter extends RouterBase {
 	// Checks to see if the user has the ability to write to the specified property on the specified wob.
 	// If we don't have the property, it checks to see if the user can write new properties.
 	private checkPropertyWrite(wob: World.Wob, prop: string, res: any): boolean {
+		if (this.token.admin)
+			return true;
+
 		if (wob.getProperty(prop)) {
 			if (!World.Security.CheckPropertyWrite(wob, prop, this.token.wobId)) {
 				res.status(403).json(new ModelBase(false, "Access denied writing to one or more properties"));
@@ -193,7 +199,7 @@ export class WorldRouter extends RouterBase {
 		if (!wob)
 			return;
 
-		if (!World.Security.CheckWobWrite(wob, this.token.wobId)) {
+		if (!this.token.admin && !World.Security.CheckWobWrite(wob, this.token.wobId)) {
 			res.status(403).json(new ModelBase(false, "Access denied for deleting properties from this wob"));
 			return;
 		}
@@ -252,7 +258,7 @@ export class WorldRouter extends RouterBase {
 		if (!wob)
 			return;
 
-		if (!World.Security.CheckPropertyRead(wob, name, this.token.wobId)) {
+		if (!this.token.admin && !World.Security.CheckPropertyRead(wob, name, this.token.wobId)) {
 			res.status(403).json(new ModelBase(false, "Access denied for reading property"));
 			return;
 		}
@@ -283,7 +289,7 @@ export class WorldRouter extends RouterBase {
 			return;
 
 		// This requires both reading and writing.
-		if (!World.Security.CheckProperty(wob, name, this.token.wobId, World.Perms.r | World.Perms.w)) {
+		if (!this.token.admin && !World.Security.CheckProperty(wob, name, this.token.wobId, World.Perms.r | World.Perms.w)) {
 			res.status(403).json(new ModelBase(false, "Access denied for reading and writing property"));
 			return;
 		}
@@ -318,7 +324,7 @@ export class WorldRouter extends RouterBase {
 			return;
 
 		// This requires both reading and writing.
-		if (!World.Security.CheckProperty(wob, name, this.token.wobId, World.Perms.r | World.Perms.w)) {
+		if (!this.token.admin && !World.Security.CheckProperty(wob, name, this.token.wobId, World.Perms.r | World.Perms.w)) {
 			res.status(403).json(new ModelBase(false, "Access denied for reading and writing property"));
 			return;
 		}

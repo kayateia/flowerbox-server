@@ -45,6 +45,7 @@ export class WobProperties {
 	public static EventStream = "eventstream";	// [{ type, time, body, tag? }]
 	public static PasswordHash = "pwhash";		// string
 	public static LastActive = "lastactive";	// int (unix timestamp)
+	public static Admin = "admin";				// boolean
 }
 
 // This should be kept in sync with the API models.
