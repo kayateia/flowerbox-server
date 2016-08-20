@@ -196,20 +196,26 @@ export class WorldRouter extends RouterBase {
 		if (!(await this.checkPropertyRead(prop.wob, name, res)))
 			return;
 
+		let perms = prop.value.perms;
+		if (!perms)
+			perms = World.Security.GetDefaultPropertyPerms();
+		let metadata = new Wob.Property(
+			prop.wob,
+			name,
+			undefined,
+			perms);
+
 		// We have to special case this for now.
-		if (prop.value instanceof Petal.PetalBlob) {
+		if (prop.value.value instanceof Petal.PetalBlob) {
 			let value: any = prop.value.value.data;
 			if (base64)
 				value = value.toString("base64");
+			res.set("X-Property-Metadata", JSON.stringify(metadata));
 			res.set("Content-Type", prop.value.value.mime)
 				.send(value);
 		} else {
-			res.json(new Wob.Property(
-				prop.wob,
-				name,
-				Petal.ObjectWrapper.Unwrap(prop.value.value),
-				prop.value.perms
-			));
+			metadata.value = Petal.ObjectWrapper.Unwrap(prop.value.value);
+			res.json(metadata);
 		}
 	}
 
@@ -408,12 +414,17 @@ export class WorldRouter extends RouterBase {
 		if (!(await this.checkVerbRead(verb.wob, name, res)))
 			return;
 
+		let perms = verb.value.perms;
+		if (!perms)
+			perms = World.Security.GetDefaultVerbPerms();
+
 		res.json(new Wob.Verb(
-				verb.wob,
-				name,
-				verb.value.signatureStrings,
-				verb.value.code
-			));
+			verb.wob,
+			name,
+			verb.value.signatureStrings,
+			verb.value.code,
+			perms
+		));
 	}
 
 	private async deleteVerb(req, res, next): Promise<any> {

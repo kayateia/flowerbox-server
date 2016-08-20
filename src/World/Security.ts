@@ -114,6 +114,28 @@ export class Perms {
 
 // Static methods for verifying various security actions against the permissions on a wob.
 export class Security {
+	/////////////////////////////////////////////////////////////////////////////////////////
+	// Default permissions
+
+	// Returns the default permissions for a property.
+	public static GetDefaultPropertyPerms(): number {
+		return Perms.parse("rw-r--r--");
+	}
+
+	// Returns the default permissions for a verb.
+	public static GetDefaultVerbPerms(): number {
+		return Perms.parse("rwxr-xr-x");
+	}
+
+	// Returns the default permissions for a wob.
+	public static GetDefaultWobPerms(): number {
+		return Perms.parse("rw-r--r--");
+	}
+
+
+	/////////////////////////////////////////////////////////////////////////////////////////
+	// Wob permissions
+
 	// Checks if the specified user has all the specified permissions on a wob.
 	public static CheckWob(wob: Wob, userId: number, mask: number): boolean {
 		// We ignore group for now.
@@ -142,6 +164,10 @@ export class Security {
 		return Security.CheckWob(wob, userId, Perms.w);
 	}
 
+
+	/////////////////////////////////////////////////////////////////////////////////////////
+	// Property permissions
+
 	// Checks if the specified user has all the specified permissions on a property on a wob.
 	public static CheckProperty(wob: Wob, property: string, userId: number, mask: number): boolean {
 		// We ignore group for now.
@@ -160,7 +186,7 @@ export class Security {
 
 		let perms = prop.perms;
 		if (!perms)
-			perms = Perms.parse("rw-r--r--");
+			perms = Security.GetDefaultPropertyPerms();
 		let others = Perms.others(perms);
 		if ((others & mask) === mask)
 			return true;
@@ -191,6 +217,10 @@ export class Security {
 		return !!(misc & Perms.s);
 	}
 
+
+	/////////////////////////////////////////////////////////////////////////////////////////
+	// Verb permissions
+
 	// Checks if the specified user has all the specified permissions on a verb on a wob.
 	public static CheckVerb(wob: Wob, verbWord: string, userId: number, mask: number): boolean {
 		// We ignore group for now.
@@ -209,7 +239,7 @@ export class Security {
 
 		let perms = verb.perms;
 		if (!perms)
-			perms = Perms.parse("rwxr-xr-x");
+			perms = Security.GetDefaultVerbPerms();
 		let others = Perms.others(perms);
 		if (others & mask)
 			return true;

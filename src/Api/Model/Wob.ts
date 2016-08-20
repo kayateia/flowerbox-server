@@ -26,18 +26,20 @@ export class Property extends ModelBase {
 
 // For returning one verb on a wob.
 export class Verb extends ModelBase {
-	constructor(id: number, name: string, sigs: string[], code: string) {
+	constructor(id: number, name: string, sigs: string[], code: string, perms: number) {
 		super(true);
 		this.id = id;
 		this.name = name;
 		this.sigs = sigs;
 		this.code = code;
+		this.perms = perms;
 	}
 
 	public id: number;
 	public name: string;
 	public sigs: string[];
 	public code: string;
+	public perms: number;
 }
 
 // Returned from setting multiple verbs. Since verbs may have compilation errors,
