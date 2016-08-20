@@ -120,7 +120,7 @@ export class Security {
 
 		let perms = wob.perms;
 		let others = Perms.others(perms);
-		if (others & mask)
+		if ((others & mask) === mask)
 			return true;
 
 		return false;
@@ -153,10 +153,18 @@ export class Security {
 		if (!perms)
 			perms = Perms.parse("rw-r--r--");
 		let others = Perms.others(perms);
-		if (others & mask)
+		if ((others & mask) === mask)
 			return true;
 
 		return false;
+	}
+
+	public static CheckPropertyRead(wob: Wob, property: string, userId: number): boolean {
+		return Security.CheckProperty(wob, property, userId, Perms.r);
+	}
+
+	public static CheckPropertyWrite(wob: Wob, property: string, userId: number): boolean {
+		return Security.CheckProperty(wob, property, userId, Perms.w);
 	}
 
 	public static CheckVerb(wob: Wob, verbWord: string, userId: number, mask: number): boolean {
