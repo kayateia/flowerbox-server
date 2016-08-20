@@ -33,23 +33,28 @@ import { Wob, WobProperties } from "./Wob";
 // Note that the static members of this class are lower case to match Petal conventions,
 // because these will be exported directly to Petal.
 export class Perms {
-	// Sticky
+	// Sticky / Super
 	// Properties: This property will retain ownership and permissions from the
 	//   object on which it originated. This bit is set on the "misc" part.
+	// Verbs: This verb, when executed, will run with elevated (admin) privileges.
+	//   This permission is not transitive, so any code called from the admin verb
+	//   will not have elevated privileges (unless that verb is also +s).
 	public static s = 0x08;
 
 	// Read
 	// Properties: Can read the property value
-	// Wobs: Can read the property list, the verb program, and the base property
+	// Verbs: Can read the verb program
+	// Wobs: Can read the property list and the base property
 	public static r = 0x04;
 
 	// Write
 	// Properties: Can write the property value
-	// Wobs: Can create and delete properties, change base property
+	// Verbs: Can write the verb program
+	// Wobs: Can create and delete properties and verbs, change base property
 	public static w = 0x02;
 
 	// Execute
-	// Verbs: Can execute the verb (this is set per verb in the verb code)
+	// Verbs: Can execute the verb
 	public static x = 0x01;
 
 	private static GetSetBits(mask: number, bits: number, newValue?: number): number {
@@ -109,6 +114,7 @@ export class Perms {
 
 // Static methods for verifying various security actions against the permissions on a wob.
 export class Security {
+	// Checks if the specified user has all the specified permissions on a wob.
 	public static CheckWob(wob: Wob, userId: number, mask: number): boolean {
 		// We ignore group for now.
 		let ownerId = wob.owner;
@@ -126,14 +132,17 @@ export class Security {
 		return false;
 	}
 
+	// Checks if the specified user has read permissions on a wob.
 	public static CheckWobRead(wob: Wob, userId: number): boolean {
 		return Security.CheckWob(wob, userId, Perms.r);
 	}
 
+	// Checks if the specified user has write permissions on a wob.
 	public static CheckWobWrite(wob: Wob, userId: number): boolean {
 		return Security.CheckWob(wob, userId, Perms.w);
 	}
 
+	// Checks if the specified user has all the specified permissions on a property on a wob.
 	public static CheckProperty(wob: Wob, property: string, userId: number, mask: number): boolean {
 		// We ignore group for now.
 		let owner = wob.owner;
@@ -159,14 +168,30 @@ export class Security {
 		return false;
 	}
 
+	// Checks if the specified user has read permissions on a property on a wob.
 	public static CheckPropertyRead(wob: Wob, property: string, userId: number): boolean {
 		return Security.CheckProperty(wob, property, userId, Perms.r);
 	}
 
+	// Checks if the specified user has write permissions on a property on a wob.
 	public static CheckPropertyWrite(wob: Wob, property: string, userId: number): boolean {
 		return Security.CheckProperty(wob, property, userId, Perms.w);
 	}
 
+	// Returns true if the specified property has its stick bit set.
+	public static CheckPropertySticky(wob: Wob, property: string): boolean {
+		let prop = wob.getProperty(property);
+		if (!prop)
+			return false;
+
+		let perms = prop.perms;
+		if (!perms)
+			return false;
+		let misc = Perms.misc(perms);
+		return !!(misc & Perms.s);
+	}
+
+	// Checks if the specified user has all the specified permissions on a verb on a wob.
 	public static CheckVerb(wob: Wob, verbWord: string, userId: number, mask: number): boolean {
 		// We ignore group for now.
 		let owner = wob.owner;
@@ -192,11 +217,56 @@ export class Security {
 		return false;
 	}
 
-	public static CheckVerbRead(wob: Wob, property: string, userId: number): boolean {
-		return Security.CheckVerb(wob, property, userId, Perms.r);
+	// Checks if the specified user has read permissions on a verb on a wob.
+	public static CheckVerbRead(wob: Wob, verb: string, userId: number): boolean {
+		return Security.CheckVerb(wob, verb, userId, Perms.r);
 	}
 
-	public static CheckVerbWrite(wob: Wob, property: string, userId: number): boolean {
-		return Security.CheckVerb(wob, property, userId, Perms.w);
+	// Checks if the specified user has write permissions on a verb on a wob.
+	public static CheckVerbWrite(wob: Wob, verb: string, userId: number): boolean {
+		return Security.CheckVerb(wob, verb, userId, Perms.w);
+	}
+
+	// Checks if the specified user has execute permissions on a verb on a wob.
+	public static CheckVerbExecute(wob: Wob, verb: string, userId: number): boolean {
+		return Security.CheckVerb(wob, verb, userId, Perms.x);
+	}
+
+	// Returns true if the specified verb is intended to be run with elevated privileges.
+	public static CheckVerbElevated(wob: Wob, verbWord: string): boolean {
+		let verb = wob.getVerb(verbWord);
+		if (!verb)
+			return false;
+
+		let perms = verb.perms;
+		if (!perms)
+			return false;
+		let misc = Perms.misc(perms);
+		return !!(misc & Perms.s);
+	}
+
+
+	/////////////////////////////////////////////////////////////////////////////////////////
+	// The rest of these are basically convenience methods that call back to the ones above,
+	// to centralize all the checks so we can easily change them later.
+
+	// Checks if the specified user has the rights to get the list of properties on a wob.
+	public static CheckGetWobProperties(wob: Wob, userId: number): boolean {
+		return Security.CheckWobRead(wob, userId);
+	}
+
+	// Checks if the specified user has the rights to get the list of verbs on a wob.
+	public static CheckGetWobVerbs(wob: Wob, userId: number): boolean {
+		return Security.CheckWobRead(wob, userId);
+	}
+
+	// Checks if the specified user has the rights to add a property to a wob.
+	public static CheckSetWobProperties(wob: Wob, userId: number): boolean {
+		return Security.CheckWobWrite(wob, userId);
+	}
+
+	// Checks if the specified user has the rights to add a verb to a wob.
+	public static CheckSetWobVerbs(wob: Wob, userId: number): boolean {
+		return Security.CheckWobWrite(wob, userId);
 	}
 }

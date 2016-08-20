@@ -152,7 +152,7 @@ export class WobWrapper implements Petal.IObject {
 				let wob = await cargo.world.getWob(this._id);
 
 				if (!(runtime.currentSecurityContext === cargo.player.id && cargo.playerIsAdmin)
-						&& !Security.CheckWobRead(wob, runtime.currentSecurityContext)) {
+						&& !Security.CheckGetWobProperties(wob, runtime.currentSecurityContext)) {
 					throw new SecurityException("Access denied reading wob", "properties");
 				}
 
@@ -168,7 +168,7 @@ export class WobWrapper implements Petal.IObject {
 				let wob = await cargo.world.getWob(this._id);
 
 				if (!(runtime.currentSecurityContext === cargo.player.id && cargo.playerIsAdmin)
-						&& !Security.CheckWobRead(wob, runtime.currentSecurityContext)) {
+						&& !Security.CheckGetWobVerbs(wob, runtime.currentSecurityContext)) {
 					throw new SecurityException("Access denied reading wob", "verbs");
 				}
 
@@ -234,7 +234,7 @@ export class WobWrapper implements Petal.IObject {
 					// FIXME: Should check here for sticky bits.
 					if (!(runtime.currentSecurityContext === cargo.player.id && cargo.playerIsAdmin)) {
 						if (!prop) {
-							if (!Security.CheckWobWrite(wob, runtime.currentSecurityContext))
+							if (!Security.CheckSetWobProperties(wob, runtime.currentSecurityContext))
 								throw new SecurityException("Access denied adding properties", member);
 						} else {
 							if (!Security.CheckPropertyWrite(wob, member, runtime.currentSecurityContext))
