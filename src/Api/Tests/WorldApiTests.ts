@@ -29,78 +29,132 @@ describe("World API", function() {
 		});
 	});
 
-	it("allows property querying", function(done) {
-		rest.get(baseUrl + "/world/wob/@world/property/name", {
-			headers: headers
-		}).on("complete", function(result) {
-			expect(result).toEqual({
-				success: true,
-				id: 1,
-				name: "name",
-				value: "Za Waarudo"
+	describe("property API", function() {
+		it("allows property querying", function(done) {
+			rest.get(baseUrl + "/world/wob/@world/property/name", {
+				headers: headers
+			}).on("complete", function(result) {
+				expect(result).toEqual({
+					success: true,
+					id: 1,
+					name: "name",
+					value: "Za Waarudo"
+				});
+				done();
 			});
-			done();
+		});
+
+		it("allows property setting by multi-part form", function(done) {
+			rest.put(baseUrl + "/world/wob/@kayateia/properties/binary", {
+				multipart: true,
+				headers: headers,
+				data: {
+					testMultipartFormSet: JSON.stringify("test value")
+				}
+			}).on("complete", function(result) {
+				expect(result).toEqual({
+					success: true,
+				});
+
+				rest.get(baseUrl + "/world/wob/@kayateia/property/testMultipartFormSet", {
+					headers: headers
+				}).on("complete", function(result) {
+					expect(result.success).toEqual(true);
+					expect(result.value).toEqual("test value");
+					done();
+				})
+			});
+		});
+
+		it("allows property setting by JSON/form", function(done) {
+			rest.put(baseUrl + "/world/wob/@kayateia/properties", {
+				headers: headers,
+				data: {
+					testJsonSet: "test value"
+				}
+			}).on("complete", function(result) {
+				expect(result).toEqual({
+					success: true,
+				});
+
+				rest.get(baseUrl + "/world/wob/@kayateia/property/testJsonSet", {
+					headers: headers
+				}).on("complete", function(result) {
+					expect(result.success).toEqual(true);
+					expect(result.value).toEqual("test value");
+					done();
+				})
+			});
+		});
+
+		it("allows property deletion", function(done) {
+			rest.del(baseUrl + "/world/wob/@kayateia/property/name", {
+				headers: headers,
+			}).on("complete", function(result) {
+				expect(result).toEqual({
+					success: true,
+				});
+
+				rest.get(baseUrl + "/world/wob/@kayateia/property/name", {
+					headers: headers
+				}).on("complete", function(result) {
+					expect(result.success).toEqual(true);
+					expect(result.value).toEqual("Player");
+					done();
+				})
+			});
 		});
 	});
 
-	it("allows property setting by multi-part form", function(done) {
-		rest.put(baseUrl + "/world/wob/@kayateia/properties/binary", {
-			multipart: true,
-			headers: headers,
-			data: {
-				testMultipartFormSet: JSON.stringify("test value")
-			}
-		}).on("complete", function(result) {
-			expect(result).toEqual({
-				success: true,
-			});
-
-			rest.get(baseUrl + "/world/wob/@kayateia/property/testMultipartFormSet", {
-				headers: headers
+	// These next couple go together and build off what the others did.
+	describe("sub-property API", function() {
+		it("allows sub-property setting", function(done) {
+			rest.put(baseUrl + "/world/wob/@kayateia/property/subSetTest/subs", {
+				headers: headers,
+				data: {
+					subProp: "test value",
+					secondProp: "second value"
+				}
 			}).on("complete", function(result) {
-				expect(result.success).toEqual(true);
-				expect(result.value).toEqual("test value");
-				done();
-			})
+				expect(result).toEqual({
+					success: true,
+				});
+
+				rest.get(baseUrl + "/world/wob/@kayateia/property/subSetTest/sub/subProp", {
+					headers: headers
+				}).on("complete", function(result) {
+					expect(result.success).toEqual(true);
+					expect(result.value).toEqual("test value");
+					done();
+				})
+			});
 		});
-	});
 
-	it("allows property setting by JSON/form", function(done) {
-		rest.put(baseUrl + "/world/wob/@kayateia/properties", {
-			headers: headers,
-			data: {
-				testJsonSet: "test value"
-			}
-		}).on("complete", function(result) {
-			expect(result).toEqual({
-				success: true,
-			});
-
-			rest.get(baseUrl + "/world/wob/@kayateia/property/testJsonSet", {
-				headers: headers
+		it("allows sub-property deletion", function(done) {
+			rest.del(baseUrl + "/world/wob/@kayateia/property/subSetTest/sub/subProp", {
+				headers: headers,
 			}).on("complete", function(result) {
-				expect(result.success).toEqual(true);
-				expect(result.value).toEqual("test value");
-				done();
-			})
+				expect(result).toEqual({
+					success: true,
+				});
+
+				rest.get(baseUrl + "/world/wob/@kayateia/property/subSetTest/sub/subProp", {
+					headers: headers
+				}).on("complete", function(result) {
+					expect(result.success).toEqual(false);
+					done();
+				})
+			});
 		});
-	});
 
-	it("allows property deletion", function(done) {
-		rest.del(baseUrl + "/world/wob/@kayateia/property/name", {
-			headers: headers,
-		}).on("complete", function(result) {
-			expect(result).toEqual({
-				success: true,
-			});
-
-			rest.get(baseUrl + "/world/wob/@kayateia/property/name", {
-				headers: headers
+		it("allows sub-property getting", function(done) {
+			rest.get(baseUrl + "/world/wob/@kayateia/property/subSetTest/sub/secondProp", {
+				headers: headers,
 			}).on("complete", function(result) {
 				expect(result.success).toEqual(true);
-				expect(result.value).toEqual("Player");
+				expect(result.value).toEqual("second value");
 				done();
-			})
+			});
 		});
 	});
 });
