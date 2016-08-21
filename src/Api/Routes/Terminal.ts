@@ -61,19 +61,15 @@ export class TerminalRouter extends RouterBase {
 
 		// If we don't have new output immediately available, then turn it into a long-wait push request.
 		let eventStream = player.getProperty(World.WobProperties.EventStream);
-		if (!eventStream) {
-			res.json(new EventStream([]));
-			return null;
-		}
+		if (!eventStream)
+			eventStream = new World.Property([]);
 		let output: any[] = this.newerThan(Petal.ObjectWrapper.Unwrap(eventStream.value), since);
 		let count = 10000 / 500;
 		while (count-- && !output.length) {
 			await CorePromises.delay(500);
 			eventStream = player.getProperty(World.WobProperties.EventStream);
-			if (!eventStream) {
-				res.json(new EventStream([]));
-				return null;
-			}
+			if (!eventStream)
+				eventStream = new World.Property([]);
 			output = this.newerThan(Petal.ObjectWrapper.Unwrap(eventStream.value), since);
 			if (output.length)
 				break;
