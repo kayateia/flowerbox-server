@@ -13,6 +13,7 @@ import { indexRouter } from "./Routes/Index";
 import { terminalRouter } from "./Routes/Terminal";
 import { userRouter } from "./Routes/User";
 import { worldRouter } from "./Routes/World";
+import { ModelBase } from "./Model/ModelBase";
 
 const bodyParser = require("body-parser");
 const InitWorld = require("../../notes/init/InitWorld");
@@ -48,9 +49,7 @@ worldStartup()
 
 		// Catch 404 and forward to error handler.
 		app.use((req, res, next) => {
-			let err: any = new Error("Not Found");
-			err.status = 404;
-			next(err);
+			res.status(404).json(new ModelBase(false, "Unknown route"));
 		});
 	})
 	.catch(err => {
