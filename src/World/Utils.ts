@@ -4,7 +4,7 @@
 	For license info, please see notes/gpl-3.0.txt under the project root.
 */
 
-import { NotationWrapper } from "./Execution";
+import { NotationWrapper } from "./Execution/NotationWrapper";
 import { DuplicationException } from "./Exceptions";
 import * as Petal from "../Petal/All";
 

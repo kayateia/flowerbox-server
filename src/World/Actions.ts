@@ -7,7 +7,7 @@
 import { Wob, WobProperties, WobRef, EventType } from "./Wob";
 import { World } from "./World";
 import { Security } from "./Security";
-import { NotationWrapper } from "./Execution";
+import { NotationWrapper } from "./Execution/NotationWrapper";
 import { WobReferenceException } from "./Exceptions";
 import { Notation } from "./Notation";
 
