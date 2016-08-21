@@ -74,20 +74,29 @@ export class WorldRouter extends RouterBase {
 		this.router.get("/wob/:ids/instanceof/:ancestorid", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,()=>this.instanceOf(rq,rs,n)); });
 	}
 
+	// This attempts to locate a wob contextually, by a global ID, integer, or partial
+	// name of something in the room with the player. This works off the same rules
+	// as InputParser, it just adds raw number support.
 	private async getWob(id: string, res): Promise<World.Wob> {
 		let wob: World.Wob;
-		if (id.startsWith("@")) {
-			let wobs = await this.world.getWobsByGlobalId([id.substr(1)]);
-			wob = wobs[0];
-		} else if (id.startsWith("#")) {
-			wob = await this.world.getWob(parseInt(id.substr(1), 10));
+
+		let num = parseInt(id, 10);
+		if (!Number.isNaN(num)) {
+			wob = await this.world.getWob(num);
+			if (!wob) {
+				res.status(404).json(new ModelBase(false, "Unknown wob ID"));
+				return null;
+			}
 		} else {
-			// Assume it's a number.
-			wob = await this.world.getWob(parseInt(id, 10));
-		}
-		if (!wob) {
-			res.status(404).json(new ModelBase(false, "Unknown wob ID"));
-			return null;
+			let player = await this.world.getWob(this.token.wobId);
+			wob = await World.Actions.Lookup(this.world, player, id);
+			if (wob === World.Wob.None) {
+				res.status(404).json(new ModelBase(false, "Unknown wob ID"));
+				return null;
+			} else if (wob === World.Wob.Ambiguous) {
+				res.status(404).json(new ModelBase(false, "Ambiguous wob prefix"));
+				return null;
+			}
 		}
 
 		return wob;

@@ -8,6 +8,7 @@ import { Verb, VerbSig } from "./Verb";
 import { Wob, WobProperties } from "./Wob";
 import { World } from "./World";
 import * as Strings from "../Utils/Strings";
+import { Actions } from "./Actions";
 
 /*
 This is a simple natural language parser. It looks in the user's current room for objects
@@ -111,38 +112,6 @@ async function parseVerbLines(world: World, obj: Wob, roomObjects: Wob[], extras
 	});
 
 	return parsedLines;
-}
-
-// Looks through the various possibilities and, given a name that may be an @atName or a #nn hash
-// name, or a partial name, find the object in question or return null if it can't be found (or is ambiguous).
-function findObjectByPartialName(name: string, roomObjs: Wob[], atObjs: Wob[], hashObjs: Wob[]): Wob {
-	if (name[0] === "@") {
-		let subname = name.substr(1);
-		for (let obj of atObjs) {
-			if (obj.getProperty(WobProperties.GlobalId) && Strings.caseEqual(obj.getProperty(WobProperties.GlobalId).value, subname))
-				return obj;
-		}
-		return null;
-	} else if (name[0] === "#") {
-		let subId = parseInt(name.substr(1), 10);
-		for (let obj of hashObjs) {
-			if (obj.id === subId)
-				return obj;
-		}
-		return null;
-	} else {
-		let possibles: Wob[] = [];
-		name = name.toLowerCase();
-		for (let obj of roomObjs) {
-			if (obj.getProperty(WobProperties.Name).value.toLowerCase().startsWith(name))
-				possibles.push(obj);
-		}
-
-		if (possibles.length !== 1)
-			return null;
-		else
-			return possibles[0];
-	}
 }
 
 export enum ParseError {
@@ -253,29 +222,20 @@ export async function parseInput(text: string, self: Wob, world: World): Promise
 		// Let's focus on the one we did get. The first array element will be the full input, but
 		// the ones after that will be the individual pieces, starting with the verb and moving on to
 		// any other components that were present.
-		function findWobByName(name: string) {
-			if (name === "here")
-				return roomWob;
-			else if (name === "me")
-				return self;
-			else
-				return findObjectByPartialName(name, roomContents, miscWobsAt, miscWobsHash);
-		}
-
 		let pieces = matches[0].match.slice(1);
 		let matchedWob = matches[0].re.wob;
 		let matchedVerb = matches[0].re.verb;
 		result = ParseResult.Result(pieces[0], matchedWob, matchedVerb);
 		if (pieces[1])
-			result.direct = findWobByName(pieces[1]);
+			result.direct = await Actions.Lookup(world, self, pieces[1]);
 		if (pieces[2])
 			result.prep = pieces[2];
 		if (pieces[3])
-			result.indirect = findWobByName(pieces[3]);
+			result.indirect = await Actions.Lookup(world, self, pieces[3]);
 		if (pieces[4])
 			result.prep2 = pieces[4];
 		if (pieces[5])
-			result.indirect2 = findWobByName(pieces[5]);
+			result.indirect2 = await Actions.Lookup(world, self, pieces[5]);
 		result.text = text;
 	}
 

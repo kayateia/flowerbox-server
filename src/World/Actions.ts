@@ -14,6 +14,50 @@ import { Notation } from "./Notation";
 // This class contains a lot of utility methods to do some actions common to both the
 // Petal/Execution side as well as the API side.
 export class Actions {
+	// Given the player's location, attempts to turn a string ID into a valid wob. This handles things
+	// of the following forms:
+	// - @globalid
+	// - #nn
+	// - me
+	// - here
+	// - Partial names of things in the room with the player
+	// If we can't find something appropriate, either Wob.None or Wob.Ambiguous will be returned.
+	public static async Lookup(world: World, player: Wob, id: string): Promise<Wob> {
+		let wob: Wob;
+		let idLower: string = id.toLowerCase();
+		if (id.startsWith("@")) {
+			let wobs = await world.getWobsByGlobalId([id.substr(1)]);
+			wob = wobs[0];
+		} else if (id.startsWith("#")) {
+			let num = parseInt(id.substr(1), 10);
+			if (Number.isNaN(num))
+				return Wob.None;
+			wob = await world.getWob(num);
+		} else if (idLower === "me") {
+			wob = player;
+		} else if (idLower === "here") {
+			wob = await world.getWob(player.container);
+		} else {
+			// Treat it as a wob name suffix and search the room for possibilities.
+			let room = await world.getWob(player.container);
+			let contents = await Promise.all(room.contents.map(cid => world.getWob(cid)));
+			let possibilities: Wob[] = [];
+			for (let item of contents) {
+				let itemName = await item.getPropertyI(WobProperties.Name, world);
+				if (itemName && itemName.value.value.toLowerCase().startsWith(idLower))
+					possibilities.push(item);
+			}
+			if (possibilities.length === 1)
+				wob = possibilities[0];
+			else if (possibilities.length > 1)
+				return Wob.Ambiguous;
+		}
+		if (!wob)
+			return Wob.None;
+		else
+			return wob;
+	}
+
 	// Moves the specified wob into the other wob. This also takes care of permissions
 	// checks, event stream notifications, and announcements in each location.
 	public static async Move(world: World, srcId: number, intoId: number): Promise<any> {

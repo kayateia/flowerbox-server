@@ -88,6 +88,11 @@ export class Wob {
 		this.updateLastUse();
 	}
 
+	// These are just constants that can be passed around for functions that are
+	// expected to return a Wob but can't find an appropriate one.
+	public static None: Wob = new Wob(-1);
+	public static Ambiguous: Wob = new Wob(-2);
+
 	public get id(): number {
 		this.updateLastUse();
 		return this._id;
