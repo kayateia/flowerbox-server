@@ -60,7 +60,10 @@ export class Database {
 			}
 
 			for (let v of verbs) {
-				wob.setVerbCode(v.name, v.code);
+				let sigs: string[] = [];
+				if (v.sigs)
+					sigs = JSON.parse(v.sigs);
+				wob.setVerbCode(v.name, sigs, v.code);
 			}
 
 			let contained = await this._sal.select(conn, "select wobid from wobs where container=?", [id]);
@@ -206,8 +209,8 @@ export class Database {
 		for (let p of wob.getVerbNames()) {
 			let v = wob.getVerb(p);
 
-			await this._sal.run(conn, "insert into verbs (wobid, name, perms, code) values (?, ?, ?, ?)",
-				[wob.id, p, v.perms, v.code]);
+			await this._sal.run(conn, "insert into verbs (wobid, name, perms, sigs, code) values (?, ?, ?, ?, ?)",
+				[wob.id, p, v.perms, JSON.stringify(v.signatureStrings), v.code]);
 		}
 	}
 

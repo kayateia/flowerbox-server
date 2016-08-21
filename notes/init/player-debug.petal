@@ -1,6 +1,4 @@
-var $debug = {
-	// 'what' should be an array of objects to be stored for later retrieval by a client.
-	code: function(what) {
-		this.$event("debug", $.timestamp(), what);
-	}
-};
+// 'what' should be an array of objects to be stored for later retrieval by a client.
+function $debug(what) {
+	this.$event("debug", $.timestamp(), what);
+}

@@ -465,8 +465,9 @@ export class WorldRouter extends RouterBase {
 
 		// Now go through and set all the verbs.
 		for (let n of names) {
+			let verbSet: Wob.VerbSet = values[n];
 			try {
-				wob.setVerbCode(n, values[n]);
+				wob.setVerbCode(n, verbSet.sigs, verbSet.code);
 			} catch (err) {
 				anyErrors = true;
 				errors[n] = err;

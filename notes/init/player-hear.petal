@@ -1,6 +1,4 @@
-var $hear = {
-	// 'what' should be an array of objects to be stored for later retrieval by a client.
-	code: function(what) {
-		this.$event("output", $.timestamp(), what);
-	}
-};
+// 'what' should be an array of objects to be stored for later retrieval by a client.
+function $hear(what) {
+	this.$event("output", $.timestamp(), what);
+}

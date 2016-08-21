@@ -1,31 +1,29 @@
-var $command = {
-	code: function() {
-		var text = $parse.text;
+function $command() {
+	var text = $parse.text;
 
-		// Translate the say and emote shortcuts.
-		if (text.startsWith('"'))
-			text = "say " + text.substr(1);
-		else if (text.startsWith(':'))
-			text = "emote " + text.substr(1);
+	// Translate the say and emote shortcuts.
+	if (text.startsWith('"'))
+		text = "say " + text.substr(1);
+	else if (text.startsWith(':'))
+		text = "emote " + text.substr(1);
 
-		if (text.startsWith("say ")) {
-			text = text.substr("say ".length);
-			$.log("Saying", text);
-			this.$sayinto(caller.location, [$.notate(caller), " says, ", text]);
-			return true;
-		} else if (text.startsWith("emote ")) {
-			text = text.substr("emote ".length);
-			$.log("Emoting", text);
-			this.$sayinto(caller.location, [$.notate(caller), " ", text]);
-			return true;
-		} else if (text.startsWith("create ")) {
-			var name = text.substr("create ".length);
-			var newWob = $.create(caller.location);
-			newWob.name = name;
-			$.log("Created", name, "(#" + newWob.id + ")");
-			this.$sayinto(caller.location, ["Poof!", $.notate(newWob), "was created."]);
-			return true;
-		} else
-			return false;
-	}
-};
+	if (text.startsWith("say ")) {
+		text = text.substr("say ".length);
+		$.log("Saying", text);
+		this.$sayinto(caller.location, [$.notate(caller), " says, ", text]);
+		return true;
+	} else if (text.startsWith("emote ")) {
+		text = text.substr("emote ".length);
+		$.log("Emoting", text);
+		this.$sayinto(caller.location, [$.notate(caller), " ", text]);
+		return true;
+	} else if (text.startsWith("create ")) {
+		var name = text.substr("create ".length);
+		var newWob = $.create(caller.location);
+		newWob.name = name;
+		$.log("Created", name, "(#" + newWob.id + ")");
+		this.$sayinto(caller.location, ["Poof!", $.notate(newWob), "was created."]);
+		return true;
+	} else
+		return false;
+}

@@ -12,9 +12,9 @@ module.exports = [
 		},
 		verbs: [
 			{ fn: "world-command.petal", name: "$command" },
-			{ fn: "world-look.petal", name: "look" },
+			{ fn: "world-look.petal", name: "look", sigs: [ "look none at self", "look self" ]},
 			{ fn: "world-sayinto.petal", name: "$sayinto" },
-			{ fn: "world-teleport.petal", name: "teleport" }
+			{ fn: "world-teleport.petal", name: "teleport", sigs: [ "teleport self", "teleport none at self" ] }
 		]
 	},
 
@@ -42,7 +42,7 @@ module.exports = [
 		container: "@world",
 		base: "@world",
 		verbs: [
-			{ fn: "room-look.petal", name: "look" }
+			{ fn: "room-look.petal", name: "look", sigs: [ "look" ] }
 		]
 	},
 
@@ -71,7 +71,8 @@ module.exports = [
 		container: "@world",
 		base: "@world",
 		verbs: [
-			{ fn: "exit-go.petal", name: "go" }
+			{ fn: "exit-go.petal", name: "go",
+				sigs: [ "go self", "go none in self", "go none at self", "go none through self" ] }
 		]
 	},
 
@@ -152,8 +153,8 @@ module.exports = [
 		container: "@world",
 		base: "@world",
 		verbs: [
-			{ fn: "hammer-use.petal", name: "use" },
-			{ fn: "hammer-throw.petal", name: "throw" }
+			{ fn: "hammer-use.petal", name: "use", sigs: [ "use self at any" ] },
+			{ fn: "hammer-throw.petal", name: "throw", sigs: [ "throw self at any" ] }
 		]
 	},
 
@@ -165,8 +166,8 @@ module.exports = [
 		container: "@world",
 		base: "@world",
 		verbs: [
-			{ fn: "teacup-drink.petal", name: "drink" },
-			{ fn: "teacup-drop.petal", name: "drop" }
+			{ fn: "teacup-drink.petal", name: "drink", sigs: [ "drink none from self" ] },
+			{ fn: "teacup-drop.petal", name: "drop", sigs: [ "drop self" ] }
 		]
 	},
 
@@ -178,8 +179,8 @@ module.exports = [
 		container: "@world",
 		base: "@world",
 		verbs: [
-			{ fn: "dog-put.petal", name: "put" },
-			{ fn: "dog-release.petal", name: "release" }
+			{ fn: "dog-put.petal", name: "put", sigs: [ "put self in any" ] },
+			{ fn: "dog-release.petal", name: "release", sigs: [ "release self" ] }
 		]
 	},
 
@@ -191,7 +192,7 @@ module.exports = [
 		},
 		container: "@room2",
 		base: "@world",
-		verbs: [ { fn: "human-pet.petal", name: "pet" } ]
+		verbs: [ { fn: "human-pet.petal", name: "pet", sigs: [ "pet self" ] } ]
 	},
 
 	{
@@ -202,7 +203,8 @@ module.exports = [
 		},
 		container: "@world",
 		base: "@exit",
-		verbs: [ { fn: "genesis_arch-go.petal", name: "go" } ]
+		verbs: [ { fn: "genesis_arch-go.petal", name: "go",
+			sigs: [ "go self", "go none in self", "go none at self", "go none through self" ] } ]
 	},
 
 	{

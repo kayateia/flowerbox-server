@@ -30,6 +30,7 @@ create table verbs (
 	id integer primary key,
 	wobid integer,
 	name text,
+	sigs text,
 	code text,
 	perms integer,
 	foreign key(wobid) references wobs(id));

@@ -9,6 +9,7 @@ import { AstStatements } from "./AstStatements";
 import { AstVarDecl } from "./AstVarDecl";
 import { AstVarStatement } from "./AstVarStatement";
 import { AstObject } from "./AstObject";
+import { AstFunction } from "./AstFunction";
 
 export class Check {
 	// Returns true if the AST represents a single variable definition with an object value.
@@ -32,5 +33,20 @@ export class Check {
 			return true;
 		else
 			return false;
+	}
+
+	// Returns true if the AST represents a single function definition.
+	public static IsSingleFunctionDef(obj: AstNode): boolean {
+		if (!(obj instanceof AstStatements))
+			return false;
+
+		let stmts: AstStatements = <AstStatements>obj;
+		if (stmts.body.length !== 1)
+			return false;
+
+		if (!(stmts.body[0] instanceof AstFunction))
+			return false;
+
+		return true;
 	}
 }

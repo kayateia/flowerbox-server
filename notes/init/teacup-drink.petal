@@ -1,4 +1,2 @@
-var drink = {
-	sigs: [ "drink none from self" ],
-	code: function() {}
-};
+function drink() {
+}

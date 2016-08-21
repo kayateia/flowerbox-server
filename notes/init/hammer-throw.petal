@@ -1,4 +1,2 @@
-var _throw = {
-	sigs: [ "throw self at any" ],
-	code: function() {}
-};
+function _throw() {
+}

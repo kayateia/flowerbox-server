@@ -1,6 +1,3 @@
-var look = {
-	sigs: [ "look" ],
-	code: function() {
-		#1.look(this);
-	}
-};
+function look() {
+	#1.look(this);
+}

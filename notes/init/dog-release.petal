@@ -1,7 +1,4 @@
-var release = {
-	sigs: [ "release self" ],
-	code: function() {
-		#1.$sayinto(this.location, [$.notate(this), " was released!"]);
-		$parse.player.$hear(["Thank you for releasing me, ", $.notate($parse.player), "!"]);
-	}
-};
+function release() {
+	#1.$sayinto(this.location, [$.notate(this), " was released!"]);
+	$parse.player.$hear(["Thank you for releasing me, ", $.notate($parse.player), "!"]);
+}

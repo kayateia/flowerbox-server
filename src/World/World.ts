@@ -65,7 +65,8 @@ export class World {
 					let p = path.join(basePath, vinfo.fn);
 					console.log("loading", p, "->", vinfo.name);
 					let contents = (await FsPromises.readFile(p)).toString();
-					wob.setVerbCode(vinfo.name, contents);
+					let sigs: string[] = vinfo.sigs;
+					wob.setVerbCode(vinfo.name, sigs, contents);
 				}
 			}
 

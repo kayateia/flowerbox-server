@@ -79,6 +79,7 @@ CREATE TABLE `verbs` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `wobid` bigint(20) DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
+  `sigs` text DEFAULT NULL,
   `code` longtext,
   `perms` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)

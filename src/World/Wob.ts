@@ -318,7 +318,7 @@ export class Wob {
 		this._verbs.delete(name);
 	}
 
-	public setVerbCode(name: string, text: string): void {
+	public setVerbCode(name: string, sigs: string[], text: string): void {
 		if (!text) {
 			this.setVerb(name, null);
 			return;
@@ -332,8 +332,8 @@ export class Wob {
 		let parsed: any = Petal.parseFromSource(text);
 
 		// Verify that it is, in fact, just an object definition.
-		if (!Petal.Check.IsSingleObjectDef(parsed))
-			throw new InvalidCodeException("Verb code is not a single variable declaration with an object value.", parsed);
+		if (!Petal.Check.IsSingleFunctionDef(parsed))
+			throw new InvalidCodeException("Verb code is not a single function declaration.", parsed);
 
 		// Execute the code. Note that we want the resulting code to run under this wob's security
 		// context, so we pass it here.
@@ -347,11 +347,9 @@ export class Wob {
 		// This should be a dictionary of verb name -> verb object, where each verb object
 		// contains "sigs" (an array) and "code" (a function object). The code may mutate this scope
 		// later, but we split it up for verbs here.
-		let verbObj: any = Petal.ObjectWrapper.Unwrap(scope.get(varnames[0]));
-		let sigs: string[] = verbObj.sigs;
 		if (sigs === undefined || sigs === null)
 			sigs = [];
-		let code: Petal.Address = verbObj.code;
+		let code: Petal.Address = scope.get(varnames[0]);
 		this.setVerb(name, new Verb(name, new VerbCode(sigs, text, code.node, code)));
 	}
 

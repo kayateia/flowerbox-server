@@ -42,6 +42,12 @@ export class Verb extends ModelBase {
 	public perms: number;
 }
 
+// Expected object to be passed in per verb being set.
+export class VerbSet {
+	public sigs: string[];
+	public code: string;
+}
+
 // Returned from setting multiple verbs. Since verbs may have compilation errors,
 // we have to return info about what happened.
 export class VerbSetErrors extends ModelBase {

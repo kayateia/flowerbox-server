@@ -1,8 +1,5 @@
-var teleport = {
-	sigs: [ "teleport self", "teleport none at self" ],
-	code: function() {
-		$player.$hear(["Poof! You teleported into ", $.notate(this)]);
-		$.move($player, this);
-		this.look();
-	}
-};
+function teleport() {
+	$player.$hear(["Poof! You teleported into ", $.notate(this)]);
+	$.move($player, this);
+	this.look();
+}
