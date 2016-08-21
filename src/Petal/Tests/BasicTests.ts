@@ -185,7 +185,7 @@ describe("Basic test", function() {
 			"5\n10\n5\n");
 	});
 
-	it("should successfully resume after an async function call", function(done) {
+	it("should successfully resume after an async function call", TestSetup.AsyncWrapper(async function() {
 		let program = "var rv = test(); log('returned', rv);";
 		let test = new TestSetup(program);
 		test.runtime.currentScope.set("test", Petal.Address.Function(function() {
@@ -195,32 +195,21 @@ describe("Basic test", function() {
 				}, 1);
 			});
 		}));
-		test.runProgramAsync()
-			.then(() => {
-				expect(test.output).toEqual("returned 5\n");
-				done();
-			});
-	});
+		await test.runProgramAsync();
+		expect(test.output).toEqual("returned 5\n");
+	}));
 
-	it("should successfully resume after an async method read", function(done) {
+	it("should successfully resume after an async method read", TestSetup.AsyncWrapper(async function() {
 		let program = "log(test.foo);";
 		let test = new TestSetup(program);
 		test.runtime.currentScope.set("test", Petal.ObjectWrapper.WrapGeneric({
 			foo: new Promise(s => setTimeout(s, 1)).then(() => "fooz!")
 		}, ["foo"]));
-		test.runProgramAsync()
-			.then(() => {
-				expect(test.output).toEqual("fooz!\n");
-				done();
-			})
-			.catch(e => {
-				console.log(e);
-				expect(1).toEqual(2);
-				done();
-			});
-	});
+		await test.runProgramAsync();
+		expect(test.output).toEqual("fooz!\n");
+	}));
 
-	it("should successfully resume after an async method read returns a promise as an l-value", function(done) {
+	it("should successfully resume after an async method read returns a promise as an l-value", TestSetup.AsyncWrapper(async function() {
 		let program = "log(test.foo);";
 		let test = new TestSetup(program);
 		test.runtime.currentScope.set("test", {
@@ -228,17 +217,9 @@ describe("Basic test", function() {
 				return new Petal.LValue("test.foo", r => "fooz!", () => {});
 			}
 		});
-		test.runProgramAsync()
-			.then(() => {
-				expect(test.output).toEqual("fooz!\n");
-				done();
-			})
-			.catch(e => {
-				console.log(e);
-				expect(1).toEqual(2);
-				done();
-			});
-	});
+		await test.runProgramAsync();
+		expect(test.output).toEqual("fooz!\n");
+	}));
 
 	it("should have a working map", function() {
 		basicTest("log(map([1,2,3], function(x) { return x + 1; }))",

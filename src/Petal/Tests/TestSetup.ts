@@ -62,6 +62,18 @@ export class TestSetup {
 		await this.runtime.executeAsync(1000);
 	}
 
+	// Generates a wrapper function to pass back to Jasmine for async usage.
+	public static AsyncWrapper(func: any): any {
+		return function(done) {
+			func()
+				.then(() => done())
+				.catch(err => {
+					console.log(err);
+					expect(1).toEqual(2);
+				});
+		};
+	}
+
 	public compile() {
 		let compiler = new Petal.Compiler("<test>");
 		compiler.compile(this.programParsed);
