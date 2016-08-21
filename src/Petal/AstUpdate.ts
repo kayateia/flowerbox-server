@@ -44,10 +44,8 @@ export class AstUpdate extends AstNode {
 				pushValue = oldValue;
 
 			if (writeRet instanceof Promise) {
-				// FIXME: Will the error actually throw out somewhere useful?
 				return writeRet
-					.then(() => pushValue)
-					.catch(err => { throw err; });
+					.then(() => pushValue);
 			} else
 				runtime.pushOperand(pushValue);
 		});

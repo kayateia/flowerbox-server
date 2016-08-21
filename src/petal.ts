@@ -40,7 +40,12 @@ compilems = Date.now() - compilems;
 
 let runms: number = Date.now();
 runtime.setInitialPC(new Petal.Address(0, compiler.module, output));
-let results = runtime.execute();
-runms = Date.now() - runms;
-console.log("Command took", results.stepsUsed, "steps,", parsems, "ms to parse,", compilems, "ms to compile, and", runms, "ms to run.");
-// console.log("Output scope:", runtime.currentScope());
+runtime.executeAsync()
+	.then(results => {
+		runms = Date.now() - runms;
+		console.log("Command took", results.stepsUsed, "steps,", parsems, "ms to parse,", compilems, "ms to compile, and", runms, "ms to run.");
+		// console.log("Output scope:", runtime.currentScope());
+	})
+	.catch(err => {
+		console.log(err);
+	});

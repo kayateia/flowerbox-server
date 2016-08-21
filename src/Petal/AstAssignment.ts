@@ -51,10 +51,8 @@ export class AstAssignment extends AstNode {
 
 			let rv = lhs.write(runtime, newlhs);
 			if (rv instanceof Promise) {
-				// FIXME: Will the error actually throw out somewhere useful?
 				return rv
-					.then(() => newlhs)
-					.catch(err => { throw err; });
+					.then(() => newlhs);
 			} else
 				runtime.pushOperand(newlhs);
 		});

@@ -12,7 +12,7 @@ import { Perms, Security } from "../Security";
 import * as Persistence from "../../Utils/Persistence";
 import * as Strings from "../../Utils/Strings";
 import { Utils } from "../Utils";
-
+import { Actions } from "../Actions";
 
 export class WobPropertyTag {
 	constructor(ww: WobWrapper, property: string) {
@@ -180,6 +180,7 @@ export class WobWrapper implements Petal.IObject {
 			} else /*if (Strings.caseIn(member, props))*/ {
 				let prop = await wob.getPropertyI(member, cargo.world);
 				let propSrc = prop ? (await cargo.world.getWob(prop.wob)) : null;
+				let stickySrc = prop ? (await Actions.GetStickyParent(propSrc, member, cargo.world)) : null;
 				return new Petal.LValue("Wob." + member, (runtime: Petal.Runtime) => {
 					if (!prop) {
 						// FIXME: Is this a security info leak?
@@ -187,7 +188,7 @@ export class WobWrapper implements Petal.IObject {
 					}
 
 					if (!(runtime.currentSecurityContext === cargo.player.id && cargo.playerIsAdmin)
-							&& !Security.CheckPropertyRead(propSrc, member, runtime.currentSecurityContext))
+							&& !Security.CheckPropertyRead(stickySrc ? stickySrc : propSrc, member, runtime.currentSecurityContext))
 						throw new SecurityException("Access denied reading property", member);
 
 					if (prop && prop.wob !== this._id) {
@@ -202,13 +203,12 @@ export class WobWrapper implements Petal.IObject {
 							return null;
 					}
 				}, (runtime: Petal.Runtime, value: any) => {
-					// FIXME: Should check here for sticky bits.
 					if (!(runtime.currentSecurityContext === cargo.player.id && cargo.playerIsAdmin)) {
 						if (!prop) {
 							if (!Security.CheckSetWobProperties(wob, runtime.currentSecurityContext))
 								throw new SecurityException("Access denied adding properties", member);
 						} else {
-							if (!Security.CheckPropertyWrite(wob, member, runtime.currentSecurityContext))
+							if (!Security.CheckPropertyWrite(stickySrc ? stickySrc : wob, member, runtime.currentSecurityContext))
 								throw new SecurityException("Access denied setting property", member);
 						}
 					}
@@ -220,18 +220,30 @@ export class WobWrapper implements Petal.IObject {
 		})();
 	}
 
-	public changeNotification(item: Petal.IPetalWrapper, runtime: Petal.Runtime): void {
-		// We just try to pull the cached wob to stay sync. If it's not in cache, then
-		// it doesn't matter anyway, it can't be dirty.
+	public async canChange(item: Petal.IPetalWrapper, runtime: Petal.Runtime): Promise<boolean> {
 		let cargo: AccessorCargo = runtime.accessorCargo;
-		let wob = cargo.world.getCachedWob(this._id);
+		if (runtime.currentSecurityContext === cargo.player.id && cargo.playerIsAdmin)
+			return true;
+
+		let wob = await cargo.world.getWob(this._id);
 		if (wob) {
 			let name = (<WobPropertyTag>item.tag).property;
-			if (!(runtime.currentSecurityContext === cargo.player.id && cargo.playerIsAdmin)
-					&& !Security.CheckPropertyWrite(wob, name, runtime.currentSecurityContext)) {
-				throw new SecurityException("Access denied setting property", name);
+			let prop = await wob.getPropertyI(name, cargo.world);
+			if (!prop) {
+				return Security.CheckSetWobProperties(wob, runtime.currentSecurityContext);
 			}
+			let propSrc = await cargo.world.getWob(prop.wob);
+			let stickySrc = await Actions.GetStickyParent(propSrc, name, cargo.world);
 
+			return Security.CheckPropertyWrite(stickySrc ? stickySrc : wob, name, runtime.currentSecurityContext);
+		} else
+			return false;
+	}
+
+	public async changeNotification(item: Petal.IPetalWrapper, runtime: Petal.Runtime): Promise<void> {
+		let cargo: AccessorCargo = runtime.accessorCargo;
+		let wob = await cargo.world.getWob(this._id);
+		if (wob) {
 			// This may not be necessary, but:
 			// a) it sets the dirty flag for us,
 			// b) if this came to us through inheritance, it will set the local copy.

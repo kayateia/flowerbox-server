@@ -23,7 +23,8 @@ module.exports = [
 			"name": "Player",
 			"desc": "A blank shape that says MY BURAZAA on it.",
 			"globalid": "player",
-			"admin": false
+			"admin": { value: false, perms: "srw-r--r--" },
+			"pwhash": { value: "", perms: "srw-------" }
 		},
 		container: "@world",
 		base: "@world",

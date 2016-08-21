@@ -103,4 +103,19 @@ export class Actions {
 			}
 		}));
 	}
+
+	// Looks for the object which defines the sticky bit on a property; if it doesn't find any,
+	// then return null.
+	public static async GetStickyParent(propSrc: Wob, property: string, world: World): Promise<Wob> {
+		while (propSrc) {
+			if (Security.CheckPropertySticky(propSrc, property))
+				return propSrc;
+			if (propSrc.base)
+				propSrc = await world.getWob(propSrc.base);
+			else
+				propSrc = null;
+		}
+
+		return null;
+	}
 }

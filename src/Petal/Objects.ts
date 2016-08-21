@@ -53,7 +53,14 @@ export class PetalArray implements IObject, IPetalWrapper {
 		this.tag = tag;
 	}
 
-	public notify(runtime: Runtime): void {
+	public async check(runtime: Runtime): Promise<boolean> {
+		if (this.tag)
+			return await runtime.canChange(this);
+		else
+			return true;
+	}
+
+	public async notify(runtime: Runtime): Promise<void> {
 		if (this.tag)
 			runtime.notifyChange(this);
 	}
@@ -155,9 +162,18 @@ export class PetalArray implements IObject, IPetalWrapper {
 		else if (typeof(name) === "number") {
 			return new LValue("Array access", (runtime: Runtime): any => {
 				return this.get(name);
-			}, (runtime: Runtime, value: any): void => {
-				this.set(name, value);
-				this.notify(runtime);
+			}, (runtime: Runtime, value: any): any => {
+				// Avoid the async code if there's no tag. If there is a tag, we can't
+				// really do much except go through with the checks.
+				if (this.tag) {
+					return (async () => {
+						if (!(await this.check(runtime)))
+							throw new RuntimeException("Access denied writing to array value", runtime);
+						this.set(name, value);
+						await this.notify(runtime);
+					})();
+				} else
+					this.set(name, value);
 			},
 			this);
 		} else
@@ -259,9 +275,16 @@ export class PetalObject implements IObject, IPetalWrapper {
 		return po;
 	}
 
-	public notify(runtime: Runtime): void {
+	public async check(runtime: Runtime): Promise<boolean> {
 		if (this.tag)
-			runtime.notifyChange(this);
+			return await runtime.canChange(this);
+		else
+			return true;
+	}
+
+	public async notify(runtime: Runtime): Promise<void> {
+		if (this.tag)
+			await runtime.notifyChange(this);
 	}
 
 	public get(index: string): any {
@@ -302,11 +325,21 @@ export class PetalObject implements IObject, IPetalWrapper {
 			if (typeof(name) !== "string")
 				throw new RuntimeException("Can't use non-string index on Petal object", runtime, name);
 			return this.get(name);
-		}, (runtime: Runtime, value: any) => {
+		}, (runtime: Runtime, value: any): any => {
 			if (typeof(name) !== "string")
 				throw new RuntimeException("Can't use non-string index on Petal object", runtime, name);
-			this.set(name, value);
-			this.notify(runtime);
+
+			// Avoid the async code if there's no tag. If there is a tag, we can't
+			// really do much except go through with the checks.
+			if (this.tag) {
+				return (async() => {
+					if (!(await this.check(runtime)))
+						throw new RuntimeException("Access denied writing to property", runtime, name);
+					this.set(name, value);
+					await this.notify(runtime);
+				})();
+			} else
+				this.set(name, value);
 		},
 		this);
 	}

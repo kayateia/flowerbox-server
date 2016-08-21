@@ -40,7 +40,11 @@ export class ExecuteResult {
 }
 
 export interface IChangeNotification {
-	(item: IPetalWrapper, runtime: Runtime): void
+	(item: IPetalWrapper, runtime: Runtime): Promise<any>
+}
+
+export interface ICanChangeNotification {
+	(item: IPetalWrapper, runtime: Runtime): Promise<boolean>
 }
 
 export class Runtime {
@@ -72,8 +76,11 @@ export class Runtime {
 	private _scopeCatcher: IScopeCatcher;
 
 	private _changeNotification: IChangeNotification;
+	private _canChangeNotification: ICanChangeNotification;
 
-	constructor(verbose?: boolean, scopeCatcher?: IScopeCatcher, changeNotification?: IChangeNotification, accessorCargo?: any) {
+	constructor(verbose?: boolean, scopeCatcher?: IScopeCatcher,
+			changeNotification?: IChangeNotification, canChangeNotification?: ICanChangeNotification,
+			accessorCargo?: any) {
 		this._setPC = false;
 
 		this._operandStack = new FixedStack<any>();
@@ -88,6 +95,7 @@ export class Runtime {
 		this._rootScope = new StandardScope(runtimeLib);
 
 		this._changeNotification = changeNotification;
+		this._canChangeNotification = canChangeNotification;
 
 		this.accessorCargo = accessorCargo;
 
@@ -99,6 +107,9 @@ export class Runtime {
 		}
 	}
 
+	// Execute at the current program counter synchronously. If we encounter a step that
+	// returns a promise, then return that as a result. Note that since many things will
+	// return Promises these days, it's a much better idea to call executeAsync() below.
 	public execute(steps?: number): ExecuteResult {
 		let stepsUsed = 0, stepsTotal = steps;
 
@@ -183,8 +194,7 @@ export class Runtime {
 		}
 	}
 
-	public executeCode(moduleName: string, code: AstNode, injections: any,
-			securityContext: number, maxSteps?: number): ExecuteResult {
+	private executeCodeCommon(moduleName: string, code: AstNode, injections: any, securityContext: number): void {
 		if (injections) {
 			this.pushScope(ConstScope.FromObject(this.currentScope, injections));
 			this.pushScope(new StandardScope(this.currentScope));
@@ -194,6 +204,12 @@ export class Runtime {
 		let module = compiler.module;
 		module.securityContext = securityContext;
 		this.setInitialPC(new Address(0, module, code));
+	}
+
+	// Executes an arbitrary block of Petal code.
+	public executeCode(moduleName: string, code: AstNode, injections: any,
+			securityContext: number, maxSteps?: number): ExecuteResult {
+		this.executeCodeCommon(moduleName, code, injections, securityContext);
 
 		// The return value actually comes off the lastStatementValue for the Runtime, because that's
 		// where the AstStatement handler would leave it.
@@ -202,17 +218,10 @@ export class Runtime {
 		return rv;
 	}
 
+	// Executes an arbitrary block of Petal code, asynchronously.
 	public async executeCodeAsync(moduleName: string, code: AstNode, injections: any,
 			securityContext: number, maxSteps?: number): Promise<ExecuteResult> {
-		if (injections) {
-			this.pushScope(ConstScope.FromObject(this.currentScope, injections));
-			this.pushScope(new StandardScope(this.currentScope));
-		}
-		var compiler = new Compiler(moduleName);
-		compiler.compile(code);
-		let module = compiler.module;
-		module.securityContext = securityContext;
-		this.setInitialPC(new Address(0, module, code));
+		this.executeCodeCommon(moduleName, code, injections, securityContext);
 
 		// The return value actually comes off the lastStatementValue for the Runtime, because that's
 		// where the AstStatement handler would leave it.
@@ -234,7 +243,7 @@ export class Runtime {
 		return rv;
 	}
 
-	// Same as executeFunction(), but allows for async callbacks to happen down in code execution.
+	// This executes an arbitrary (pre-parsed) function.
 	public async executeFunctionAsync(func: Address, param: any[], caller: any, maxSteps?: number): Promise<ExecuteResult> {
 		let address = AstCallExpression.Create(func, param, caller);
 		this.setInitialPC(address);
@@ -247,12 +256,22 @@ export class Runtime {
 		return rv;
 	}
 
+	// Called by IPetalWrappers when they want to change something inside themselves.
+	public async canChange(target: IPetalWrapper): Promise<boolean> {
+		if (this.verbose)
+			console.log("CAN CHANGE", target, "TAG", target.tag);
+		if (this._canChangeNotification)
+			return await this._canChangeNotification(target, this);
+		else
+			return true;
+	}
+
 	// Called by IPetalWrappers when changes are made inside themselves.
-	public notifyChange(target: IPetalWrapper): void {
+	public async notifyChange(target: IPetalWrapper): Promise<any> {
 		if (this.verbose)
 			console.log("CHANGED", target, "TAG", target.tag);
 		if (this._changeNotification)
-			this._changeNotification(target, this);
+			await this._changeNotification(target, this);
 	}
 
 	// Returns a stack trace from the current execution state.

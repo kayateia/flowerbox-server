@@ -57,13 +57,19 @@ export async function executeResult(parse: ParseResult, player: Wob, playerIsAdm
 
 	// Check for a global command handler on #1. If it exists, we'll call that first.
 	let rootScope = new RootScope(world, injections);
-	let changeRouter = (item: Petal.IPetalWrapper, runtime: Petal.Runtime) => {
+	let changeRouter = async (item: Petal.IPetalWrapper, runtime: Petal.Runtime) => {
 		if (item.tag && item.tag instanceof WobPropertyTag) {
 			let ww: WobPropertyTag = item.tag;
-			ww.wob.changeNotification(item, runtime);
+			await ww.wob.changeNotification(item, runtime);
 		}
 	};
-	let rt = new Petal.Runtime(false, rootScope, changeRouter, cargo);
+	let changeTester = async (item: Petal.IPetalWrapper, runtime: Petal.Runtime) => {
+		if (item.tag && item.tag instanceof WobPropertyTag) {
+			let ww: WobPropertyTag = item.tag;
+			return await ww.wob.canChange(item, runtime);
+		}
+	};
+	let rt = new Petal.Runtime(false, rootScope, changeRouter, changeTester, cargo);
 	dollarObj.runtime = rt;
 
 	// If it's a literal code line, skip the rest of this.
@@ -120,7 +126,7 @@ export async function executeResult(parse: ParseResult, player: Wob, playerIsAdm
 
 			if (parse.verb) {
 				// Reset the runtime.
-				rt = new Petal.Runtime(false, rootScope, changeRouter, cargo);
+				rt = new Petal.Runtime(false, rootScope, changeRouter, changeTester, cargo);
 				dollarObj.runtime = rt;
 			}
 		}

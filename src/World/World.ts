@@ -48,8 +48,16 @@ export class World {
 
 		for (let wobdef of init) {
 			let wob = await this.createWob();
-			for (let prop of Utils.GetPropertyNames(wobdef.properties))
-				wob.setProperty(prop, new Property(wobdef.properties[prop]));
+			for (let prop of Utils.GetPropertyNames(wobdef.properties)) {
+				let value = wobdef.properties[prop];
+				if (typeof(value) === "object" && value.hasOwnProperty("value")) {
+					let perms: any = value.perms;
+					if (perms)
+						perms = Perms.parse(perms);
+					wob.setProperty(prop, new Property(Petal.ObjectWrapper.Wrap(value.value), perms));
+				} else
+					wob.setProperty(prop, new Property(Petal.ObjectWrapper.Wrap(value)));
+			}
 			if (wobdef.propertiesBinary) {
 				for (let prop of Utils.GetPropertyNames(wobdef.propertiesBinary)) {
 					let pv = wobdef.propertiesBinary[prop];
