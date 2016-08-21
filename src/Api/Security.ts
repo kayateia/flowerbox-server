@@ -19,7 +19,7 @@ export class Security {
 			}
 
 			if (!auth) {
-				res.json(new ModelBase(false, "Missing bearer token"));
+				res.status(401).json(new ModelBase(false, "Missing bearer token"));
 				return;
 			}
 
@@ -31,7 +31,7 @@ export class Security {
 			return tokenContents;
 		} catch (err) {
 			console.log("Validation error:", err);
-			res.json(new ModelBase(false, "Token validation error"));
+			res.status(401).json(new ModelBase(false, "Token validation error"));
 			return null;
 		}
 	}
