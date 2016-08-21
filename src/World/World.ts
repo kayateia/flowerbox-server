@@ -7,6 +7,7 @@
 import { WobReferenceException, WobOperationException } from "./Exceptions";
 import { Wob, WobProperties } from "./Wob";
 import { Verb } from "./Verb";
+import { Property } from "./Property";
 import * as Strings from "../Utils/Strings";
 import { Utils } from "../Petal/Utils";
 import * as Petal from "../Petal/All";
@@ -14,6 +15,7 @@ import * as FsPromises from "../Async/FsPromises";
 import * as CorePromises from "../Async/CorePromises";
 import * as path from "path";
 import { Database } from "./Database";
+import { Perms } from "./Security";
 
 // Zaa Warudo
 export class World {
@@ -47,14 +49,14 @@ export class World {
 		for (let wobdef of init) {
 			let wob = await this.createWob();
 			for (let prop of Utils.GetPropertyNames(wobdef.properties))
-				wob.setProperty(prop, wobdef.properties[prop]);
+				wob.setProperty(prop, new Property(wobdef.properties[prop]));
 			if (wobdef.propertiesBinary) {
 				for (let prop of Utils.GetPropertyNames(wobdef.propertiesBinary)) {
 					let pv = wobdef.propertiesBinary[prop];
 					let fn = path.join(basePath, pv.file);
 					console.log("loading", fn, "-", pv.mime);
 					let contents = await FsPromises.readFile(fn);
-					wob.setProperty(prop, new Petal.PetalBlob(contents, pv.mime, pv.file));
+					wob.setProperty(prop, new Property(new Petal.PetalBlob(contents, pv.mime, pv.file)));
 				}
 			}
 
@@ -67,24 +69,44 @@ export class World {
 				}
 			}
 
-			if (wobdef.container) {
-				let container: Wob;
-				if (typeof(wobdef.container) === "string" && wobdef.container[0] === "@") {
-					container = (await this.getWobsByGlobalId([wobdef.container.substr(1)]))[0];
+			// Does name resolution for referenced wobs.
+			let findWob = async (inputWob: Wob, id: any): Promise<Wob> => {
+				let wob: Wob;
+				if (typeof(id) === "string") {
+					if (id[0] === "@") {
+						wob = (await this.getWobsByGlobalId([id.substr(1)]))[0];
+					} else if (id === "self") {
+						wob = inputWob;
+					} else {
+						throw new Error("Invalid string " + id + "to identify wob");
+					}
 				} else {
-					container = this.getCachedWob(wobdef.container);
+					wob = this.getCachedWob(id);
 				}
+				return wob;
+			};
+
+			if (wobdef.container) {
+				let container: Wob = await findWob(wob, wobdef.container);
 				wob.container = container.id;
 				container.contents.push(wob.id);
 			}
 			if (wobdef.base) {
-				if (typeof(wobdef.base) === "string" && wobdef.base[0] === "@") {
-					let baseWob: Wob = (await this.getWobsByGlobalId([wobdef.base.substr(1)]))[0];
-					wob.base = baseWob.id;
-				} else {
-					wob.base = wobdef.base;
-				}
+				let base: Wob = await findWob(wob, wobdef.base);
+				wob.base = base.id;
 			}
+			if (wobdef.owner) {
+				let owner: Wob = await findWob(wob, wobdef.owner);
+				wob.owner = owner.id;
+			}
+			if (wobdef.group) {
+				let group: Wob = await findWob(wob, wobdef.group);
+				wob.group = group.id;
+			}
+			if (wobdef.perms)
+				wob.perms = wobdef.perms;
+			else
+				wob.perms = Perms.parse("rw-r--r--");
 		}
 
 		await this.commit();
@@ -163,7 +185,13 @@ export class World {
 	public async getWobsByGlobalId(ids: string[]): Promise<Wob[]> {
 		// Start off getting the in-memory results.
 		let resultMap = new Map<number, boolean>();
-		let results = [...this._wobCache.values()].filter((w) => Strings.caseIn(w.getProperty(WobProperties.GlobalId), ids));
+		let results = [...this._wobCache.values()].filter(w => {
+			let prop = w.getProperty(WobProperties.GlobalId);
+			if (!prop)
+				return false;
+
+			return Strings.caseIn(prop.value, ids);
+		});
 		results.forEach(w => resultMap.set(w.id, true));
 
 		// Look for results in the database as well.
@@ -187,10 +215,11 @@ export class World {
 			return null;
 	}
 
+	// FIXME: This doesn't work for complex objects - need a JSON comparator.
 	public async getWobsByPropertyMatch(property: string, value: any): Promise<Wob[]> {
 		// Start off getting the in-memory results.
 		let resultMap = new Map<number, boolean>();
-		let results = [...this._wobCache.values()].filter((w) => w.getProperty(property) === value);
+		let results = [...this._wobCache.values()].filter((w) => w.getProperty(property) && w.getProperty(property).value === value);
 		results.forEach(w => resultMap.set(w.id, true));
 
 		// Look for results in the database as well.

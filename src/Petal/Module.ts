@@ -20,4 +20,9 @@ export class Module {
 	public name: string;
 	public program: Step[];
 	public node: AstNode;
+
+	// This defines a wob ID under which this code runs. For example, if the
+	// player types an immediate command, this will be the player's wob ID. If
+	// it's a verb on wob #52, this will be 52.
+	public securityContext: number;
 }

@@ -29,14 +29,19 @@ async function tester() {
 	let player = (await world.getWobsByGlobalId(["kayateia"]))[0];
 	(function nextLine() {
 		rl.question('> ', (answer) => {
+			let admin = false;
+			if (answer[0] === "!") {
+				admin = true;
+				answer = answer.substr(1);
+			}
 			World.parseInput(answer, player, world)
 				.then((match) => {
-					World.executeResult(match, player, world)
+					World.executeResult(match, player, admin, world)
 						.then(() => {
 							// Look for new output on the player.
-							let output = player.getProperty(World.WobProperties.EventStream);
+							let output: any = player.getProperty(World.WobProperties.EventStream);
 							if (output)
-								output = Petal.ObjectWrapper.Unwrap(output);
+								output = Petal.ObjectWrapper.Unwrap(output.value);
 							if (output && output.length) {
 								output.forEach(l => {
 									let arr = [];
@@ -55,7 +60,7 @@ async function tester() {
 									});
 									console.log(arr.join(""));
 								});
-								player.setProperty(World.WobProperties.EventStream, null);
+								player.setPropertyKeepingPerms(World.WobProperties.EventStream, null);
 							}
 							nextLine();
 						})

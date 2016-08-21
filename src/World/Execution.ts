@@ -5,14 +5,16 @@
 */
 
 import { ParseResult, ParseError } from "./InputParser";
-import { Wob, WobProperties, WobValue, WobRef, EventType, PropertyRef } from "./Wob";
+import { Wob, WobProperties, WobValue, WobRef, EventType } from "./Wob";
 import { World } from "./World";
 import * as Petal from "../Petal/All";
 import * as Strings from "../Utils/Strings";
-import { WobReferenceException, WobOperationException } from "./Exceptions";
+import { WobReferenceException, WobOperationException, SecurityException } from "./Exceptions";
 import { Notation } from "./Notation";
 import { Utils } from "./Utils";
 import * as Persistence from "../Utils/Persistence";
+import { Property, PropertyRef } from "./Property";
+import { Perms, Security } from "./Security";
 
 // Wraps a notation for passing around in Petal scripts. These are opaque
 // objects and you can't do anything with them but pass them around.
@@ -55,10 +57,14 @@ class WobPropertyTag {
 class AccessorCargo {
 	public world: World;
 	public injections: any;
+	public player: Wob;
+	public playerIsAdmin: boolean;
 
-	constructor(world: World, injections: any) {
+	constructor(world: World, injections: any, player: Wob, playerIsAdmin: boolean) {
 		this.world = world;
 		this.injections = injections;
+		this.player = player;
+		this.playerIsAdmin = playerIsAdmin;
 	}
 }
 
@@ -144,6 +150,12 @@ export class WobWrapper implements Petal.IObject {
 		if (index === "properties") {
 			return new Petal.LValue("Wob.properties", async (runtime: Petal.Runtime) => {
 				let wob = await cargo.world.getWob(this._id);
+
+				if (!(runtime.currentSecurityContext === cargo.player.id && cargo.playerIsAdmin)
+						&& !Security.CheckGetWobProperties(wob, runtime.currentSecurityContext)) {
+					throw new SecurityException("Access denied reading wob", "properties");
+				}
+
 				let props = await wob.getPropertyNamesI(cargo.world);
 				return Petal.ObjectWrapper.Wrap(props.map(wv => ({ wobid: wv.wob, name: wv.value })));
 			}, () => {
@@ -154,6 +166,12 @@ export class WobWrapper implements Petal.IObject {
 		if (index === "verbs") {
 			return new Petal.LValue("Wob.verbs", async (runtime: Petal.Runtime) => {
 				let wob = await cargo.world.getWob(this._id);
+
+				if (!(runtime.currentSecurityContext === cargo.player.id && cargo.playerIsAdmin)
+						&& !Security.CheckGetWobVerbs(wob, runtime.currentSecurityContext)) {
+					throw new SecurityException("Access denied reading wob", "verbs");
+				}
+
 				let verbs = await wob.getVerbNamesI(cargo.world);
 				return Petal.ObjectWrapper.Wrap(verbs.map(wv => ({ wobid: wv.wob, name: wv.value })));
 			}, () => {
@@ -170,7 +188,17 @@ export class WobWrapper implements Petal.IObject {
 			// Check verbs first, but if it's not there, assume it's a property so that new properties can be written.
 			if (Strings.caseIn(member, verbs)) {
 				let verb = await wob.getVerbI(member, cargo.world);
+				let verbSrc = verb ? (await cargo.world.getWob(verb.wob)) : null;
 				return new Petal.LValue("Wob." + member, (runtime: Petal.Runtime) => {
+					if (!verb) {
+						// FIXME: Is this a security info leak?
+						return null;
+					}
+
+					if (!(runtime.currentSecurityContext === cargo.player.id && cargo.playerIsAdmin)
+							&& !Security.CheckVerb(verbSrc, member, runtime.currentSecurityContext, Perms.x))
+						throw new SecurityException("Access denied executing verb", member);
+
 					let addr = verb.value.address.copy();
 					addr.thisValue = this;
 					addr.injections = cargo.injections;
@@ -180,21 +208,42 @@ export class WobWrapper implements Petal.IObject {
 				}, this);
 			} else /*if (Strings.caseIn(member, props))*/ {
 				let prop = await wob.getPropertyI(member, cargo.world);
+				let propSrc = prop ? (await cargo.world.getWob(prop.wob)) : null;
 				return new Petal.LValue("Wob." + member, (runtime: Petal.Runtime) => {
+					if (!prop) {
+						// FIXME: Is this a security info leak?
+						return null;
+					}
+
+					if (!(runtime.currentSecurityContext === cargo.player.id && cargo.playerIsAdmin)
+							&& !Security.CheckPropertyRead(propSrc, member, runtime.currentSecurityContext))
+						throw new SecurityException("Access denied reading property", member);
+
 					if (prop && prop.wob !== this._id) {
-						let rv = Utils.Duplicate(prop.value);
+						let rv = Utils.Duplicate(prop.value.value);
 						Petal.ObjectWrapper.SetTag(rv, new WobPropertyTag(this, member));
 						return rv;
 					} else {
 						if (prop) {
-							Petal.ObjectWrapper.SetTag(prop.value, new WobPropertyTag(this, member));
-							return prop.value;
+							Petal.ObjectWrapper.SetTag(prop.value.value, new WobPropertyTag(this, member));
+							return prop.value.value;
 						} else
 							return null;
 					}
 				}, (runtime: Petal.Runtime, value: any) => {
+					// FIXME: Should check here for sticky bits.
+					if (!(runtime.currentSecurityContext === cargo.player.id && cargo.playerIsAdmin)) {
+						if (!prop) {
+							if (!Security.CheckSetWobProperties(wob, runtime.currentSecurityContext))
+								throw new SecurityException("Access denied adding properties", member);
+						} else {
+							if (!Security.CheckPropertyWrite(wob, member, runtime.currentSecurityContext))
+								throw new SecurityException("Access denied setting property", member);
+						}
+					}
+
 					Petal.ObjectWrapper.SetTag(value, new WobPropertyTag(this, member));
-					wob.setProperty(member, value);
+					wob.setPropertyKeepingPerms(member, value);
 				}, this);
 			}
 		})();
@@ -206,10 +255,16 @@ export class WobWrapper implements Petal.IObject {
 		let cargo: AccessorCargo = runtime.accessorCargo;
 		let wob = cargo.world.getCachedWob(this._id);
 		if (wob) {
+			let name = (<WobPropertyTag>item.tag).property;
+			if (!(runtime.currentSecurityContext === cargo.player.id && cargo.playerIsAdmin)
+					&& !Security.CheckPropertyWrite(wob, name, runtime.currentSecurityContext)) {
+				throw new SecurityException("Access denied setting property", name);
+			}
+
 			// This may not be necessary, but:
 			// a) it sets the dirty flag for us,
 			// b) if this came to us through inheritance, it will set the local copy.
-			wob.setProperty((<WobPropertyTag>item.tag).property, item);
+			wob.setPropertyKeepingPerms(name, item);
 		}
 	}
 
@@ -354,6 +409,9 @@ class DollarObject {
 		let newWob = await this._world.createWob(intoOrId);
 		newWob.base = 1;
 
+		// Also default to the ownership being the object who created it.
+		newWob.owner = this._runtime.currentSecurityContext;
+
 		return new WobWrapper(newWob.id);
 	}
 
@@ -364,11 +422,10 @@ class DollarObject {
 			let wob = await this._world.getWob(notation.id);
 			text = await wob.getPropertyI(WobProperties.Name, this._world);
 			if (text)
-				text = text.value;
+				text = text.value.value;
 		}
 
 		if (typeof(text) !== "string") {
-			console.log(text);
 			// Don't think this is quite the right exception...
 			throw new WobReferenceException("Received a non-string for notation", 0);
 		}
@@ -388,8 +445,18 @@ class DollarObject {
 		"log", "logArray", "timestamp", "get", "move", "contents", "create", "notate"
 	];
 
+	// Each time a new Runtime is created to deal with this object, set this value so we
+	// have it to use in our methods.
+	//
+	// It would've been better to have this passed down into the methods, but then we'd have
+	// to do the whole getAccessor thing here, and that's even uglier.
+	public set runtime(runtime: Petal.Runtime) {
+		this._runtime = runtime;
+	}
+
 	private _world: World;
 	private _injections: any;
+	private _runtime: Petal.Runtime;
 }
 
 // Wraps the ParseResult object for $parse inside Petal.
@@ -476,19 +543,22 @@ function handleFailure(parse: ParseResult, player: Wob): void {
 	}
 }
 
-function formatPetalException(player: Wob, err: any) : void {
+function formatPetalException(runtime: Petal.Runtime, player: Wob, err: any) : void {
 	let output;
+
+	// Try to pull the official Petal stack off the error, if it has one. If not,
+	// go to the runtime and try to pull one anyway.
 	if (err.petalStack)
 		output = [err.cause, " ", JSON.stringify(err.petalStack)];
 	else
-		output = [err.toString()];
+		output = [err.toString(), err.stack, JSON.stringify(runtime.getStackTrace())];
 	player.event(EventType.ScriptError, Date.now(), output);
 }
 
-export async function executeResult(parse: ParseResult, player: Wob, world: World): Promise<void> {
+export async function executeResult(parse: ParseResult, player: Wob, playerIsAdmin: boolean, world: World): Promise<void> {
 	// Get the environment ready.
 	let injections: any = {};
-	let cargo = new AccessorCargo(world, injections);
+	let cargo = new AccessorCargo(world, injections, player, playerIsAdmin);
 
 	let dollarObj = new DollarObject(world, injections);
 	let dollar = Petal.ObjectWrapper.WrapGeneric(dollarObj, DollarObject.Members, false);
@@ -496,9 +566,12 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 	let dollarParseObj = new DollarParse(parse, player, world, injections);
 	let dollarParse = Petal.ObjectWrapper.WrapGeneric(dollarParseObj, DollarParse.Members, false);
 
+	let perms = Petal.ObjectWrapper.WrapGeneric(Perms, [ "r", "w", "x", "s", "group", "others" ]);
+
 	injections.$ = dollar;
 	injections.$parse = dollarParse;
 	injections.$player = dollarParseObj.player;
+	injections.$perms = perms;
 
 	// Check for a global command handler on #1. If it exists, we'll call that first.
 	let rootScope = new RootScope(world, injections);
@@ -509,6 +582,7 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 		}
 	};
 	let rt = new Petal.Runtime(false, rootScope, changeRouter, cargo);
+	dollarObj.runtime = rt;
 
 	// If it's a literal code line, skip the rest of this.
 	let trimmedLine = parse.text.trim();
@@ -518,14 +592,15 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 			$: injections.$,
 			$parse: injections.$parse,
 			$player: injections.$player,
+			$perms: injections.$perms,
 			caller: dollarParseObj.player,
 			this: null
 		};
 		let result: Petal.ExecuteResult;
 		try {
-			result = await rt.executeCodeAsync("<immediate>", compiled, immediateInjections, 100000);
+			result = await rt.executeCodeAsync("<immediate>", compiled, immediateInjections, player.id, 100000);
 		} catch (err) {
-			formatPetalException(player, err);
+			formatPetalException(rt, player, err);
 		}
 		if (result) {
 			console.log("Command took", result.stepsUsed, "steps");
@@ -550,7 +625,7 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 		try {
 			result = await rt.executeFunctionAsync(addr, [], dollarParseObj.player, 100000);
 		} catch (err) {
-			formatPetalException(player, err);
+			formatPetalException(rt, player, err);
 		}
 		if (result) {
 			player.event(EventType.Debug, Date.now(), ["$command took ", result.stepsUsed, " steps"]);
@@ -564,6 +639,7 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 			if (parse.verb) {
 				// Reset the runtime.
 				rt = new Petal.Runtime(false, rootScope, changeRouter, cargo);
+				dollarObj.runtime = rt;
 			}
 		}
 	}
@@ -585,7 +661,7 @@ export async function executeResult(parse: ParseResult, player: Wob, world: Worl
 		try {
 			result = await rt.executeFunctionAsync(addr, [], dollarParseObj.player, 1000000);
 		} catch (err) {
-			formatPetalException(player, err);
+			formatPetalException(rt, player, err);
 		}
 
 		if (result) {

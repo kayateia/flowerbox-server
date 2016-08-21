@@ -8,34 +8,38 @@ import { ModelBase } from "./ModelBase";
 
 // For returning one property on a wob.
 export class Property extends ModelBase {
-	constructor(id: number, name: string, value: any, sub?: string) {
+	constructor(id: number, name: string, value: any, perms: number, sub?: string) {
 		super(true);
 		this.id = id;
 		this.name = name;
 		this.value = value;
+		this.perms = perms;
 		this.sub = sub;
 	}
 
 	public id: number;
 	public name: string;
 	public value: any;
+	public perms: number;
 	public sub: string;
 }
 
 // For returning one verb on a wob.
 export class Verb extends ModelBase {
-	constructor(id: number, name: string, sigs: string[], code: string) {
+	constructor(id: number, name: string, sigs: string[], code: string, perms: number) {
 		super(true);
 		this.id = id;
 		this.name = name;
 		this.sigs = sigs;
 		this.code = code;
+		this.perms = perms;
 	}
 
 	public id: number;
 	public name: string;
 	public sigs: string[];
 	public code: string;
+	public perms: number;
 }
 
 // Returned from setting multiple verbs. Since verbs may have compilation errors,
@@ -54,6 +58,7 @@ export class VerbSetErrors extends ModelBase {
 export class Info extends ModelBase {
 	constructor(id: number, base: number, container: number,
 			name: string, desc: string, globalid: string,
+			owner: number, group: number, perms: number,
 			properties?: AttachedItem[], verbs?: AttachedItem[]) {
 		super(true);
 
@@ -64,6 +69,9 @@ export class Info extends ModelBase {
 		this.name = name;
 		this.desc = desc;
 		this.globalid = globalid;
+		this.owner = owner;
+		this.group = group;
+		this.perms = perms;
 
 		this.properties = properties;
 		this.verbs = verbs;
@@ -73,6 +81,9 @@ export class Info extends ModelBase {
 	public id: number;
 	public base: number;
 	public container: number;
+	public owner: number;
+	public group: number;
+	public perms: number;
 
 	// Common named properties
 	public name: string;

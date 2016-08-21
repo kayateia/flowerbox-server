@@ -41,6 +41,8 @@ export function registerType(type: any): void {
 export function persist(obj: any): any {
 	if (typeof(obj) === "number")
 		return { type: "number", value: obj };
+	else if (typeof(obj) === "boolean")
+		return { type: "boolean", value: obj };
 	else if (typeof(obj) === "string")
 		return { type: "string", value: obj };
 	else if (obj === undefined)
@@ -79,6 +81,7 @@ export function unpersist(obj: any) {
 
 	switch (obj.type) {
 		case "number":
+		case "boolean":
 		case "string":
 		case "undefined":
 			return obj.value;

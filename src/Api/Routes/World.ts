@@ -93,6 +93,91 @@ export class WorldRouter extends RouterBase {
 		return wob;
 	}
 
+	// Does some preliminary checks for reading on objects on a wob. Returns one of three things:
+	// - A Wob representing the source object where the property or verb came from
+	// - Null, if the object doesn't exist
+	// - True, if the entire check should just succeed immediately
+	private async readChecks(srcWobId: number, furtherChecks: (srcWob: World.Wob) => boolean, res: any): Promise<any> {
+		if (this.token.admin)
+			return true;
+
+		let srcWob = await this.world.getWob(srcWobId);
+		if (!srcWob) {
+			res.status(500).json(new ModelBase(false, "Can't find property's wob to test security"));
+			return false;
+		}
+
+		return furtherChecks(srcWob);
+	}
+
+	// Checks to see if the user has the ability to read from the specified property on the specified wob.
+	// This is async because we look up the wob (it is often not the same wob that was read).
+	private async checkPropertyRead(srcWobId: number, prop: string, res: any): Promise<boolean> {
+		return await this.readChecks(srcWobId, wob => {
+			if (!World.Security.CheckPropertyRead(wob, prop, this.token.wobId)) {
+				res.status(403).json(new ModelBase(false, "Access denied for reading property"));
+				return false;
+			}
+
+			return true;
+		}, res);
+	}
+
+	// Checks to see if the user has the ability to write to the specified property on the specified wob.
+	// If we don't have the property, it checks to see if the user can write new properties.
+	private checkPropertyWrite(wob: World.Wob, prop: string, res: any): boolean {
+		if (this.token.admin)
+			return true;
+
+		if (wob.getProperty(prop)) {
+			if (!World.Security.CheckPropertyWrite(wob, prop, this.token.wobId)) {
+				res.status(403).json(new ModelBase(false, "Access denied writing to one or more properties"));
+				return false;
+			}
+		} else {
+			if (!World.Security.CheckWobWrite(wob, this.token.wobId)) {
+				res.status(403).json(new ModelBase(false, "Access denied for writing new properties to this wob"));
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	// Checks to see if the user has the ability to read from the specified verb on the specified wob.
+	// This is async because we look up the wob (it is often not the same wob that was read).
+	private async checkVerbRead(srcWobId: number, verb: string, res: any): Promise<boolean> {
+		return await this.readChecks(srcWobId, wob => {
+			if (!World.Security.CheckVerbRead(wob, verb, this.token.wobId)) {
+				res.status(403).json(new ModelBase(false, "Access denied for reading verb"));
+				return false;
+			}
+
+			return true;
+		}, res);
+	}
+
+	// Checks to see if the user has the ability to write to the specified verb on the specified wob.
+	// If we don't have the verb, it checks to see if the user can write new verbs.
+	private checkVerbWrite(wob: World.Wob, prop: string, res: any): boolean {
+		if (this.token.admin)
+			return true;
+
+		if (wob.getVerb(prop)) {
+			if (!World.Security.CheckVerbWrite(wob, prop, this.token.wobId)) {
+				res.status(403).json(new ModelBase(false, "Access denied writing to one or more verbs"));
+				return false;
+			}
+		} else {
+			if (!World.Security.CheckWobWrite(wob, this.token.wobId)) {
+				res.status(403).json(new ModelBase(false, "Access denied for writing new verbs to this wob"));
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	private async getProperty(req, res, next): Promise<any> {
 		let id = req.params.id;
 		let name = req.params.name;
@@ -108,19 +193,29 @@ export class WorldRouter extends RouterBase {
 			return;
 		}
 
+		if (!(await this.checkPropertyRead(prop.wob, name, res)))
+			return;
+
+		let perms = prop.value.perms;
+		if (!perms)
+			perms = World.Security.GetDefaultPropertyPerms();
+		let metadata = new Wob.Property(
+			prop.wob,
+			name,
+			undefined,
+			perms);
+
 		// We have to special case this for now.
-		if (prop.value instanceof Petal.PetalBlob) {
-			let value = prop.value.data;
+		if (prop.value.value instanceof Petal.PetalBlob) {
+			let value: any = prop.value.value.data;
 			if (base64)
 				value = value.toString("base64");
-			res.set("Content-Type", prop.value.mime)
+			res.set("X-Property-Metadata", JSON.stringify(metadata));
+			res.set("Content-Type", prop.value.value.mime)
 				.send(value);
 		} else {
-			res.json(new Wob.Property(
-				prop.wob,
-				name,
-				Petal.ObjectWrapper.Unwrap(prop.value)
-			));
+			metadata.value = Petal.ObjectWrapper.Unwrap(prop.value.value);
+			res.json(metadata);
 		}
 	}
 
@@ -131,8 +226,16 @@ export class WorldRouter extends RouterBase {
 		if (!wob)
 			return;
 
-		for (let prop of Petal.Utils.GetPropertyNames(req.body)) {
-			wob.setProperty(prop, req.body[prop]);
+		let props = Petal.Utils.GetPropertyNames(req.body);
+
+		// Check all the permissions up front.
+		for (let prop of props) {
+			if (!this.checkPropertyWrite(wob, prop, res))
+				return;
+		}
+
+		for (let prop of props) {
+			wob.setPropertyKeepingPerms(prop, req.body[prop]);
 		}
 
 		res.json(new ModelBase(true));
@@ -145,6 +248,11 @@ export class WorldRouter extends RouterBase {
 		let wob = await this.getWob(id, res);
 		if (!wob)
 			return;
+
+		if (!this.token.admin && !World.Security.CheckWobWrite(wob, this.token.wobId)) {
+			res.status(403).json(new ModelBase(false, "Access denied for deleting properties from this wob"));
+			return;
+		}
 
 		wob.deleteProperty(name);
 
@@ -163,16 +271,29 @@ export class WorldRouter extends RouterBase {
 			return;
 
 		let names = Petal.Utils.GetPropertyNames(value);
+
+		// Check all the permissions up front.
+		for (let n of names) {
+			if (!this.checkPropertyWrite(wob, n, res))
+				return;
+		}
+		for (let f of files) {
+			if (!this.checkPropertyWrite(wob, f.fieldname, res))
+				return;
+		}
+
+		// Set all the non-binary values.
 		for (let n of names) {
 			// Multer processes this, not the JSON body middleware, so we have
 			// to do our own JSON handling on it.
-			wob.setProperty(n, Petal.ObjectWrapper.Wrap(JSON.parse(value[n])));
+			wob.setPropertyKeepingPerms(n, Petal.ObjectWrapper.Wrap(JSON.parse(value[n])));
 		}
 
+		// And all the binary ones.
 		for (let f of files) {
 			let n = f.fieldname;
 			let blob = new Petal.PetalBlob(f.buffer, f.mimetype, f.originalname);
-			wob.setProperty(n, blob);
+			wob.setPropertyKeepingPerms(n, blob);
 		}
 
 		res.json(new ModelBase(true));
@@ -187,19 +308,24 @@ export class WorldRouter extends RouterBase {
 		if (!wob)
 			return;
 
+		if (!this.token.admin && !World.Security.CheckPropertyRead(wob, name, this.token.wobId)) {
+			res.status(403).json(new ModelBase(false, "Access denied for reading property"));
+			return;
+		}
+
 		let prop = wob.getProperty(name);
 		if (!prop) {
 			res.status(404).json(new ModelBase(false, "Property does not exist on wob"));
 			return;
 		}
 
-		if (!(prop instanceof Petal.PetalObject)) {
+		if (!(prop.value instanceof Petal.PetalObject)) {
 			res.status(500).json(new ModelBase(false, "Property is not an object"));
 			return;
 		}
 
-		if (prop.has(sub))
-			res.json(new Wob.Property(wob.id, name, prop.get(sub), sub));
+		if (prop.value.has(sub))
+			res.json(new Wob.Property(wob.id, name, prop.value.get(sub), sub));
 		else
 			res.status(404).json(new ModelBase(false, "Sub-property does not exist"));
 	}
@@ -212,19 +338,25 @@ export class WorldRouter extends RouterBase {
 		if (!wob)
 			return;
 
+		// This requires both reading and writing.
+		if (!this.token.admin && !World.Security.CheckProperty(wob, name, this.token.wobId, World.Perms.r | World.Perms.w)) {
+			res.status(403).json(new ModelBase(false, "Access denied for reading and writing property"));
+			return;
+		}
+
 		let prop = wob.getProperty(name);
 		if (!prop) {
 			// If property doesn't currently exist, create one.
-			prop = Petal.ObjectWrapper.Wrap({});
+			prop = new World.Property(Petal.ObjectWrapper.Wrap({}));
 		}
 
-		if (!(prop instanceof Petal.PetalObject)) {
+		if (!(prop.value instanceof Petal.PetalObject)) {
 			res.status(500).json(new ModelBase(false, "Property is not an object"));
 			return;
 		}
 
 		for (let sub of Petal.Utils.GetPropertyNames(req.body)) {
-			prop.set(sub, req.body[sub]);
+			prop.value.set(sub, req.body[sub]);
 		}
 
 		wob.setProperty(name, prop);
@@ -241,18 +373,24 @@ export class WorldRouter extends RouterBase {
 		if (!wob)
 			return;
 
-		let prop: Petal.PetalObject = wob.getProperty(name);
+		// This requires both reading and writing.
+		if (!this.token.admin && !World.Security.CheckProperty(wob, name, this.token.wobId, World.Perms.r | World.Perms.w)) {
+			res.status(403).json(new ModelBase(false, "Access denied for reading and writing property"));
+			return;
+		}
+
+		let prop = wob.getProperty(name);
 		if (!prop) {
 			res.status(404).json(new ModelBase(false, "Property does not exist"));
 			return;
 		}
 
-		if (!(prop instanceof Petal.PetalObject)) {
+		if (!(prop.value instanceof Petal.PetalObject)) {
 			res.status(500).json(new ModelBase(false, "Property is not an object"));
 			return;
 		}
 
-		prop.delete(sub);
+		prop.value.delete(sub);
 
 		wob.setProperty(name, prop);
 
@@ -273,12 +411,20 @@ export class WorldRouter extends RouterBase {
 			return;
 		}
 
+		if (!(await this.checkVerbRead(verb.wob, name, res)))
+			return;
+
+		let perms = verb.value.perms;
+		if (!perms)
+			perms = World.Security.GetDefaultVerbPerms();
+
 		res.json(new Wob.Verb(
-				verb.wob,
-				name,
-				verb.value.signatureStrings,
-				verb.value.code
-			));
+			verb.wob,
+			name,
+			verb.value.signatureStrings,
+			verb.value.code,
+			perms
+		));
 	}
 
 	private async deleteVerb(req, res, next): Promise<any> {
@@ -288,6 +434,11 @@ export class WorldRouter extends RouterBase {
 		let wob = await this.getWob(id, res);
 		if (!wob)
 			return;
+
+		if (!this.token.admin && !World.Security.CheckWobWrite(wob, this.token.wobId)) {
+			res.status(403).json(new ModelBase(false, "Access denied deleting verbs on wob"));
+			return;
+		}
 
 		wob.deleteVerb(name);
 
@@ -305,6 +456,14 @@ export class WorldRouter extends RouterBase {
 		let names = Petal.Utils.GetPropertyNames(values);
 		let errors = {};
 		let anyErrors = false;
+
+		// Check permissions on everything first.
+		for (let n of names) {
+			if (!this.checkVerbWrite(wob, n, res))
+				return;
+		}
+
+		// Now go through and set all the verbs.
 		for (let n of names) {
 			try {
 				wob.setVerbCode(n, values[n]);
@@ -329,6 +488,13 @@ export class WorldRouter extends RouterBase {
 			return;
 
 		let rv = await WobCommon.GetInfo(wob, this.world);
+
+		// If they don't have read access on the wob, remove the lists of properties and verbs.
+		if (!this.token.admin && !World.Security.CheckWobRead(wob, this.token.wobId)) {
+			delete rv.properties;
+			delete rv.verbs;
+		}
+
 		res.json(rv);
 	}
 
@@ -339,6 +505,12 @@ export class WorldRouter extends RouterBase {
 		let wob = await this.getWob(id, res);
 		if (!wob)
 			return;
+
+		// If they don't have write access on the wob, we pretty much can't let them do anything here.
+		if (!this.token.admin && !World.Security.CheckWobRead(wob, this.token.wobId)) {
+			res.status(403).json(new ModelBase(false, "Access denied writing to wob info"));
+			return;
+		}
 
 		if (body.base)
 			wob.base = body.base;
@@ -359,6 +531,11 @@ export class WorldRouter extends RouterBase {
 		if (!wob)
 			return;
 
+		if (!this.token.admin && !World.Security.CheckWobRead(wob, this.token.wobId)) {
+			res.status(403).json(new ModelBase(false, "Access denied reading wob contents"));
+			return;
+		}
+
 		res.json(new Wob.IdList(wob.contents));
 	}
 
@@ -369,6 +546,11 @@ export class WorldRouter extends RouterBase {
 		let wob = await this.getWob(id, res);
 		if (!wob)
 			return;
+
+		if (!this.token.admin && !World.Security.CheckWobRead(wob, this.token.wobId)) {
+			res.status(403).json(new ModelBase(false, "Access denied reading wob contents"));
+			return;
+		}
 
 		// FIXME: TypeScript thinks Promise.all returns Promise<Promise<Wob>[]>. See if they've
 		// fixed this later and try it again without the <any>.

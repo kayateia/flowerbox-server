@@ -22,7 +22,8 @@ module.exports = [
 		properties: {
 			"name": "Player",
 			"desc": "A blank shape that says MY BURAZAA on it.",
-			"globalid": "player"
+			"globalid": "player",
+			"admin": false
 		},
 		container: "@world",
 		base: "@world",
@@ -50,13 +51,15 @@ module.exports = [
 			"name": "Kayateia",
 			"desc": "A hacker girl stares at you from a hooded gaze... or maybe just falls asleep on her keyboard.",
 			"globalid": "kayateia",
-			"pwhash": "c9771fdacefc80d33926f5c9db42d2b839459ca2"
+			"pwhash": "c9771fdacefc80d33926f5c9db42d2b839459ca2",
+			"admin": true
 		},
 		propertiesBinary: {
 			"image": { file: "kayateia.jpg", mime: "image/jpeg" }
 		},
 		container: "@world",
-		base: "@player"
+		base: "@player",
+		owner: "self"
 	},
 
 	{
@@ -97,10 +100,12 @@ module.exports = [
 			"name": "Deciare",
 			"desc": "Wielding a pillow and a blanket, she stares at you fiercely.",
 			"globalid": "deciare",
-			"pwhash": "d074bdbe9ad92dedded13262944570114043a84d"
+			"pwhash": "d074bdbe9ad92dedded13262944570114043a84d",
+			"admin": true
 		},
 		container: "@world",
-		base: "@player"
+		base: "@player",
+		owner: "self"
 	},
 
 	{

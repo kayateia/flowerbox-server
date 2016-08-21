@@ -5,12 +5,14 @@
 */
 
 import { WobOperationException, InvalidCodeException } from "./Exceptions";
+import { Property } from "./Property";
 import { Verb, VerbCode } from "./Verb";
 import { CaseMap } from "../Utils/Strings";
 import * as Persistence from "../Utils/Persistence";
 import { World } from "./World";
 import * as Petal from "../Petal/All";
 import { Utils } from "./Utils";
+import { Perms } from "./Security";
 
 // When a wob wants to reference another wob in its properties, one of these should be used.
 export class WobRef {
@@ -30,26 +32,6 @@ export class WobRef {
 }
 Persistence.registerType(WobRef);
 
-// When we need to reference a property, one of these should be used.
-export class PropertyRef {
-	constructor(wobid: number, property: string) {
-		this.wobid = wobid;
-		this.property = property;
-	}
-
-	public persist(): any {
-		return { wobid: this.wobid, property: this.property };
-	}
-
-	public static Unpersist(obj: any): PropertyRef {
-		return new PropertyRef(obj.wobid, obj.property);
-	}
-
-	public wobid: number;
-	public property: string;
-}
-Persistence.registerType(PropertyRef);
-
 // Some well-defined properties.
 export class WobProperties {
 	// On all objects.
@@ -63,6 +45,7 @@ export class WobProperties {
 	public static EventStream = "eventstream";	// [{ type, time, body, tag? }]
 	public static PasswordHash = "pwhash";		// string
 	public static LastActive = "lastactive";	// int (unix timestamp)
+	public static Admin = "admin";				// boolean
 }
 
 // This should be kept in sync with the API models.
@@ -94,8 +77,12 @@ export class Wob {
 		this._container = 0;
 		this._base = 0;
 		this._contents = [];
-		this._properties = new CaseMap<any>();
+		this._properties = new CaseMap<Property>();
 		this._verbs = new CaseMap<Verb>();
+
+		this._owner = 1;
+		this._group = undefined;
+		this._perms = Perms.parse("rw-r--r--");
 
 		this._dirty = true;
 		this.updateLastUse();
@@ -149,6 +136,34 @@ export class Wob {
 		this._base = v;
 	}
 
+	public get owner(): number {
+		return this._owner;
+	}
+
+	public set owner(o: number) {
+		this._owner = o;
+
+		// We also have to go through and set the security context on all our verbs.
+		for (let v of this.getVerbs())
+			v.address.module.securityContext = o;
+	}
+
+	public get group(): number {
+		return this._group;
+	}
+
+	public set group(g: number) {
+		this._group = g;
+	}
+
+	public get perms(): number {
+		return this._perms;
+	}
+
+	public set perms(p: number) {
+		this._perms = p;
+	}
+
 	// If the current wob is an instance of the other wob (i.e. if "other" is somewhere
 	// in our base inheritance chain), then this returns true.
 	public async instanceOf(otherId: number, world: World): Promise<boolean> {
@@ -187,16 +202,16 @@ export class Wob {
 		}
 	}
 
-	public getProperty(name: string): any {
+	public getProperty(name: string): Property {
 		this.updateLastUse();
 		return this._properties.get(name);
 	}
 
 	// This version searches up the inheritance chain for answers.
-	public async getPropertyI(name: string, world: World): Promise<WobValue<any>> {
+	public async getPropertyI(name: string, world: World): Promise<WobValue<Property>> {
 		let ours = this._properties.get(name);
 		if (ours)
-			return new WobValue<any>(this.id, ours);
+			return new WobValue<Property>(this.id, ours);
 
 		if (this.base) {
 			let baseWob = await world.getWob(this.base);
@@ -205,10 +220,18 @@ export class Wob {
 			return null;
 	}
 
-	public setProperty(name: string, value: any): void {
+	public setProperty(name: string, value: Property): void {
 		this.updateLastUse();
 		this._dirty = true;
 		this._properties.set(name, value);
+	}
+
+	// Sets a new property value, keeping the old permissions, or using new defaults
+	// if there was no property value before.
+	public setPropertyKeepingPerms(name: string, value: any): void {
+		let oldProperty = this.getProperty(name);
+		let newProperty = Property.CopyPerms(oldProperty, value);
+		this.setProperty(name, newProperty);
 	}
 
 	public deleteProperty(name: string): void {
@@ -220,11 +243,11 @@ export class Wob {
 	// Record an event in the wob's event stream. 'type' should be a value
 	// from the EventType class.
 	public event(type: string, timestamp: number, body: any[], tag?: string): void {
-		let value = this.getProperty(WobProperties.EventStream);
-		if (value == null)
-			value = new Petal.PetalArray();
-		value.push(Petal.PetalObject.FromObject({ type: type, time: timestamp, body: body, tag: tag }));
-		this.setProperty(WobProperties.EventStream, value);
+		let prop = this.getProperty(WobProperties.EventStream);
+		if (prop === null || prop.value === null)
+			prop = new Property(new Petal.PetalArray());
+		prop.value.push(Petal.PetalObject.FromObject({ type: type, time: timestamp, body: body, tag: tag }));
+		this.setProperty(WobProperties.EventStream, prop);
 	}
 
 	public getVerbNames(): string[] {
@@ -312,9 +335,10 @@ export class Wob {
 		if (!Petal.Check.IsSingleObjectDef(parsed))
 			throw new InvalidCodeException("Verb code is not a single variable declaration with an object value.", parsed);
 
-		// Execute the code.
+		// Execute the code. Note that we want the resulting code to run under this wob's security
+		// context, so we pass it here.
 		let rt = new Petal.Runtime();
-		let runresult = rt.executeCode("#" + this.id + "." + name, parsed, null, 10000);
+		let runresult = rt.executeCode("#" + this.id + "." + name, parsed, null, this._owner, 10000);
 
 		// Look for the variable that was set in the scope.
 		let scope = rt.currentScope;
@@ -359,6 +383,7 @@ export class Wob {
 	private _dirty: boolean;
 	private _lastUse: number;
 
-	/*private _owner: number;
-	private _group: number;*/
+	private _owner: number;
+	private _group: number;
+	private _perms: number;
 }

@@ -11,6 +11,8 @@ export * from "./Exceptions";
 export * from "./Execution";
 export * from "./InputParser";
 export * from "./Notation";
+export * from "./Property";
+export * from "./Security";
 export * from "./Utils";
 export * from "./Verb";
 export * from "./Wob";

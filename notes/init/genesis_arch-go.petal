@@ -256,6 +256,8 @@ var go = {
 			let container = $.create(1);
 			if (!@genesis_arch.counter)
 				@genesis_arch.counter = 1;
+			else
+				++@genesis_arch.counter;
 			let containerName = "Genesis Zone " + @genesis_arch.counter;
 			container.name = containerName;
 			container.desc = "Here there be creation; forest biome";
