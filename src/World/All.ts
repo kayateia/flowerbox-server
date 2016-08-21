@@ -6,6 +6,7 @@
 
 // This is just a catch-all module that you can import if you want to pull in
 // various things from World.
+export * from "./Actions";
 export * from "./Database";
 export * from "./Exceptions";
 export * from "./Execution";

@@ -516,8 +516,7 @@ export class WorldRouter extends RouterBase {
 		if (body.base)
 			wob.base = body.base;
 		if (body.container && wob.container != body.container) {
-			// FIXME: Move notifications.
-			await this.world.moveWob(wob.id, body.container);
+			await World.Actions.Move(this.world, wob.id, body.container);
 		}
 
 		// TODO: Security bits.

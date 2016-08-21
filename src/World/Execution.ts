@@ -15,6 +15,7 @@ import { Utils } from "./Utils";
 import * as Persistence from "../Utils/Persistence";
 import { Property, PropertyRef } from "./Property";
 import { Perms, Security } from "./Security";
+import { Actions } from "./Actions";
 
 // Wraps a notation for passing around in Petal scripts. These are opaque
 // objects and you can't do anything with them but pass them around.
@@ -339,44 +340,7 @@ class DollarObject {
 		if (typeof(objOrId) !== "number" || typeof(intoOrId) !== "number")
 			throw new WobReferenceException("Received a non-wob object in move()", 0);
 
-		// FIXME: Need to ask the wob itself if it's okay to move it.
-
-		let wob: Wob = await this._world.getWob(objOrId);
-		let oldLocation = await this._world.getWob(wob.container);
-		let newLocation = await this._world.getWob(intoOrId);
-
-		let playerBase: Wob = await this._world.getWobByGlobalId("player");
-		if (!playerBase)
-			throw new WobReferenceException("Can't find the @player object", 0);
-
-		// Notify all the player objects in the old room that something is moving.
-		await Promise.all(oldLocation.contents.map(async c => {
-			if (c === wob.id)
-				return;
-			let cwob = await this._world.getWob(c);
-			if (cwob && await cwob.instanceOf(playerBase.id, this._world)) {
-				cwob.event(EventType.MoveNotification, Date.now(), [
-					await this.notate(new WobWrapper(wob.id), null),
-					await this.notate(new WobWrapper(oldLocation.id), null),
-					await this.notate(new WobWrapper(newLocation.id), null)
-				]);
-			}
-		}));
-
-		await this._world.moveWob(wob.id, newLocation.id);
-
-		// Notify all the player objects in the new room (including the moved object, if
-		// it's a player) that something is moving.
-		await Promise.all(newLocation.contents.map(async c => {
-			let cwob = await this._world.getWob(c);
-			if (cwob && await cwob.instanceOf(playerBase.id, this._world)) {
-				cwob.event(EventType.MoveNotification, Date.now(), [
-					await this.notate(new WobWrapper(wob.id), null),
-					await this.notate(new WobWrapper(oldLocation.id), null),
-					await this.notate(new WobWrapper(newLocation.id), null)
-				]);
-			}
-		}));
+		await Actions.Move(this._world, objOrId, intoOrId);
 	}
 
 	public async contents(objOrId: any /*WobWrapper | number*/): Promise<WobWrapper[]> {
