@@ -65,7 +65,7 @@ export class Info extends ModelBase {
 	constructor(id: number, base: number, container: number,
 			name: string, desc: string, globalid: string,
 			owner: number, group: number, perms: number,
-			properties?: AttachedItem[], verbs?: AttachedItem[]) {
+			properties?: AttachedProperty[], verbs?: AttachedItem[]) {
 		super(true);
 
 		this.id = id;
@@ -97,18 +97,35 @@ export class Info extends ModelBase {
 	public globalid: string;
 
 	// List of properties and verbs, by wob ID.
-	public properties: AttachedItem[];
-	public verbs: AttachedItem[];
+	public properties: AttachedProperty[];
+	public verbs: AttachedVerb[];
 }
 
 export class AttachedItem {
-	constructor(sourceid: number, value: string) {
+	constructor(sourceid: number, value: string, perms: number) {
 		this.sourceid = sourceid;
 		this.value = value;
+		this.perms = perms;
 	}
 
 	public sourceid: number;
 	public value: string;
+	public perms: number;
+}
+
+export class AttachedProperty extends AttachedItem {
+	constructor(sourceid: number, value: string, perms: number, blobmimetype: string) {
+		super(sourceid, value, perms);
+		this.blobmimetype = blobmimetype;
+	}
+
+	public blobmimetype: string;
+}
+
+export class AttachedVerb extends AttachedItem {
+	constructor(sourceid: number, value: string, perms: number) {
+		super(sourceid, value, perms);
+	}
 }
 
 export class IdList extends ModelBase {

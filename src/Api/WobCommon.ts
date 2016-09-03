@@ -6,6 +6,7 @@
 
 import * as Wob from "./Model/Wob";
 import * as World from "../World/All";
+import * as Petal from "../Petal/All";
 
 export class WobCommon {
 	// Gets all the Wob.Info data for a loaded wob.
@@ -20,16 +21,39 @@ export class WobCommon {
 		let group = wob.group;
 		let perms = wob.perms;
 
-		let properties = await wob.getPropertyNamesI(world);
-		let verbs = await wob.getVerbNamesI(world);
+		// Get all the properties and verbs. We need more than just their names here, as we
+		// want to include useful metadata like permissions and mime types.
+		let properties = await wob.getPropertiesI(world);
+		let verbs = await wob.getVerbsI(world);
+
+		// Convert the properties into property metadata.
+		let propertyInfos: Wob.AttachedProperty[] = [];
+		for (let p of properties.pairs()) {
+			let key: string = p[0];
+			let wobid: number = p[1].wob;
+			let value: World.Property = p[1].value;
+
+			// We only pass back a mime type if it's a blob property.
+			let mimetype: string;
+			if (value.value instanceof Petal.PetalBlob)
+				mimetype = (<Petal.PetalBlob>(value.value)).mime;
+
+			propertyInfos.push(new Wob.AttachedProperty(wobid, key, value.perms, mimetype));
+		}
+
+		// Convert the verbs into verb metadata.
+		let verbInfos: Wob.AttachedVerb[] = [];
+		for (let v of verbs) {
+			verbInfos.push(new Wob.AttachedVerb(v.wob, v.value.word, v.value.perms));
+		}
 
 		let rv = new Wob.Info(wob.id, base, container, name.value.value, desc.value.value,
 			globalid ? globalid.value : null,
 			owner,
 			group,
 			perms,
-			properties.map(p => new Wob.AttachedItem(p.wob, p.value)),
-			verbs.map(v => new Wob.AttachedItem(v.wob, v.value)));
+			propertyInfos,
+			verbInfos);
 		return rv;
 	}
 }

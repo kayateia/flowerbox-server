@@ -57,6 +57,13 @@ export class CaseMap<T> {
 		return ret;
 	}
 
+	public pairs(): [[string, T]] {
+		let ret: any = [];
+		for (let pair of this._map)
+			ret.push([pair[1].key, pair[1].value]);
+		return ret;
+	}
+
 	private _map: Map<string, Item<T>>;
 }
 

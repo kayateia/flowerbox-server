@@ -184,29 +184,44 @@ export class Wob {
 		return base !== 0;
 	}
 
+	// Returns the names of all the properties on this wob.
 	public getPropertyNames(): string[] {
 		this.updateLastUse();
 		return [...this._properties.keys()];
 	}
 
-	// This version searches up the inheritance chain for answers.
+	// Returns the names of all the properties on this wob, with consideration for the
+	// inheritance chain.
 	public async getPropertyNamesI(world: World): Promise<WobValue<string>[]> {
-		let map = new CaseMap<WobValue<string>>();
-		await this.mapPropertyNamesI(world, map);
-		return map.values();
+		let map = await this.getPropertiesI(world);
+		let rv = [];
+		for (let pair of map.pairs()) {
+			rv.push(new WobValue<string>(pair[1].wob, pair[0]));
+		}
+		return rv;
 	}
 
-	private async mapPropertyNamesI(world: World, map: CaseMap<WobValue<string>>): Promise<void> {
+	// Returns a map from name to WobValue of all properties on this object, with consideration
+	// for the inheritance chain.
+	public async getPropertiesI(world: World): Promise<CaseMap<WobValue<Property>>> {
+		let map = new CaseMap<WobValue<Property>>();
+		await this.mapPropertiesI(world, map);
+		return map;
+	}
+
+	// Recursively search the inheritance chain for properties.
+	private async mapPropertiesI(world: World, map: CaseMap<WobValue<Property>>): Promise<void> {
 		this.getPropertyNames().forEach(pn => {
 			if (!map.has(pn))
-				map.set(pn, new WobValue<string>(this.id, pn));
+				map.set(pn, new WobValue<Property>(this.id, this.getProperty(pn)));
 		});
 		if (this.base) {
 			let baseWob = await world.getWob(this.base);
-			baseWob.mapPropertyNamesI(world, map);
+			baseWob.mapPropertiesI(world, map);
 		}
 	}
 
+	// Returns the named property on this particular wob, if it exists; doesn't consider the inheritance chain.
 	public getProperty(name: string): Property {
 		this.updateLastUse();
 		return this._properties.get(name);
@@ -225,6 +240,7 @@ export class Wob {
 			return null;
 	}
 
+	// Sets the named property on this particular wob.
 	public setProperty(name: string, value: Property): void {
 		this.updateLastUse();
 		this._dirty = true;
