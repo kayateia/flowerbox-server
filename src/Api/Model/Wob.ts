@@ -8,12 +8,13 @@ import { ModelBase } from "./ModelBase";
 
 // For returning one property on a wob.
 export class Property extends ModelBase {
-	constructor(id: number, name: string, value: any, perms: number, sub?: string) {
+	constructor(id: number, name: string, value: any, perms: number, permsEffective: number, sub?: string) {
 		super(true);
 		this.id = id;
 		this.name = name;
 		this.value = value;
 		this.perms = perms;
+		this.permseffective = permsEffective;
 		this.sub = sub;
 	}
 
@@ -21,18 +22,20 @@ export class Property extends ModelBase {
 	public name: string;
 	public value: any;
 	public perms: number;
+	public permseffective: number;
 	public sub: string;
 }
 
 // For returning one verb on a wob.
 export class Verb extends ModelBase {
-	constructor(id: number, name: string, sigs: string[], code: string, perms: number) {
+	constructor(id: number, name: string, sigs: string[], code: string, perms: number, permsEffective: number) {
 		super(true);
 		this.id = id;
 		this.name = name;
 		this.sigs = sigs;
 		this.code = code;
 		this.perms = perms;
+		this.permseffective = permsEffective;
 	}
 
 	public id: number;
@@ -40,6 +43,7 @@ export class Verb extends ModelBase {
 	public sigs: string[];
 	public code: string;
 	public perms: number;
+	public permseffective: number;
 }
 
 // Expected object to be passed in per verb being set.
@@ -102,20 +106,22 @@ export class Info extends ModelBase {
 }
 
 export class AttachedItem {
-	constructor(sourceid: number, value: string, perms: number) {
+	constructor(sourceid: number, value: string, perms: number, permsEffective: number) {
 		this.sourceid = sourceid;
 		this.value = value;
 		this.perms = perms;
+		this.permseffective = permsEffective;
 	}
 
 	public sourceid: number;
 	public value: string;
 	public perms: number;
+	public permseffective: number;
 }
 
 export class AttachedProperty extends AttachedItem {
-	constructor(sourceid: number, value: string, perms: number, blobmimetype: string) {
-		super(sourceid, value, perms);
+	constructor(sourceid: number, value: string, perms: number, permsEffective: number, blobmimetype: string) {
+		super(sourceid, value, perms, permsEffective);
 		this.blobmimetype = blobmimetype;
 	}
 
@@ -123,8 +129,8 @@ export class AttachedProperty extends AttachedItem {
 }
 
 export class AttachedVerb extends AttachedItem {
-	constructor(sourceid: number, value: string, perms: number) {
-		super(sourceid, value, perms);
+	constructor(sourceid: number, value: string, perms: number, permsEffective: number) {
+		super(sourceid, value, perms, permsEffective);
 	}
 }
 

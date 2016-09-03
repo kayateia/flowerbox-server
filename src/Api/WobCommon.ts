@@ -38,13 +38,25 @@ export class WobCommon {
 			if (value.value instanceof Petal.PetalBlob)
 				mimetype = (<Petal.PetalBlob>(value.value)).mime;
 
-			propertyInfos.push(new Wob.AttachedProperty(wobid, key, value.perms, mimetype));
+			// If the property doesn't have permissions set, we use the defaults.
+			let perms: number = value.perms;
+			let permsEffective: number = perms;
+			if (perms === undefined)
+				permsEffective = World.Security.GetDefaultPropertyPerms();
+
+			propertyInfos.push(new Wob.AttachedProperty(wobid, key, perms, permsEffective, mimetype));
 		}
 
 		// Convert the verbs into verb metadata.
 		let verbInfos: Wob.AttachedVerb[] = [];
 		for (let v of verbs) {
-			verbInfos.push(new Wob.AttachedVerb(v.wob, v.value.word, v.value.perms));
+			// If the verb doesn't have permissions set, we use the defaults.
+			let perms: number = v.value.perms;
+			let permsEffective: number = perms;
+			if (perms === undefined)
+				permsEffective = World.Security.GetDefaultVerbPerms();
+
+			verbInfos.push(new Wob.AttachedVerb(v.wob, v.value.word, perms, permsEffective));
 		}
 
 		let rv = new Wob.Info(wob.id, base, container, name.value.value, desc.value.value,

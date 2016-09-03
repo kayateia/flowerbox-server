@@ -206,13 +206,15 @@ export class WorldRouter extends RouterBase {
 			return;
 
 		let perms = prop.value.perms;
-		if (!perms)
-			perms = World.Security.GetDefaultPropertyPerms();
+		let permsEffective = perms;
+		if (!permsEffective)
+			permsEffective = World.Security.GetDefaultPropertyPerms();
 		let metadata = new Wob.Property(
 			prop.wob,
 			name,
 			undefined,
-			perms);
+			perms,
+			permsEffective);
 
 		// We have to special case this for now.
 		if (prop.value.value instanceof Petal.PetalBlob) {
@@ -333,9 +335,13 @@ export class WorldRouter extends RouterBase {
 			return;
 		}
 
-		if (prop.value.has(sub))
-			res.json(new Wob.Property(wob.id, name, prop.value.get(sub), sub));
-		else
+		if (prop.value.has(sub)) {
+			let perms = prop.perms;
+			let permsEffective = perms;
+			if (!permsEffective)
+				permsEffective = World.Security.GetDefaultPropertyPerms();
+			res.json(new Wob.Property(wob.id, name, prop.value.get(sub), perms, permsEffective, sub));
+		} else
 			res.status(404).json(new ModelBase(false, "Sub-property does not exist"));
 	}
 
@@ -424,15 +430,17 @@ export class WorldRouter extends RouterBase {
 			return;
 
 		let perms = verb.value.perms;
-		if (!perms)
-			perms = World.Security.GetDefaultVerbPerms();
+		let permsEffective = perms;
+		if (!permsEffective)
+			permsEffective = World.Security.GetDefaultVerbPerms();
 
 		res.json(new Wob.Verb(
 			verb.wob,
 			name,
 			verb.value.signatureStrings,
 			verb.value.code,
-			perms
+			perms,
+			permsEffective
 		));
 	}
 

@@ -39,7 +39,7 @@ describe("World API", function() {
 					id: 1,
 					name: "name",
 					value: "Za Waarudo",
-					perms: 0x060404
+					permseffective: 0x060404
 				});
 				done();
 			});
