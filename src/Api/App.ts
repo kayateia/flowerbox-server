@@ -16,7 +16,6 @@ import { worldRouter } from "./Routes/World";
 import { ModelBase } from "./Model/ModelBase";
 
 const bodyParser = require("body-parser");
-const InitWorld = require("../../notes/init/InitWorld");
 
 export let app = express();
 
@@ -29,7 +28,7 @@ let cors = require("cors");
 
 async function worldStartup() {
 	// Create a small in-world "game world" to test with.
-	await world.createDefault(InitWorld, "./notes/init");
+	await world.createDefault("./notes/init");
 	for (let r of [indexRouter, terminalRouter, userRouter, worldRouter]) {
 		r.world = world;
 		r.config = config;

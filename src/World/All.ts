@@ -15,6 +15,7 @@ export * from "./Execution/DollarParse";
 export * from "./Execution/NotationWrapper";
 export * from "./Execution/RootScope";
 export * from "./Execution/WobWrapper";
+export * from "./ImportExport";
 export * from "./InputParser";
 export * from "./Notation";
 export * from "./Property";

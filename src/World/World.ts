@@ -6,16 +6,9 @@
 
 import { WobReferenceException, WobOperationException } from "./Exceptions";
 import { Wob, WobProperties } from "./Wob";
-import { Verb } from "./Verb";
-import { Property } from "./Property";
 import * as Strings from "../Utils/Strings";
-import { Utils } from "../Petal/Utils";
-import * as Petal from "../Petal/All";
-import * as FsPromises from "../Async/FsPromises";
-import * as CorePromises from "../Async/CorePromises";
-import * as path from "path";
 import { Database } from "./Database";
-import { Perms } from "./Security";
+import { ImportExport } from "./ImportExport";
 
 // Zaa Warudo
 export class World {
@@ -37,7 +30,7 @@ export class World {
 		setTimeout(() => this.commitTimeout(), 5*1000);
 	}
 
-	public async createDefault(init: any, basePath: string): Promise<void> {
+	public async createDefault(basePath: string): Promise<void> {
 		if (await this._db.exists(1)) {
 			console.log("Skipping default world creation; already exists");
 			let nextidstr = await this._db.readMeta("nextid");
@@ -46,78 +39,7 @@ export class World {
 			return;
 		}
 
-		for (let wobdef of init) {
-			let wob = await this.createWob();
-			for (let prop of Utils.GetPropertyNames(wobdef.properties)) {
-				let value = wobdef.properties[prop];
-				if (typeof(value) === "object" && value.hasOwnProperty("value")) {
-					let perms: any = value.perms;
-					if (perms)
-						perms = Perms.parse(perms);
-					wob.setProperty(prop, new Property(Petal.ObjectWrapper.Wrap(value.value), perms));
-				} else
-					wob.setProperty(prop, new Property(Petal.ObjectWrapper.Wrap(value)));
-			}
-			if (wobdef.propertiesBinary) {
-				for (let prop of Utils.GetPropertyNames(wobdef.propertiesBinary)) {
-					let pv = wobdef.propertiesBinary[prop];
-					let fn = path.join(basePath, pv.file);
-					console.log("loading", fn, "-", pv.mime);
-					let contents = await FsPromises.readFile(fn);
-					wob.setProperty(prop, new Property(new Petal.PetalBlob(contents, pv.mime, pv.file)));
-				}
-			}
-
-			if (wobdef.verbs) {
-				for (let vinfo of wobdef.verbs) {
-					let p = path.join(basePath, vinfo.fn);
-					console.log("loading", p, "->", vinfo.name);
-					let contents = (await FsPromises.readFile(p)).toString();
-					let sigs: string[] = vinfo.sigs;
-					wob.setVerbCode(vinfo.name, sigs, contents);
-				}
-			}
-
-			// Does name resolution for referenced wobs.
-			let findWob = async (inputWob: Wob, id: any): Promise<Wob> => {
-				let wob: Wob;
-				if (typeof(id) === "string") {
-					if (id[0] === "@") {
-						wob = (await this.getWobsByGlobalId([id.substr(1)]))[0];
-					} else if (id === "self") {
-						wob = inputWob;
-					} else {
-						throw new Error("Invalid string " + id + "to identify wob");
-					}
-				} else {
-					wob = this.getCachedWob(id);
-				}
-				return wob;
-			};
-
-			if (wobdef.container) {
-				let container: Wob = await findWob(wob, wobdef.container);
-				wob.container = container.id;
-				container.contents.push(wob.id);
-			}
-			if (wobdef.base) {
-				let base: Wob = await findWob(wob, wobdef.base);
-				wob.base = base.id;
-			}
-			if (wobdef.owner) {
-				let owner: Wob = await findWob(wob, wobdef.owner);
-				wob.owner = owner.id;
-			}
-			if (wobdef.group) {
-				let group: Wob = await findWob(wob, wobdef.group);
-				wob.group = group.id;
-			}
-			if (wobdef.perms)
-				wob.perms = wobdef.perms;
-			else
-				wob.perms = Perms.parse("rw-r--r--");
-		}
-
+		await ImportExport.Import(this, basePath);
 		await this.commit();
 	}
 

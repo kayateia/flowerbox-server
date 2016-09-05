@@ -11,7 +11,6 @@ import * as readline from "readline";
 import * as Petal from "./Petal/All";
 import * as Database from "./Database/All";
 
-let InitWorld = require("../notes/init/InitWorld");
 let config = require("../config");
 
 let sal = new Database.AccessLayer(config);
@@ -24,7 +23,7 @@ const rl = readline.createInterface({
 
 async function tester() {
 	// Create a small in-world "game world" to test with.
-	await world.createDefault(InitWorld, "./notes/init");
+	await world.createDefault("./notes/init");
 
 	let player = (await world.getWobsByGlobalId(["kayateia"]))[0];
 	(function nextLine() {
