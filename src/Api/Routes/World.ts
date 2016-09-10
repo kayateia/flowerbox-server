@@ -408,7 +408,14 @@ export class WorldRouter extends RouterBase {
 
 		prop.value.delete(sub);
 
-		wob.setProperty(name, prop);
+		if (!prop.value.keys.length) {
+			// If all sub-properites have been deleted, also delete the
+			// property that was containing them.
+			wob.deleteProperty(name);
+		}
+		else {
+			wob.setProperty(name, prop);
+		}
 
 		res.json(new ModelBase(true));
 	}
