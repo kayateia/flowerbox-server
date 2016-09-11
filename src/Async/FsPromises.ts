@@ -16,3 +16,14 @@ export function readFile(path: string): Promise<Buffer> {
 		});
 	});
 }
+
+export function writeFile(path: string, contents: string | Buffer): Promise<any> {
+	return new Promise((a, r) => {
+		fs.writeFile(path, contents, (err, result) => {
+			if (err)
+				r(err);
+			else
+				a(result);
+		});
+	});
+}

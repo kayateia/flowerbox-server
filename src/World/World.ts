@@ -88,6 +88,12 @@ export class World {
 		return wob;
 	}
 
+	// Returns the ID of the next object we would create. This is intended mainly
+	// for use by the exporter so that it can enumerate all objects for export.
+	public get nextId(): number {
+		return this._nextId;
+	}
+
 	public async getWob(id: number): Promise<Wob> {
 		if (!this._wobCache.has(id)) {
 			let loaded = await this._db.loadWob(id);

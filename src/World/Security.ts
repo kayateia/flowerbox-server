@@ -110,6 +110,36 @@ export class Perms {
 
 		return out;
 	}
+
+	// This expects a permissions bit mask, and returns a string of the form "srwxr--r--".
+	public static unparse(mask: number): string {
+		let out = "";
+		if (Perms.misc(mask) & Perms.s)
+			out = "s";
+
+		function unparseOneChunk(maskPart: number): string {
+			let chunkOut = "";
+			if (maskPart & Perms.r)
+				chunkOut += "r";
+			else
+				chunkOut += "-";
+			if (maskPart & Perms.w)
+				chunkOut += "w";
+			else
+				chunkOut += "-";
+			if (maskPart & Perms.x)
+				chunkOut += "x";
+			else
+				chunkOut += "-";
+
+			return chunkOut;
+		}
+
+		out += unparseOneChunk(Perms.owner(mask));
+		out += unparseOneChunk(Perms.group(mask));
+		out += unparseOneChunk(Perms.others(mask));
+		return out;
+	}
 }
 
 // Static methods for verifying various security actions against the permissions on a wob.
