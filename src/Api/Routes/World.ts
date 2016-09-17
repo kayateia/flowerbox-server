@@ -221,6 +221,7 @@ export class WorldRouter extends RouterBase {
 			let value: any = prop.value.value.data;
 			if (base64)
 				value = value.toString("base64");
+			res.set("Access-Control-Expose-Headers", "X-Property-Metadata");
 			res.set("X-Property-Metadata", JSON.stringify(metadata));
 			res.set("Content-Type", prop.value.value.mime)
 				.send(value);
@@ -407,7 +408,14 @@ export class WorldRouter extends RouterBase {
 
 		prop.value.delete(sub);
 
-		wob.setProperty(name, prop);
+		if (!prop.value.keys.length) {
+			// If all sub-properites have been deleted, also delete the
+			// property that was containing them.
+			wob.deleteProperty(name);
+		}
+		else {
+			wob.setProperty(name, prop);
+		}
 
 		res.json(new ModelBase(true));
 	}
