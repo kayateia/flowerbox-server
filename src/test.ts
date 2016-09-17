@@ -14,7 +14,7 @@ import * as Database from "./Database/All";
 let config = require("../config");
 
 let sal = new Database.AccessLayer(config);
-let world = new World.World(new World.Database(sal));
+let world = new World.World(new World.Database(sal), true);
 
 const rl = readline.createInterface({
 	input: process.stdin,

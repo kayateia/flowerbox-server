@@ -30,7 +30,7 @@ export let app = express();
 let config = require("../../config");
 
 let sal = new Database.AccessLayer(config);
-let world = new World.World(new World.Database(sal));
+let world = new World.World(new World.Database(sal), true);
 
 let cors = require("cors");
 

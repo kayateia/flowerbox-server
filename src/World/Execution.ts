@@ -25,15 +25,24 @@ function handleFailure(parse: ParseResult, player: Wob): void {
 	}
 }
 
-function formatPetalException(runtime: Petal.Runtime, player: Wob, err: any) : void {
+export function formatPetalException(runtime: Petal.Runtime, err: any): string[] {
 	let output;
 
 	// Try to pull the official Petal stack off the error, if it has one. If not,
 	// go to the runtime and try to pull one anyway.
 	if (err.petalStack)
 		output = [err.cause, " ", JSON.stringify(err.petalStack)];
+	else if (runtime)
+		output = [err.toString(), " ", err.stack, " ", JSON.stringify(runtime.getStackTrace())];
 	else
-		output = [err.toString(), err.stack, JSON.stringify(runtime.getStackTrace())];
+		output = [err.toString(), " ", err.stack];
+
+	return output;
+}
+
+function displayPetalException(runtime: Petal.Runtime, player: Wob, err: any): void {
+	let output = formatPetalException(runtime, err);
+
 	if (player)
 		player.event(EventType.ScriptError, Date.now(), output);
 	else
@@ -130,20 +139,36 @@ class EnvironmentSetup {
 	}
 }
 
-// Executes a function in the context of a standard verb execution. Parse and player
-// may be null if they are not available.
-async function executeFunctionInner(funcName: string, func: Petal.Address, thisValue: any, env: EnvironmentSetup): Promise<Petal.ExecuteResult> {
+// Executes an arbitrary function in the context of a standard verb execution. Parse and player
+// may be null if they are not available. Errors thrown in the runtime *will* bubble out.
+export async function executeFunction(parse: ParseResult, player: Wob, playerIsAdmin: boolean, world: World,
+		func: Petal.Address, thisValue: any): Promise<Petal.ExecuteResult> {
+	// Get the environment ready.
+	let env: EnvironmentSetup = EnvironmentSetup.Setup(parse, player, playerIsAdmin, world);
+
 	let addr = func.copy();
 	if (thisValue instanceof Wob)
 		thisValue = new WobWrapper(thisValue.id);
 	addr.thisValue = thisValue;
 	addr.injections = env.injections;
+
+	return await env.runtime.executeFunctionAsync(addr, [], env.player, 1000000);
+}
+
+// Executes a verb in the context of a standard verb execution.
+async function executeVerbInner(funcName: string, func: Petal.Address, thisValue: any, env: EnvironmentSetup): Promise<Petal.ExecuteResult> {
+	let addr = func.copy();
+	if (thisValue instanceof Wob)
+		thisValue = new WobWrapper(thisValue.id);
+	addr.thisValue = thisValue;
+	addr.injections = env.injections;
+
 	let result: Petal.ExecuteResult;
 	try {
 		let player: Wob;
 		result = await env.runtime.executeFunctionAsync(addr, [], env.player, 1000000);
 	} catch (err) {
-		formatPetalException(env.runtime, env.playerObj, err);
+		displayPetalException(env.runtime, env.playerObj, err);
 	}
 	if (result) {
 		env.playerObj.event(EventType.Debug, Date.now(), [funcName, " took ", result.stepsUsed, " steps"]);
@@ -153,15 +178,6 @@ async function executeFunctionInner(funcName: string, func: Petal.Address, thisV
 		}
 	}
 	return result;
-}
-
-// Executes an arbitrary function in the context of a standard verb execution. Parse and player
-// may be null if they are not available.
-export async function executeFunction(parse: ParseResult, player: Wob, playerIsAdmin: boolean, world: World,
-		funcName: string, func: Petal.Address, thisValue: any): Promise<Petal.ExecuteResult> {
-	// Get the environment ready.
-	let env: EnvironmentSetup = EnvironmentSetup.Setup(parse, player, playerIsAdmin, world);
-	return await executeFunctionInner(funcName, func, thisValue, env);
 }
 
 // Takes the result of a parse and executes it as necessary.
@@ -185,7 +201,7 @@ export async function executeResult(parse: ParseResult, player: Wob, playerIsAdm
 		try {
 			result = await env.runtime.executeCodeAsync("<immediate>", compiled, immediateInjections, player.id, 100000);
 		} catch (err) {
-			formatPetalException(env.runtime, player, err);
+			displayPetalException(env.runtime, player, err);
 		}
 		if (result) {
 			console.log("Command took", result.stepsUsed, "steps");
@@ -203,7 +219,7 @@ export async function executeResult(parse: ParseResult, player: Wob, playerIsAdm
 	let root = await world.getWob(1);
 	let parserVerb = root.getVerb("$command");
 	if (parserVerb) {
-		let result: Petal.ExecuteResult = await executeFunctionInner("$command", parserVerb.address, new WobWrapper(1), env);
+		let result: Petal.ExecuteResult = await executeVerbInner("$command", parserVerb.address, new WobWrapper(1), env);
 		if (result) {
 			if (result.returnValue)
 				return;
@@ -224,7 +240,7 @@ export async function executeResult(parse: ParseResult, player: Wob, playerIsAdm
 
 	// We'll only continue here if we actually found a verb.
 	if (parse.verb) {
-		let result: Petal.ExecuteResult = await executeFunctionInner(parse.verb.word, parse.verb.address,
+		let result: Petal.ExecuteResult = await executeVerbInner(parse.verb.word, parse.verb.address,
 			new WobWrapper(parse.verbObject.id), env);
 	} else {
 		handleFailure(parse, player);

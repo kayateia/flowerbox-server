@@ -249,6 +249,10 @@
 				"sigs": [
 					"release self"
 				]
+			},
+			{
+				"fn": "dog-onload.petal",
+				"name": "$onload"
 			}
 		]
 	},

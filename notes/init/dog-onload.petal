@@ -1,0 +1,7 @@
+function $onload() {
+	// This will get printed so we can see that it loaded.
+	$.log("dog.onload called");
+
+	// This will trigger an exception, which should get saved into _lastonloaderror.
+	$.log(a.bar);
+}

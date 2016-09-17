@@ -145,7 +145,11 @@ export class DollarObject {
 			// Our "callback" is going to be a Petal address. Just execute it in a minimal
 			// verb context. There won't be a lot of info available here.
 			// FIXME: Ignoring Promise results here.
-			Execution.executeFunction(null, null, false, this._world, "<timer>", callback, null);
+			Execution.executeFunction(null, null, false, this._world, callback, null)
+				.catch(err => {
+					// FIXME: This is getting called from a wob context, but we don't have it here.
+					// wob.setProperty(WobProperties.LastTimerError, new Property(err.toString(), Perms.ownerOnly));
+				});
 		}, delay);
 
 		// TODO: Return a real timer ID.
