@@ -34,6 +34,14 @@ export class PropertyRouter extends WorldRouterBase {
 		worldRouter.router.delete("/wob/:id/property/:name", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,
 			()=>this.deleteProperty(rq,rs,n)); });
 
+		// Get the security of a property on a wob. Returns 404 if we can't find the wob or property.
+		worldRouter.router.get("/wob/:id/property/:name/perms", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,
+			()=>this.getPropertyPerms(rq,rs,n)); });
+
+		// Set (or delete) the security of a property on a wob. Returns 404 if we can't find the wob or property.
+		worldRouter.router.put("/wob/:id/property/:name/perms", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,
+			()=>this.putPropertyPerms(rq,rs,n)); });
+
 		// Get a sub-value of a property on a wob. Returns 404 if we can't find the wob, the property on the wob,
 		// or the sub-property on the property. Note that this does not work on inherited properties.
 		worldRouter.router.get("/wob/:id/property/:name/sub/:sub", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,
@@ -207,6 +215,73 @@ export class PropertyRouter extends WorldRouterBase {
 		}
 
 		res.json(new ModelBase(true));
+	}
+
+	private async propertyPermsCommon(req, res, next) {
+		let id = req.params.id;
+		let name = req.params.name;
+
+		let wob = await this.getWob(id, res);
+		if (!wob)
+			return null;
+
+		let prop = wob.getProperty(name);
+		if (!prop) {
+			res.status(404).json(new ModelBase(false, "Property does not exist on wob"));
+			return null;
+		}
+
+		return {
+			id: id,
+			name: name,
+			wob: wob,
+			prop: prop
+		};
+	}
+
+	private async getPropertyPerms(req, res, next): Promise<any> {
+		let info = await this.propertyPermsCommon(req, res, next);
+		if (!info)
+			return;
+
+		if (!this.token.admin && !World.Security.CheckWobRead(info.wob, this.token.wobId)) {
+			res.status(403).json(new ModelBase(false, "Access denied for getting security on properties from this wob"));
+			return null;
+		}
+
+		// If the property doesn't have permissions set, we use the defaults.
+		let perms: number = info.prop.perms;
+		let permsEffective: number = perms;
+		if (perms === undefined)
+			permsEffective = World.Security.GetDefaultPropertyPerms();
+
+		res.json(new Wob.PermsStatus(perms, permsEffective));
+	}
+
+	private async putPropertyPerms(req, res, next): Promise<any> {
+		let body: Wob.PermsSet = req.body;
+		let perms: any = body.perms;
+
+		let info = await this.propertyPermsCommon(req, res, next);
+		if (!info)
+			return;
+
+		if (!this.token.admin && !World.Security.CheckWobWrite(info.wob, this.token.wobId)) {
+			res.status(403).json(new ModelBase(false, "Access denied for setting security on properties from this wob"));
+			return null;
+		}
+
+		// For now, assume that we are getting numeric values here; will have to adjust.
+		// TODO: Deal with non-numeric inputs.
+		let prop: World.Property = info.prop;
+		prop.perms = perms;
+
+		// If the property doesn't have permissions set, we use the defaults.
+		let permsEffective: number = perms;
+		if (perms === undefined)
+			permsEffective = World.Security.GetDefaultPropertyPerms();
+
+		res.json(new Wob.PermsStatus(perms, permsEffective));
 	}
 
 	private async getPropertySub(req, res, next): Promise<any> {

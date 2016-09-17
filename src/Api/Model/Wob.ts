@@ -171,3 +171,26 @@ export class InstanceOfList extends ModelBase {
 
 	public list: InstanceOfResult[];
 }
+
+// Model for setting permissions on a wob, property, or verb.
+// The value here is "any" because it could be a numeric property value or a
+// diff string ("u+rw").
+export class PermsSet {
+	constructor(perms: any) {
+		this.perms = perms;
+	}
+
+	public perms: any;
+}
+
+// Returned by the permission getters and setters to describe permissions on an item.
+// The value here is currently a number, but it may eventually be a string.
+export class PermsStatus {
+	constructor(perms: number, permsEffective: number) {
+		this.perms = perms;
+		this.permsEffective = permsEffective;
+	}
+
+	public perms: number;
+	public permsEffective: number;
+}
