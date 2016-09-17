@@ -13,6 +13,7 @@ import { Notation } from "../Notation";
 import { NotationWrapper } from "./NotationWrapper";
 import { Actions } from "../Actions";
 import * as Petal from "../../Petal/All";
+import * as Execution from "../Execution";
 
 // Represents the $ object within the game, which represents the interface to the game itself.
 export class DollarObject {
@@ -134,8 +135,26 @@ export class DollarObject {
 		return new NotationWrapper(new Notation(text, notation));
 	}
 
+	public setTimeout(callback: any, delay: number): number {
+		// Don't let wob code hog the server.
+		if (delay < 250)
+			delay = 250;
+
+		// TODO: Use some sort of central scheduler so we can keep track of these.
+		setTimeout(() => {
+			// Our "callback" is going to be a Petal address. Just execute it in a minimal
+			// verb context. There won't be a lot of info available here.
+			// FIXME: Ignoring Promise results here.
+			Execution.executeFunction(null, null, false, this._world, "<timer>", callback, null);
+		}, delay);
+
+		// TODO: Return a real timer ID.
+		return 0;
+	}
+
 	public static Members: string[] = [
-		"log", "logArray", "timestamp", "get", "move", "contents", "create", "notate"
+		"log", "logArray", "timestamp", "get", "move", "contents", "create", "notate",
+		"setTimeout"
 	];
 
 	// Each time a new Runtime is created to deal with this object, set this value so we
