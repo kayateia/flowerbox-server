@@ -13,6 +13,8 @@ import * as Persistence from "../../Utils/Persistence";
 import * as Strings from "../../Utils/Strings";
 import { Utils } from "../Utils";
 import { Actions } from "../Actions";
+import * as Execution from "../Execution";
+import { Property } from "../Property";
 
 export class WobPropertyTag {
 	constructor(ww: WobWrapper, property: string) {
@@ -64,6 +66,32 @@ export class WobWrapper implements Petal.IObject {
 		return await uswob.instanceOf(them, cargo.world);
 	}
 
+	private setTimerCommon(id: string, callback: any, delay: number, wob: Wob, cargo: AccessorCargo, setter: any): void {
+		// Don't let wob code hog the server.
+		if (delay < 250)
+			delay = 250;
+
+		// Namespace the ID by wob ID.
+		id = this._id + "_" + id;
+
+		setter(id, () => {
+			// Our "callback" is going to be a Petal address. Just execute it in a minimal
+			// verb context. There won't be a lot of info available here.
+			// FIXME: Ignoring Promise results here.
+			Execution.executeFunction(null, null, false, cargo.world, callback, null)
+				.catch(err => {
+					wob.setProperty(WobProperties.LastTimerError, new Property(err.toString(), Perms.ownerOnly));
+				});
+		}, delay);
+	}
+
+	private clearTimerCommon(id: string, cargo: AccessorCargo, clearer: any): void {
+		// Namespace the ID by wob ID.
+		id = this._id + "_" + id;
+
+		clearer(id);
+	}
+
 	public getAccessor(index: any, cargo: AccessorCargo): any {
 		if (typeof(index) !== "string")
 			throw new WobOperationException("Can't access non-string members on Wobs", []);
@@ -108,13 +136,44 @@ export class WobWrapper implements Petal.IObject {
 		}
 
 		if (index === "$event") {
-			return new Petal.LValue("Wob.$event", async(runtime: Petal.Runtime) => {
+			return new Petal.LValue("Wob.$event", async (runtime: Petal.Runtime) => {
 				let wob = await cargo.world.getWob(this._id);
 				return Petal.Address.Function((type: string, timestamp: number, body: any[]) => {
 					wob.event(type, timestamp, body);
 				});
 			}, () => {
 				throw new WobOperationException("Can't set $event on a wob", []);
+			}, this);
+		}
+
+		if (index === "setTimeout" || index === "setInterval") {
+			return new Petal.LValue("Wob." + index, async (runtime: Petal.Runtime) => {
+				let wob = await cargo.world.getWob(this._id);
+				return Petal.Address.Function((id: string, callback: Petal.Address, delay: number) => {
+					let setter: any;
+					if (index === "setTimeout")
+						setter = cargo.world.timers.setTimeout.bind(cargo.world.timers);
+					else
+						setter = cargo.world.timers.setInterval.bind(cargo.world.timers);
+					this.setTimerCommon(id, callback, delay, wob, cargo, setter);
+				});
+			}, () => {
+				throw new WobOperationException("Can't set " + index + " on a wob", []);
+			}, this);
+		}
+
+		if (index === "clearTimeout" || index === "clearInterval") {
+			return new Petal.LValue("Wob." + index, (runtime: Petal.Runtime) => {
+				return Petal.Address.Function((id: string) => {
+					let setter: any;
+					if (index === "clearTimeout")
+						setter = cargo.world.timers.clearTimeout.bind(cargo.world.timers);
+					else
+						setter = cargo.world.timers.clearInterval.bind(cargo.world.timers);
+					this.clearTimerCommon(id, cargo, setter);
+				});
+			}, () => {
+				throw new WobOperationException("Can't set " + index + " on a wob", []);
 			}, this);
 		}
 

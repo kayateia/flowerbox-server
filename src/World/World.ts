@@ -9,6 +9,7 @@ import { Wob, WobProperties } from "./Wob";
 import * as Strings from "../Utils/Strings";
 import { Database } from "./Database";
 import { ImportExport } from "./ImportExport";
+import { Timers } from "./Timers";
 
 // Zaa Warudo
 export class World {
@@ -17,6 +18,7 @@ export class World {
 	private _wobCache: Map<number, Wob>;
 	private _db: Database;
 	private _callOnLoads: boolean;
+	private _timers: Timers;
 
 	constructor(database: Database, callOnLoads: boolean) {
 		// This is the default nextId. We don't set it to dirty because in the case
@@ -28,6 +30,8 @@ export class World {
 		this._wobCache = new Map<number, Wob>();
 		this._db = database;
 		this._callOnLoads = callOnLoads;
+
+		this._timers = new Timers();
 
 		setTimeout(() => this.commitTimeout(), 5*1000);
 	}
@@ -223,5 +227,9 @@ export class World {
 
 		// And remove it from our store.
 		this._wobCache.delete(id);
+	}
+
+	public get timers(): Timers {
+		return this._timers;
 	}
 }
