@@ -1,0 +1,13 @@
+function _tick() {
+	#1.$sayinto(this.location, ["The dog runs away!"]);
+	if (this.location === #1)
+		$.move(this, @room1);
+	else
+		$.move(this, #1);
+	#1.$sayinto(this.location, ["The dog arrives!"]);
+
+	var that = this;
+	this.setTimeout(this._timerid, function() {
+		that._tick();
+	}, Math.floor(Math.random() * 3000) + 500);
+}

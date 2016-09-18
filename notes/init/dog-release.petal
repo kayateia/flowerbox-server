@@ -1,4 +1,12 @@
 function release() {
+	if (this.released) {
+		$parse.player.$hear(["The dog is already released."]);
+		return;
+	}
+
 	#1.$sayinto(this.location, [$.notate(this), " was released!"]);
 	$parse.player.$hear(["Thank you for releasing me, ", $.notate($parse.player), "!"]);
+	this.desc = this._happydesc;
+	this.released = true;
+	this._tick();
 }
