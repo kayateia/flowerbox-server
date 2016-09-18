@@ -19,7 +19,7 @@ export class WobCommon {
 		let globalid = wob.getProperty(World.WobProperties.GlobalId);
 		let owner = wob.owner;
 		let group = wob.group;
-		let perms = wob.perms;
+		let perms = World.Perms.unparse(wob.perms);
 
 		// Get all the properties and verbs. We need more than just their names here, as we
 		// want to include useful metadata like permissions and mime types.
@@ -39,10 +39,10 @@ export class WobCommon {
 				mimetype = (<Petal.PetalBlob>(value.value)).mime;
 
 			// If the property doesn't have permissions set, we use the defaults.
-			let perms: number = value.perms;
-			let permsEffective: number = perms;
+			let perms: string = World.Perms.unparse(value.perms);
+			let permsEffective: string = perms;
 			if (perms === undefined)
-				permsEffective = World.Security.GetDefaultPropertyPerms();
+				permsEffective = World.Perms.unparse(World.Security.GetDefaultPropertyPerms());
 
 			propertyInfos.push(new Wob.AttachedProperty(wobid, key, perms, permsEffective, mimetype));
 		}
@@ -51,10 +51,10 @@ export class WobCommon {
 		let verbInfos: Wob.AttachedVerb[] = [];
 		for (let v of verbs) {
 			// If the verb doesn't have permissions set, we use the defaults.
-			let perms: number = v.value.perms;
-			let permsEffective: number = perms;
+			let perms: string = World.Perms.unparse(v.value.perms);
+			let permsEffective: string = perms;
 			if (perms === undefined)
-				permsEffective = World.Security.GetDefaultVerbPerms();
+				permsEffective = World.Perms.unparse(World.Security.GetDefaultVerbPerms());
 
 			verbInfos.push(new Wob.AttachedVerb(v.wob, v.value.word, perms, permsEffective));
 		}

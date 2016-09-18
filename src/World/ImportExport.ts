@@ -10,7 +10,7 @@ import * as path from "path";
 import { World } from "./World";
 import { Wob, WobProperties } from "./Wob";
 import { Utils } from "../Petal/Utils";
-import { Perms } from "./Security";
+import { Perms, Security } from "./Security";
 import { Property } from "./Property";
 import * as Petal from "../Petal/All";
 import { Verb } from "./Verb";
@@ -95,7 +95,7 @@ export class ImportExport {
 			if (wobdef.perms)
 				wob.perms = Perms.parse(wobdef.perms);
 			else
-				wob.perms = Perms.parse("rw-r--r--");
+				wob.perms = Security.GetDefaultWobPerms();
 		}
 	}
 
@@ -209,7 +209,7 @@ interface InitVerb {
 	name: string;
 	sigs: string[];
 
-	// Should be a permission string, e.g. "rwxr-xr-x".
+	// Should be a permission string, e.g. "rwx:rx:rx".
 	perms?: string;
 }
 
@@ -220,7 +220,7 @@ interface InitProperties {
 interface InitPropertyWithPerms {
 	value: any;
 
-	// Should be a permission string, e.g. "rw-r--r--".
+	// Should be a permission string, e.g. "rw:r:r".
 	perms: string;
 }
 
@@ -232,7 +232,7 @@ interface InitPropertyBinary {
 	file: string;
 	mime: string;
 
-	// Should be a permission string, e.g. "rw-r--r--".
+	// Should be a permission string, e.g. "rw:r:r".
 	perms: string;
 }
 
@@ -257,7 +257,7 @@ interface InitWob {
 	// Should be a globalid if possible.
 	group?: string | number;
 
-	// Should be a permission string, e.g. "rw-r--r--".
+	// Should be a permission string, e.g. "rw:r:r".
 	perms: string;
 
 	verbs: InitVerb[];

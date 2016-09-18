@@ -23,7 +23,7 @@ this is what you will get.
 For each object that is securable, these three groups are separated by 8 bits within a
 single 24-bit number, from most to least significant. So for example, a property that is
 read/write for the owner, readable for group, and not readable by others, might have a
-textual representation like "-rw- -r-- ----". This would be represented in numeric
+textual representation like "rw:r::". This would be represented in numeric
 form as 0x060400.
 
 */
@@ -85,59 +85,76 @@ export class Perms {
 		return Perms.GetSetBits(mask, 0, newValue);
 	}
 
-	// This expects a string of the form "srwxr--r--" and returns permissions bit values.
+	// This expects a string of the form "rwx:r:r:s" and returns permissions bit values.
+	//
+	//  "owner:group:other:meta"
+	//
+	// There are a total of four possible groups in the permission string. The first segment
+	// is for owner/user, the second for group, the third for "other", and the fourth is the
+	// meta/misc bits. The fourth segment is actually higher up in the number than the
+	// other three, but it's last so that it can be more optional. If any group is missing
+	// or empty, it will be assumed that it's zero. Also, the bits within a group need
+	// not be in any prescribed order.
 	public static parse(maskString: string): number {
-		let out = 0;
-		if (maskString[0] === "s") {
-			out = Perms.misc(out, Perms.s);
-			maskString = maskString.substr(1);
-		}
+		if (maskString === undefined)
+			return undefined;
+
+		let groups: string[] = maskString.split(":");
 
 		function parseOneChunk(chunk: string): number {
 			let chunkOut = 0;
-			if (chunk[0] === "r")
-				chunkOut = Perms.r;
-			if (chunk[1] === "w")
-				chunkOut |= Perms.w;
-			if (chunk[2] === "x")
-				chunkOut |= Perms.x;
+			for (let c of chunk) {
+				if (c === "r")
+					chunkOut |= Perms.r;
+				if (c === "w")
+					chunkOut |= Perms.w;
+				if (c === "x")
+					chunkOut |= Perms.x;
+				if (c === "s")
+					chunkOut |= Perms.s;
+			}
 			return chunkOut;
 		}
 
-		out = Perms.owner(out, parseOneChunk(maskString.substr(0, 3)));
-		out = Perms.group(out, parseOneChunk(maskString.substr(3, 3)));
-		out = Perms.others(out, parseOneChunk(maskString.substr(6, 3)));
+		let out = 0;
+
+		if (groups.length > 0)
+			out = Perms.owner(out, parseOneChunk(groups[0]));
+		if (groups.length > 1)
+			out = Perms.group(out, parseOneChunk(groups[1]));
+		if (groups.length > 2)
+			out = Perms.others(out, parseOneChunk(groups[2]));
+		if (groups.length > 3)
+			out = Perms.misc(out, parseOneChunk(groups[3]));
 
 		return out;
 	}
 
-	// This expects a permissions bit mask, and returns a string of the form "srwxr--r--".
+	// This expects a permissions bit mask, and returns a string of the form "rwx:r:r:s".
+	// Note that all groups will be present even if they are empty.
 	public static unparse(mask: number): string {
-		let out = "";
-		if (Perms.misc(mask) & Perms.s)
-			out = "s";
+		if (mask === undefined)
+			return undefined;
 
 		function unparseOneChunk(maskPart: number): string {
 			let chunkOut = "";
 			if (maskPart & Perms.r)
 				chunkOut += "r";
-			else
-				chunkOut += "-";
 			if (maskPart & Perms.w)
 				chunkOut += "w";
-			else
-				chunkOut += "-";
 			if (maskPart & Perms.x)
 				chunkOut += "x";
-			else
-				chunkOut += "-";
+			if (maskPart & Perms.s)
+				chunkOut += "s";
 
 			return chunkOut;
 		}
 
-		out += unparseOneChunk(Perms.owner(mask));
-		out += unparseOneChunk(Perms.group(mask));
-		out += unparseOneChunk(Perms.others(mask));
+		let out = unparseOneChunk(Perms.owner(mask));
+		out += ":" + unparseOneChunk(Perms.group(mask));
+		out += ":" + unparseOneChunk(Perms.others(mask));
+		out += ":" + unparseOneChunk(Perms.misc(mask));
+
 		return out;
 	}
 }
@@ -148,18 +165,33 @@ export class Security {
 	// Default permissions
 
 	// Returns the default permissions for a property.
+	public static GetDefaultPropertyString(): string {
+		return "rw:r:r:";
+	}
+
+	// Returns the default permissions for a property.
 	public static GetDefaultPropertyPerms(): number {
-		return Perms.parse("rw-r--r--");
+		return Perms.parse(Security.GetDefaultPropertyString());
+	}
+
+	// Returns the default permissions for a verb.
+	public static GetDefaultVerbString(): string {
+		return "rwx:rx:rx:";
 	}
 
 	// Returns the default permissions for a verb.
 	public static GetDefaultVerbPerms(): number {
-		return Perms.parse("rwxr-xr-x");
+		return Perms.parse(Security.GetDefaultVerbString());
+	}
+
+	// Returns the default permissions for a wob.
+	public static GetDefaultWobString(): string {
+		return "rw:r:r:";
 	}
 
 	// Returns the default permissions for a wob.
 	public static GetDefaultWobPerms(): number {
-		return Perms.parse("rw-r--r--");
+		return Perms.parse(Security.GetDefaultWobString());
 	}
 
 

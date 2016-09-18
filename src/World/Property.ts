@@ -22,7 +22,7 @@ export class Property {
 	}
 
 	// Permission bits (r/w). This may also be undefined, in which case we use the
-	// default permissions for properties (rwr-r-).
+	// default permissions for properties (rw:r:r).
 	public perms: number;
 
 	// The value of the property.

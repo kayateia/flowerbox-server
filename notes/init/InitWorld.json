@@ -41,11 +41,11 @@
 		"propertiesWithPerms": {
 			"admin": {
 				"value": false,
-				"perms": "srw-r--r--"
+				"perms": "rw:r:r:s"
 			},
 			"pwhash": {
 				"value": "",
-				"perms": "srw-------"
+				"perms": "rw:::s"
 			}
 		},
 		"container": "@world",

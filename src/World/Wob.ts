@@ -12,7 +12,7 @@ import * as Persistence from "../Utils/Persistence";
 import { World } from "./World";
 import * as Petal from "../Petal/All";
 import { Utils } from "./Utils";
-import { Perms } from "./Security";
+import { Perms, Security } from "./Security";
 
 // When a wob wants to reference another wob in its properties, one of these should be used.
 export class WobRef {
@@ -82,7 +82,7 @@ export class Wob {
 
 		this._owner = 1;
 		this._group = undefined;
-		this._perms = Perms.parse("rw-r--r--");
+		this._perms = Security.GetDefaultWobPerms();
 
 		this._dirty = true;
 		this.updateLastUse();

@@ -111,10 +111,10 @@ export class PropertyRouter extends WorldRouterBase {
 		if (!(await this.checkPropertyRead(prop.wob, name, res)))
 			return;
 
-		let perms = prop.value.perms;
+		let perms = World.Perms.unparse(prop.value.perms);
 		let permsEffective = perms;
 		if (!permsEffective)
-			permsEffective = World.Security.GetDefaultPropertyPerms();
+			permsEffective = World.Security.GetDefaultPropertyString();
 		let metadata = new Wob.Property(
 			prop.wob,
 			name,
@@ -250,10 +250,10 @@ export class PropertyRouter extends WorldRouterBase {
 		}
 
 		// If the property doesn't have permissions set, we use the defaults.
-		let perms: number = info.prop.perms;
-		let permsEffective: number = perms;
+		let perms: string = World.Perms.unparse(info.prop.perms);
+		let permsEffective: string = perms;
 		if (perms === undefined)
-			permsEffective = World.Security.GetDefaultPropertyPerms();
+			permsEffective = World.Security.GetDefaultPropertyString();
 
 		res.json(new Wob.PermsStatus(perms, permsEffective));
 	}
@@ -274,13 +274,13 @@ export class PropertyRouter extends WorldRouterBase {
 		// For now, assume that we are getting numeric values here; will have to adjust.
 		// TODO: Deal with non-numeric inputs.
 		let prop: World.Property = info.prop;
-		prop.perms = perms;
+		prop.perms = World.Perms.parse(perms);
 		info.wob.setProperty(info.name, prop);
 
 		// If the property doesn't have permissions set, we use the defaults.
-		let permsEffective: number = perms;
+		let permsEffective: string = World.Perms.unparse(prop.perms);
 		if (perms === undefined)
-			permsEffective = World.Security.GetDefaultPropertyPerms();
+			permsEffective = World.Security.GetDefaultPropertyString();
 
 		res.json(new Wob.PermsStatus(perms, permsEffective));
 	}
@@ -311,10 +311,10 @@ export class PropertyRouter extends WorldRouterBase {
 		}
 
 		if (prop.value.has(sub)) {
-			let perms = prop.perms;
+			let perms = World.Perms.unparse(prop.perms);
 			let permsEffective = perms;
 			if (!permsEffective)
-				permsEffective = World.Security.GetDefaultPropertyPerms();
+				permsEffective = World.Security.GetDefaultPropertyString();
 			res.json(new Wob.Property(wob.id, name, prop.value.get(sub), perms, permsEffective, sub));
 		} else
 			res.status(404).json(new ModelBase(false, "Sub-property does not exist"));

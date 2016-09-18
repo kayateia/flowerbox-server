@@ -8,7 +8,7 @@ import { ModelBase } from "./ModelBase";
 
 // For returning one property on a wob.
 export class Property extends ModelBase {
-	constructor(id: number, name: string, value: any, perms: number, permsEffective: number, sub?: string) {
+	constructor(id: number, name: string, value: any, perms: string, permsEffective: string, sub?: string) {
 		super(true);
 		this.id = id;
 		this.name = name;
@@ -21,14 +21,14 @@ export class Property extends ModelBase {
 	public id: number;
 	public name: string;
 	public value: any;
-	public perms: number;
-	public permseffective: number;
+	public perms: string;
+	public permseffective: string;
 	public sub: string;
 }
 
 // For returning one verb on a wob.
 export class Verb extends ModelBase {
-	constructor(id: number, name: string, sigs: string[], code: string, perms: number, permsEffective: number) {
+	constructor(id: number, name: string, sigs: string[], code: string, perms: string, permsEffective: string) {
 		super(true);
 		this.id = id;
 		this.name = name;
@@ -42,8 +42,8 @@ export class Verb extends ModelBase {
 	public name: string;
 	public sigs: string[];
 	public code: string;
-	public perms: number;
-	public permseffective: number;
+	public perms: string;
+	public permseffective: string;
 }
 
 // Expected object to be passed in per verb being set.
@@ -68,7 +68,7 @@ export class VerbSetErrors extends ModelBase {
 export class Info extends ModelBase {
 	constructor(id: number, base: number, container: number,
 			name: string, desc: string, globalid: string,
-			owner: number, group: number, perms: number,
+			owner: number, group: number, perms: string,
 			properties?: AttachedProperty[], verbs?: AttachedItem[]) {
 		super(true);
 
@@ -93,7 +93,7 @@ export class Info extends ModelBase {
 	public container: number;
 	public owner: number;
 	public group: number;
-	public perms: number;
+	public perms: string;
 
 	// Common named properties
 	public name: string;
@@ -106,7 +106,7 @@ export class Info extends ModelBase {
 }
 
 export class AttachedItem {
-	constructor(sourceid: number, value: string, perms: number, permsEffective: number) {
+	constructor(sourceid: number, value: string, perms: string, permsEffective: string) {
 		this.sourceid = sourceid;
 		this.value = value;
 		this.perms = perms;
@@ -115,12 +115,12 @@ export class AttachedItem {
 
 	public sourceid: number;
 	public value: string;
-	public perms: number;
-	public permseffective: number;
+	public perms: string;
+	public permseffective: string;
 }
 
 export class AttachedProperty extends AttachedItem {
-	constructor(sourceid: number, value: string, perms: number, permsEffective: number, blobmimetype: string) {
+	constructor(sourceid: number, value: string, perms: string, permsEffective: string, blobmimetype: string) {
 		super(sourceid, value, perms, permsEffective);
 		this.blobmimetype = blobmimetype;
 	}
@@ -129,7 +129,7 @@ export class AttachedProperty extends AttachedItem {
 }
 
 export class AttachedVerb extends AttachedItem {
-	constructor(sourceid: number, value: string, perms: number, permsEffective: number) {
+	constructor(sourceid: number, value: string, perms: string, permsEffective: string) {
 		super(sourceid, value, perms, permsEffective);
 	}
 }
@@ -184,13 +184,12 @@ export class PermsSet {
 }
 
 // Returned by the permission getters and setters to describe permissions on an item.
-// The value here is currently a number, but it may eventually be a string.
 export class PermsStatus {
-	constructor(perms: number, permsEffective: number) {
+	constructor(perms: string, permsEffective: string) {
 		this.perms = perms;
 		this.permsEffective = permsEffective;
 	}
 
-	public perms: number;
-	public permsEffective: number;
+	public perms: string;
+	public permsEffective: string;
 }

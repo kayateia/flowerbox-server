@@ -87,10 +87,10 @@ export class VerbRouter extends WorldRouterBase {
 		if (!(await this.checkVerbRead(verb.wob, name, res)))
 			return;
 
-		let perms = verb.value.perms;
+		let perms = World.Perms.unparse(verb.value.perms);
 		let permsEffective = perms;
 		if (!permsEffective)
-			permsEffective = World.Security.GetDefaultVerbPerms();
+			permsEffective = World.Security.GetDefaultVerbString();
 
 		res.json(new Wob.Verb(
 			verb.wob,
@@ -190,10 +190,10 @@ export class VerbRouter extends WorldRouterBase {
 
 		// If the property doesn't have permissions set, we use the defaults.
 		let verb: World.Verb = info.verb;
-		let perms: number = verb.perms;
-		let permsEffective: number = perms;
+		let perms: string = World.Perms.unparse(verb.perms);
+		let permsEffective: string = perms;
 		if (perms === undefined)
-			permsEffective = World.Security.GetDefaultVerbPerms();
+			permsEffective = World.Security.GetDefaultVerbString();
 
 		res.json(new Wob.PermsStatus(perms, permsEffective));
 	}
@@ -214,13 +214,13 @@ export class VerbRouter extends WorldRouterBase {
 		// For now, assume that we are getting numeric values here; will have to adjust.
 		// TODO: Deal with non-numeric inputs.
 		let verb: World.Verb = info.verb;
-		verb.perms = perms;
+		verb.perms = World.Perms.parse(perms);
 		info.wob.setVerb(info.name, verb);
 
 		// If the property doesn't have permissions set, we use the defaults.
-		let permsEffective: number = perms;
+		let permsEffective: string = World.Perms.unparse(verb.perms);
 		if (perms === undefined)
-			permsEffective = World.Security.GetDefaultVerbPerms();
+			permsEffective = World.Security.GetDefaultVerbString();
 
 		res.json(new Wob.PermsStatus(perms, permsEffective));
 	}
