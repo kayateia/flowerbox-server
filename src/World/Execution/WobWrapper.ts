@@ -80,7 +80,8 @@ export class WobWrapper implements Petal.IObject {
 			// FIXME: Ignoring Promise results here.
 			Execution.executeFunction(null, null, false, cargo.world, callback, null)
 				.catch(err => {
-					wob.setProperty(WobProperties.LastTimerError, new Property(err.toString(), Perms.ownerOnly));
+					wob.setProperty(WobProperties.LastTimerError,
+						new Property(Execution.formatPetalException(null, err), Perms.ownerOnly));
 				});
 		}, delay);
 	}
