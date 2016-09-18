@@ -60,6 +60,10 @@ export class Verb {
 		return this._perms;
 	}
 
+	public set perms(p: number) {
+		this._perms = p;
+	}
+
 	private _word: string;
 	private _code: VerbCode;
 	private _signatures: VerbSig[];

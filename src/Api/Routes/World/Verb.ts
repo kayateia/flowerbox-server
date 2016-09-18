@@ -26,6 +26,14 @@ export class VerbRouter extends WorldRouterBase {
 		// Set the code of one or more verbs on a wob. Returns 404 if we can't find the wob.
 		worldRouter.router.put("/wob/:id/verbs", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,
 			()=>this.setVerbs(rq,rs,n)); });
+
+		// Get the security of a verb on a wob. Returns 404 if we can't find the wob or verb.
+		worldRouter.router.get("/wob/:id/verb/:name/perms", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,
+			()=>this.getVerbPerms(rq,rs,n)); });
+
+		// Set (or delete) the security of a property on a wob. Returns 404 if we can't find the wob or property.
+		worldRouter.router.put("/wob/:id/verb/:name/perms", (rq,rs,n) => { this.asyncWrapperLoggedIn(rq,rs,n,
+			()=>this.putVerbPerms(rq,rs,n)); });
 	}
 
 	// Checks to see if the user has the ability to read from the specified verb on the specified wob.
@@ -146,5 +154,73 @@ export class VerbRouter extends WorldRouterBase {
 		else
 			errors = undefined;
 		res.json(new Wob.VerbSetErrors(errors));
+	}
+
+	private async verbPermsCommon(req, res, next) {
+		let id = req.params.id;
+		let name = req.params.name;
+
+		let wob = await this.getWob(id, res);
+		if (!wob)
+			return null;
+
+		let verb = wob.getVerb(name);
+		if (!verb) {
+			res.status(404).json(new ModelBase(false, "Verb does not exist on wob"));
+			return null;
+		}
+
+		return {
+			id: id,
+			name: name,
+			wob: wob,
+			verb: verb
+		};
+	}
+
+	private async getVerbPerms(req, res, next): Promise<any> {
+		let info = await this.verbPermsCommon(req, res, next);
+		if (!info)
+			return;
+
+		if (!this.token.admin && !World.Security.CheckWobRead(info.wob, this.token.wobId)) {
+			res.status(403).json(new ModelBase(false, "Access denied for getting security on verbs from this wob"));
+			return null;
+		}
+
+		// If the property doesn't have permissions set, we use the defaults.
+		let verb: World.Verb = info.verb;
+		let perms: number = verb.perms;
+		let permsEffective: number = perms;
+		if (perms === undefined)
+			permsEffective = World.Security.GetDefaultVerbPerms();
+
+		res.json(new Wob.PermsStatus(perms, permsEffective));
+	}
+
+	private async putVerbPerms(req, res, next): Promise<any> {
+		let body: Wob.PermsSet = req.body;
+		let perms: any = body.perms;
+
+		let info = await this.verbPermsCommon(req, res, next);
+		if (!info)
+			return;
+
+		if (!this.token.admin && !World.Security.CheckWobWrite(info.wob, this.token.wobId)) {
+			res.status(403).json(new ModelBase(false, "Access denied for setting security on verbs from this wob"));
+			return null;
+		}
+
+		// For now, assume that we are getting numeric values here; will have to adjust.
+		// TODO: Deal with non-numeric inputs.
+		let verb: World.Verb = info.verb;
+		verb.perms = perms;
+
+		// If the property doesn't have permissions set, we use the defaults.
+		let permsEffective: number = perms;
+		if (perms === undefined)
+			permsEffective = World.Security.GetDefaultVerbPerms();
+
+		res.json(new Wob.PermsStatus(perms, permsEffective));
 	}
 }
