@@ -157,6 +157,10 @@ export class Perms {
 
 		return out;
 	}
+
+	// These two constants are for permissions on properties and verbs for only the owner (private).
+	public static ownerOnly = Perms.owner(0, Perms.r | Perms.w);
+	public static ownerOnlyExec = Perms.owner(0, Perms.r | Perms.w | Perms.x);
 }
 
 // Static methods for verifying various security actions against the permissions on a wob.

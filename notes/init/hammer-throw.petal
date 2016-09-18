@@ -1,2 +1,6 @@
 function _throw() {
+	var loc = this.location;
+	$.setTimeout(function() {
+		#1.$sayinto(loc, ["The hammer dropped."]);
+	}, 500);
 }

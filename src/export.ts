@@ -12,7 +12,7 @@ import * as Database from "./Database/All";
 let config = require("../config");
 
 let sal = new Database.AccessLayer(config);
-let world = new World.World(new World.Database(sal));
+let world = new World.World(new World.Database(sal), false);
 
 async function exporter() {
 	// Create a small in-world "game world" to test with (or load the database).

@@ -9,6 +9,7 @@ import { Wob, WobProperties } from "./Wob";
 import * as Strings from "../Utils/Strings";
 import { Database } from "./Database";
 import { ImportExport } from "./ImportExport";
+import { Timers } from "./Timers";
 
 // Zaa Warudo
 export class World {
@@ -16,8 +17,10 @@ export class World {
 	private _nextIdDirty: boolean;
 	private _wobCache: Map<number, Wob>;
 	private _db: Database;
+	private _callOnLoads: boolean;
+	private _timers: Timers;
 
-	constructor(database: Database) {
+	constructor(database: Database, callOnLoads: boolean) {
 		// This is the default nextId. We don't set it to dirty because in the case
 		// where the database hasn't been created yet, we will write it out after the first
 		// wob create anyway; and if it has been created, we don't want to accidentally overwrite it.
@@ -26,6 +29,9 @@ export class World {
 
 		this._wobCache = new Map<number, Wob>();
 		this._db = database;
+		this._callOnLoads = callOnLoads;
+
+		this._timers = new Timers();
 
 		setTimeout(() => this.commitTimeout(), 5*1000);
 	}
@@ -39,7 +45,7 @@ export class World {
 			return;
 		}
 
-		await ImportExport.Import(this, basePath);
+		await ImportExport.Import(this, basePath, this._callOnLoads);
 		await this.commit();
 	}
 
@@ -83,6 +89,9 @@ export class World {
 			containerWob.contents.push(wob.id);
 		}
 
+		if (this._callOnLoads)
+			await wob.callOnLoad(this);
+
 		await this._db.createWob(wob);
 
 		return wob;
@@ -97,8 +106,10 @@ export class World {
 	public async getWob(id: number): Promise<Wob> {
 		if (!this._wobCache.has(id)) {
 			let loaded = await this._db.loadWob(id);
-			if (loaded)
+			if (loaded) {
 				this._wobCache.set(id, loaded);
+				await loaded.callOnLoad(this);
+			}
 		}
 
 		// For now, we only support the in-memory cache.
@@ -133,13 +144,15 @@ export class World {
 
 		// Look for results in the database as well.
 		let dbresults = await this._db.loadWobsByGlobalId(ids);
-		dbresults.forEach(w => {
+		await Promise.all(dbresults.map(async w => {
 			if (!resultMap.has(w.id)) {
 				results.push(w);
 				resultMap.set(w.id, true);
 				this._wobCache.set(w.id, w);
+				if (this._callOnLoads)
+					await w.callOnLoad(this);
 			}
-		});
+		}));
 
 		return results;
 	}
@@ -161,13 +174,15 @@ export class World {
 
 		// Look for results in the database as well.
 		let dbresults = await this._db.loadWobsByPropertyMatch(property, value);
-		dbresults.forEach(w => {
+		await Promise.all(dbresults.map(async w => {
 			if (!resultMap.has(w.id)) {
 				results.push(w);
 				resultMap.set(w.id, true);
 				this._wobCache.set(w.id, w);
+				if (this._callOnLoads)
+					await w.callOnLoad(this);
 			}
-		});
+		}));
 
 		return results;
 	}
@@ -212,5 +227,9 @@ export class World {
 
 		// And remove it from our store.
 		this._wobCache.delete(id);
+	}
+
+	public get timers(): Timers {
+		return this._timers;
 	}
 }

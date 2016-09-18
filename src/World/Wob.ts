@@ -13,6 +13,7 @@ import { World } from "./World";
 import * as Petal from "../Petal/All";
 import { Utils } from "./Utils";
 import { Perms, Security } from "./Security";
+import * as Execution from "./Execution";
 
 // When a wob wants to reference another wob in its properties, one of these should be used.
 export class WobRef {
@@ -40,6 +41,10 @@ export class WobProperties {
 	public static Name = "name";				// string
 	public static Description = "desc";			// string
 	public static Image = "image";				// blob
+
+	// On objects with callbacks/timers.
+	public static LastOnLoadError = "_lastonloaderror";	// string[]
+	public static LastTimerError = "_lasttimererror";	// string[]
 
 	// On player objects.
 	public static EventStream = "eventstream";	// [{ type, time, body, tag? }]
@@ -372,6 +377,21 @@ export class Wob {
 			sigs = [];
 		let code: Petal.Address = scope.get(varnames[0]);
 		this.setVerb(name, new Verb(name, new VerbCode(sigs, text, code.node, code)));
+	}
+
+	// If this wob has an $onload verb, call it. This must not fail because it will interrupt
+	// upstream things; so logs must be saved on the wob itself.
+	public async callOnLoad(world: World): Promise<void> {
+		let verb = this.getVerb("$onload");
+		if (!verb)
+			return;
+		try {
+			// TODO: Should probably catch the failure output that happens inside this.
+			await Execution.executeFunction(null, null, false, world, verb.address, this);
+		} catch (err) {
+			this.setProperty(WobProperties.LastOnLoadError,
+				new Property(Execution.formatPetalException(null, err), Perms.ownerOnly));
+		}
 	}
 
 

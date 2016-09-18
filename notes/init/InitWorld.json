@@ -199,7 +199,7 @@
 				"fn": "hammer-throw.petal",
 				"name": "throw",
 				"sigs": [
-					"throw self at any"
+					"throw self"
 				]
 			}
 		]
@@ -231,7 +231,11 @@
 	{
 		"properties": {
 			"name": "Dog who was put in a kennel",
-			"desc": "A very sad dog."
+			"desc": "A very sad dog.",
+			"released": false,
+			"_saddesc": "A very sad dog.",
+			"_happydesc": "A happy dog!",
+			"_timerid": "dogtick"
 		},
 		"container": "@world",
 		"base": "@world",
@@ -249,6 +253,14 @@
 				"sigs": [
 					"release self"
 				]
+			},
+			{
+				"fn": "dog-onload.petal",
+				"name": "$onload"
+			},
+			{
+				"fn": "dog-_tick.petal",
+				"name": "_tick"
 			}
 		]
 	},

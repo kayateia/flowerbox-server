@@ -1,3 +1,11 @@
 function put() {
+	if (!this.released) {
+		$parse.player.$hear(["The dog is already captured."]);
+		return;
+	}
+
 	$player.$hear(["Noooes, ", $.notate($parse.player), ", why did you put me in the ", $.notate($parse.indirect), "?"]);
+	this.released = false;
+	this.desc = this._saddesc;
+	this.clearTimeout(this._timerid);
 }

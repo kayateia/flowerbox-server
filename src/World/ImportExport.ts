@@ -14,11 +14,16 @@ import { Perms, Security } from "./Security";
 import { Property } from "./Property";
 import * as Petal from "../Petal/All";
 import { Verb } from "./Verb";
+import * as Execution from "./Execution";
 
 export class ImportExport {
-	public static async Import(world: World, basePath: string) {
+	// Import world data from JSON and files. basePath is the dir where we can find
+	// the InitWorld.json file. If callOnLoads is true, then we will call any $onload
+	// verbs that we find during startup.
+	public static async Import(world: World, basePath: string, callOnLoads: boolean) {
 		const initFn: string = path.join(basePath, "InitWorld.json");
 		const init: InitWob[] = JSON.parse((await FsPromises.readFile(initFn)).toString());
+		let onLoads: Wob[] = [];
 
 		for (let wobdef of init) {
 			let wob = await world.createWob();
@@ -55,6 +60,11 @@ export class ImportExport {
 					let contents = (await FsPromises.readFile(p)).toString();
 					let sigs: string[] = vinfo.sigs;
 					wob.setVerbCode(vinfo.name, sigs, contents);
+
+					// There should only be one $onload per wob, if any, so it should be
+					// safe to do this inside the loop.
+					if (vinfo.name === "$onload")
+						onLoads.push(wob);
 				}
 			}
 
@@ -96,6 +106,12 @@ export class ImportExport {
 				wob.perms = Perms.parse(wobdef.perms);
 			else
 				wob.perms = Security.GetDefaultWobPerms();
+		}
+
+		if (callOnLoads) {
+			for (let wob of onLoads) {
+				wob.callOnLoad(world);
+			}
 		}
 	}
 
