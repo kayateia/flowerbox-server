@@ -275,6 +275,7 @@ export class PropertyRouter extends WorldRouterBase {
 		// TODO: Deal with non-numeric inputs.
 		let prop: World.Property = info.prop;
 		prop.perms = perms;
+		info.wob.setProperty(info.name, prop);
 
 		// If the property doesn't have permissions set, we use the defaults.
 		let permsEffective: number = perms;

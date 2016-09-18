@@ -215,6 +215,7 @@ export class VerbRouter extends WorldRouterBase {
 		// TODO: Deal with non-numeric inputs.
 		let verb: World.Verb = info.verb;
 		verb.perms = perms;
+		info.wob.setVerb(info.name, verb);
 
 		// If the property doesn't have permissions set, we use the defaults.
 		let permsEffective: number = perms;
