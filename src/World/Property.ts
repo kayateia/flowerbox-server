@@ -22,10 +22,12 @@ export class Property {
 	}
 
 	// Permission bits (r/w). This may also be undefined, in which case we use the
-	// default permissions for properties (rw:r:r).
+	// default permissions for properties (rw:r:r). Note that if this Property object
+	// is a wrapper for a Verb, then the perms here will reflect the verb's permissions.
 	public perms: number;
 
-	// The value of the property.
+	// The value of the property. Note that this may be a Verb, in which case you have
+	// to execute the verb to get the actual value of the property.
 	public value: any;
 }
 

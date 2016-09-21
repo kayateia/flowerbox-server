@@ -24,6 +24,7 @@ export class Property extends ModelBase {
 	public perms: string;
 	public permseffective: string;
 	public sub: string;
+	public computed: boolean;
 }
 
 // For returning one verb on a wob.

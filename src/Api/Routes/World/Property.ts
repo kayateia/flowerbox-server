@@ -93,21 +93,27 @@ export class PropertyRouter extends WorldRouterBase {
 		return true;
 	}
 
-	private async getProperty(req, res, next): Promise<any> {
-		let id = req.params.id;
-		let name = req.params.name;
+	// Common end-of-code for both types of property getters.
+	private getPropertySend(value: any, metadata: Wob.Property, req, res): void {
 		let base64 = req.query.base64;
 
-		let wob = await this.getWob(id, res);
-		if (!wob)
-			return;
-
-		let prop = await wob.getPropertyI(name, this.world);
-		if (!prop) {
-			res.status(404).json(new ModelBase(false, "Property does not exist on wob"));
-			return;
+		// We have to special case this for now.
+		if (value instanceof Petal.PetalBlob) {
+			let data: any = value.data;
+			if (base64)
+				value = value.toString("base64");
+			res.set("Access-Control-Expose-Headers", "X-Property-Metadata");
+			res.set("X-Property-Metadata", JSON.stringify(metadata));
+			res.set("Content-Type", value.mime)
+				.send(value);
+		} else {
+			metadata.value = Petal.ObjectWrapper.Unwrap(value);
+			res.json(metadata);
 		}
+	}
 
+	// This version only deals with literal (constant) property values.
+	private async getPropertyLiteral(name: string, prop: World.WobValue<World.Property>, req, res): Promise<any> {
 		if (!(await this.checkPropertyRead(prop.wob, name, res)))
 			return;
 
@@ -122,19 +128,62 @@ export class PropertyRouter extends WorldRouterBase {
 			perms,
 			permsEffective);
 
-		// We have to special case this for now.
-		if (prop.value.value instanceof Petal.PetalBlob) {
-			let value: any = prop.value.value.data;
-			if (base64)
-				value = value.toString("base64");
-			res.set("Access-Control-Expose-Headers", "X-Property-Metadata");
-			res.set("X-Property-Metadata", JSON.stringify(metadata));
-			res.set("Content-Type", prop.value.value.mime)
-				.send(value);
-		} else {
-			metadata.value = Petal.ObjectWrapper.Unwrap(prop.value.value);
-			res.json(metadata);
+		this.getPropertySend(prop.value.value, metadata, req, res);
+	}
+
+	// This version only deals with computed property values.
+	private async getPropertyComputed(wob: World.Wob, name: string, verb: World.WobValue<World.Verb>, req, res): Promise<any> {
+		let base64 = req.query.base64;
+
+		if (!World.Security.CheckVerbExecute(wob, "@" + name, this.token.wobId)) {
+			res.status(403).json(new ModelBase(false, "Access denied executing computed property"));
+			return;
 		}
+
+		let perms = World.Perms.unparse(verb.value.perms);
+		let permsEffective = perms;
+		if (!permsEffective)
+			permsEffective = World.Security.GetDefaultVerbString();
+		let metadata = new Wob.Property(
+			verb.wob,
+			name,
+			undefined,
+			perms,
+			permsEffective);
+		metadata.computed = true;
+
+		// Get the player wob.
+		let player: World.Wob = await this.world.getWob(this.token.wobId);
+
+		// Execute the verb code to get the property value.
+		let result = await World.executeFunction(null, player, this.token.admin, this.world, verb.value.address, verb.wob);
+		let value = result.returnValue;
+
+		this.getPropertySend(value, metadata, req, res);
+	}
+
+	private async getProperty(req, res, next): Promise<any> {
+		let id = req.params.id;
+		let name = req.params.name;
+
+		let wob = await this.getWob(id, res);
+		if (!wob)
+			return;
+
+		// Find our property, if it's out there.
+		let prop = await wob.getPropertyI(name, this.world);
+		if (!prop) {
+			res.status(404).json(new ModelBase(false, "Property does not exist on wob"));
+			return;
+		}
+
+		// Did we get a verb or a real property?
+		if (prop.value.value instanceof World.Verb) {
+			let verbSrc = new World.WobValue<World.Verb>(prop.wob, prop.value.value);
+			return this.getPropertyComputed(wob, name, verbSrc, req, res);
+		} else
+			return this.getPropertyLiteral(name, prop, req, res);
+
 	}
 
 	private async setProperty(req, res, next): Promise<any> {

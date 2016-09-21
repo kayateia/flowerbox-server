@@ -68,7 +68,7 @@ export class UserRouter extends RouterBase {
 		if (!wob)
 			return new ModelBase(false, "Can't find user wob");
 
-		res.json(await WobCommon.GetInfo(wob, this.world));
+		res.json(await WobCommon.GetInfo(wob, wob, this.token.admin, this.world));
 		return null;
 	}
 }

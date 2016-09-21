@@ -1,0 +1,3 @@
+function @desc() {
+	return "Stand in the place where you are!";
+}

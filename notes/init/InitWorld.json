@@ -267,7 +267,6 @@
 	{
 		"properties": {
 			"name": "Human person",
-			"desc": "Stand in the place where you are.",
 			"globalid": "human"
 		},
 		"container": "@room2",
@@ -279,6 +278,10 @@
 				"sigs": [
 					"pet self"
 				]
+			},
+			{
+				"fn": "human-_desc.petal",
+				"name": "@desc"
 			}
 		]
 	},

@@ -10,10 +10,11 @@ import * as Petal from "../Petal/All";
 
 export class WobCommon {
 	// Gets all the Wob.Info data for a loaded wob.
-	public static async GetInfo(wob: World.Wob, world: World.World): Promise<Wob.Info> {
+	public static async GetInfo(wob: World.Wob, player: World.Wob, isAdmin: boolean, world: World.World): Promise<Wob.Info> {
 		let base = wob.base;
 		let container = wob.container;
 
+		// Pull out some common intrinsics and regular properties.
 		let name = await wob.getPropertyI(World.WobProperties.Name, world);
 		let desc = await wob.getPropertyI(World.WobProperties.Description, world);
 		let globalid = wob.getProperty(World.WobProperties.GlobalId);
@@ -32,6 +33,10 @@ export class WobCommon {
 			let key: string = p[0];
 			let wobid: number = p[1].wob;
 			let value: World.Property = p[1].value;
+
+			// We don't want computed properties here. Those will get listed as verbs.
+			if (value.value instanceof World.Verb)
+				continue;
 
 			// We only pass back a mime type if it's a blob property.
 			let mimetype: string;
@@ -59,7 +64,20 @@ export class WobCommon {
 			verbInfos.push(new Wob.AttachedVerb(v.wob, v.value.word, perms, permsEffective));
 		}
 
-		let rv = new Wob.Info(wob.id, base, container, name.value.value, desc.value.value,
+		// Compute these, as they may be computed properties.
+		async function compute(prop: World.Property): Promise<any> {
+			if (prop.value instanceof World.Verb) {
+				// Execute the verb code to get the property value.
+				let result = await World.executeFunction(null, player, isAdmin, world, prop.value.address, wob);
+			 	return result.returnValue;
+			} else {
+				return prop.value;
+			}
+		}
+		let nameValue = await compute(name.value);
+		let descValue = await compute(desc.value);
+
+		let rv = new Wob.Info(wob.id, base, container, nameValue, descValue,
 			globalid ? globalid.value : null,
 			owner,
 			group,

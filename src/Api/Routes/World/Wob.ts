@@ -50,7 +50,8 @@ export class WobRouter extends WorldRouterBase {
 		if (!wob)
 			return;
 
-		let rv = await WobCommon.GetInfo(wob, this.world);
+		let player = await this.world.getWob(this.token.wobId);
+		let rv = await WobCommon.GetInfo(wob, player, this.token.admin, this.world);
 
 		// If they don't have read access on the wob, remove the lists of properties and verbs.
 		if (!this.token.admin && !World.Security.CheckWobRead(wob, this.token.wobId)) {
@@ -119,9 +120,10 @@ export class WobRouter extends WorldRouterBase {
 		let subwobs: World.Wob[] = <any>(await Promise.all(wob.contents.map(i => this.world.getWob(i))));
 
 		// Get the properties of each sub-wob.
+		let player = await this.world.getWob(this.token.wobId);
 		let wobinfos = [];
 		for (let w of subwobs) {
-			let info = await WobCommon.GetInfo(w, this.world);
+			let info = await WobCommon.GetInfo(w, player, this.token.admin, this.world);
 
 			// This is really terrible but there is no good language construct in TypeScript
 			// to deal with this situation, and I won't copy and paste the whole class.

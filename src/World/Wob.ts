@@ -189,13 +189,26 @@ export class Wob {
 		return base !== 0;
 	}
 
+	// Returns the full inheritance chain of the current wob, starting with the current wob itself.
+	public async getInheritanceChain(world: World): Promise<Wob[]> {
+		let chain: Wob[] = [];
+
+		let uswob: Wob = this;
+		while (uswob) {
+			chain.push(uswob);
+			uswob = await world.getWob(uswob.base);
+		}
+
+		return chain;
+	}
+
 	// Returns the names of all the properties on this wob.
 	public getPropertyNames(): string[] {
 		this.updateLastUse();
 		return [...this._properties.keys()];
 	}
 
-	// Returns the names of all the properties on this wob, with consideration for the
+	// Returns the names of all the properties (computed and otherwise) on this wob, with consideration for the
 	// inheritance chain.
 	public async getPropertyNamesI(world: World): Promise<WobValue<string>[]> {
 		let map = await this.getPropertiesI(world);
@@ -214,11 +227,17 @@ export class Wob {
 		return map;
 	}
 
-	// Recursively search the inheritance chain for properties.
+	// Recursively search the inheritance chain for properties, computed and literal.
 	private async mapPropertiesI(world: World, map: CaseMap<WobValue<Property>>): Promise<void> {
 		this.getPropertyNames().forEach(pn => {
 			if (!map.has(pn))
 				map.set(pn, new WobValue<Property>(this.id, this.getProperty(pn)));
+		});
+		this.getVerbNames().forEach(pn => {
+			if (pn.startsWith("@") && !map.has(pn.substr(1))) {
+				let verb = this.getVerb(pn);
+				map.set(pn, new WobValue<Property>(this.id, new Property(verb, verb.perms)));
+			}
 		});
 		if (this.base) {
 			let baseWob = await world.getWob(this.base);
@@ -232,8 +251,13 @@ export class Wob {
 		return this._properties.get(name);
 	}
 
-	// This version searches up the inheritance chain for answers.
+	// This version searches up the inheritance chain for answers. It also searches
+	// for computed property verbs.
 	public async getPropertyI(name: string, world: World): Promise<WobValue<Property>> {
+		let ourVerb = this._verbs.get("@" + name);
+		if (ourVerb)
+			return new WobValue<Property>(this.id, new Property(ourVerb, ourVerb.perms));
+
 		let ours = this._properties.get(name);
 		if (ours)
 			return new WobValue<Property>(this.id, ours);
@@ -266,6 +290,7 @@ export class Wob {
 		this._properties.delete(name);
 	}
 
+
 	// Record an event in the wob's event stream. 'type' should be a value
 	// from the EventType class.
 	public event(type: string, timestamp: number, body: any[], tag?: string): void {
@@ -275,6 +300,7 @@ export class Wob {
 		prop.value.push(Petal.PetalObject.FromObject({ type: type, time: timestamp, body: body, tag: tag }));
 		this.setProperty(WobProperties.EventStream, prop);
 	}
+
 
 	public getVerbNames(): string[] {
 		this.updateLastUse();

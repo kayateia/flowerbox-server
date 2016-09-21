@@ -15,6 +15,7 @@ import { Utils } from "../Utils";
 import { Actions } from "../Actions";
 import * as Execution from "../Execution";
 import { Property } from "../Property";
+import { Verb } from "../Verb";
 
 export class WobPropertyTag {
 	constructor(ww: WobWrapper, property: string) {
@@ -246,6 +247,10 @@ export class WobWrapper implements Petal.IObject {
 						// FIXME: Is this a security info leak?
 						return null;
 					}
+
+					// FIXME/TODO: Computed properties.
+					if (prop.value.value instanceof Verb)
+						return null;
 
 					if (!(cargo.player && runtime.currentSecurityContext === cargo.player.id && cargo.playerIsAdmin)
 							&& !Security.CheckPropertyRead(stickySrc ? stickySrc : propSrc, member, runtime.currentSecurityContext))
