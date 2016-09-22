@@ -101,7 +101,7 @@ export class PropertyRouter extends WorldRouterBase {
 		if (value instanceof Petal.PetalBlob) {
 			let data: any = value.data;
 			if (base64)
-				value = value.toString("base64");
+				data = data.toString("base64");
 			res.set("Access-Control-Expose-Headers", "X-Property-Metadata");
 			res.set("X-Property-Metadata", JSON.stringify(metadata));
 			res.set("Content-Type", value.mime)
