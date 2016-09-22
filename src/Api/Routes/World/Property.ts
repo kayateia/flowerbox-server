@@ -105,7 +105,7 @@ export class PropertyRouter extends WorldRouterBase {
 			res.set("Access-Control-Expose-Headers", "X-Property-Metadata");
 			res.set("X-Property-Metadata", JSON.stringify(metadata));
 			res.set("Content-Type", value.mime)
-				.send(value);
+				.send(data);
 		} else {
 			metadata.value = Petal.ObjectWrapper.Unwrap(value);
 			res.json(metadata);
