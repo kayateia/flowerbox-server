@@ -185,12 +185,13 @@ export class PermsSet {
 }
 
 // Returned by the permission getters and setters to describe permissions on an item.
-export class PermsStatus {
+export class PermsStatus extends ModelBase {
 	constructor(perms: string, permsEffective: string) {
+		super(true);
 		this.perms = perms;
-		this.permsEffective = permsEffective;
+		this.permseffective = permsEffective;
 	}
 
 	public perms: string;
-	public permsEffective: string;
+	public permseffective: string;
 }
