@@ -1,0 +1,9 @@
+function attrs() {
+	if (!$player || !$player.$hear)
+		return;
+
+	$player.$hear(["Attributes:"]);
+	for (var pair of this.properties) {
+		$player.$hear([pair.name, " (", pair.wobid, ") --- ", this[pair.name]]);
+	}
+}

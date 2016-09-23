@@ -1,0 +1,9 @@
+function newroom() {
+	var parent = this.location;
+	var room = $.create(parent);
+	room.base = @room;
+	room.name = $parse.directWords;
+
+	if ($player)
+		$player.$hear(["A new room '", $.notate(room), "' was created next to this one."]);
+}

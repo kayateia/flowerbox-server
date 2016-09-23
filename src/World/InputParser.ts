@@ -86,26 +86,32 @@ async function parseVerbLines(world: World, obj: Wob, roomObjects: Wob[], extras
 	allVerbs.forEach((v) => {
 		v.value.signatures.forEach((parsed) => {
 			let re = "^(" + parsed.verb + ")";
-			if (parsed.dobj) {
-				if (Strings.caseEqual(parsed.dobj, "any"))
+
+			function addOneObject(obj: string): void {
+				if (obj === "*")
+					re += " ([ \\w]+)";
+				else if (Strings.caseEqual(obj, "any"))
 					re += " " + createTargetsRegex(roomObjects, extras);
-				else if (Strings.caseEqual(parsed.dobj, "self"))
+				else if (Strings.caseEqual(obj, "self"))
 					re += " (" + createTargetRegex(selfRef) + ")";
-				else if (Strings.caseEqual(parsed.dobj, "none"))
+				else if (Strings.caseEqual(obj, "none"))
 					re += "()";
 			}
+
+			if (parsed.dobj)
+				addOneObject(parsed.dobj);
 			if (parsed.prep) {
 				let alts = alternates[parsed.prep];
 				re += " (" + alts.join("|") + ")";
 			}
-			if (parsed.indobj) {
-				if (Strings.caseEqual(parsed.indobj, "any"))
-					re += " " + createTargetsRegex(roomObjects, extras);
-				else if (Strings.caseEqual(parsed.indobj, "self"))
-					re += " (" + createTargetRegex(selfRef) + ")";
-				else if (Strings.caseEqual(parsed.indobj, "none"))
-					re += "()";
+			if (parsed.indobj)
+				addOneObject(parsed.indobj);
+			if (parsed.prep2) {
+				let alts = alternates[parsed.prep2];
+				re += " (" + alts.join("|") + ")";
 			}
+			if (parsed.indobj2)
+				addOneObject(parsed.indobj2);
 
 			parsedLines.push(new ReMatch(re + "$", obj, v.value));
 		});
@@ -146,10 +152,13 @@ export class ParseResult {
 	public verb: Verb;
 
 	public direct: Wob;
+	public directWords: string;
 	public prep: string;
 	public indirect: Wob;
+	public indirectWords: string;
 	public prep2: string;
 	public indirect2: Wob;
+	public indirect2Words: string;
 
 	public failure: ParseError;
 
@@ -215,7 +224,7 @@ export async function parseInput(text: string, self: Wob, world: World): Promise
 	/*if (matches.length > 1)
 		failure = ParseError.Ambiguous; */
 
-	let result;
+	let result: ParseResult;
 	if (failure != ParseError.NoError) {
 		result = ParseResult.Failure(failure, text);
 	} else {
@@ -226,16 +235,22 @@ export async function parseInput(text: string, self: Wob, world: World): Promise
 		let matchedWob = matches[0].re.wob;
 		let matchedVerb = matches[0].re.verb;
 		result = ParseResult.Result(pieces[0], matchedWob, matchedVerb);
-		if (pieces[1])
+		if (pieces[1]) {
 			result.direct = await Actions.Lookup(world, self, pieces[1]);
+			result.directWords = pieces[1];
+		}
 		if (pieces[2])
 			result.prep = pieces[2];
-		if (pieces[3])
+		if (pieces[3]) {
 			result.indirect = await Actions.Lookup(world, self, pieces[3]);
+			result.indirectWords = pieces[3];
+		}
 		if (pieces[4])
 			result.prep2 = pieces[4];
-		if (pieces[5])
+		if (pieces[5]) {
 			result.indirect2 = await Actions.Lookup(world, self, pieces[5]);
+			result.indirect2Words = pieces[5];
+		}
 		result.text = text;
 	}
 

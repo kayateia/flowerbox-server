@@ -29,6 +29,13 @@
 					"teleport self",
 					"teleport none at self"
 				]
+			},
+			{
+				"fn": "world-_attrs.petal",
+				"name": "!attrs",
+				"sigs": [
+					"!attrs self"
+				]
 			}
 		]
 	},
@@ -75,6 +82,20 @@
 				"name": "look",
 				"sigs": [
 					"look"
+				]
+			},
+			{
+				"fn": "room-carve.petal",
+				"name": "carve",
+				"sigs": [
+					"carve * at any"
+				]
+			},
+			{
+				"fn": "room-newroom.petal",
+				"name": "newroom",
+				"sigs": [
+					"newroom *"
 				]
 			}
 		]
