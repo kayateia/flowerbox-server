@@ -1,7 +1,7 @@
 function carve() {
 	var exitFromHere = $.create(this);
 	exitFromHere.base = @exit;
-	exitFromHere.target = $parse.indirect;
+	exitFromHere.target = $parse.indirect.id;
 	exitFromHere.name = $parse.directWords;
 
 	// If we want bidirectional exits eventually...
