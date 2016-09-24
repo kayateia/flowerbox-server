@@ -5,12 +5,12 @@ function carve() {
 	exitFromHere.name = $parse.directWords;
 
 	// If we want bidirectional exits eventually...
-	/*var exitToHere = $.create($parse.indirect);
+	/*var exitToHere = $.create($parse.indirect.id);
 	exitToHere.base = @exit;
 	exitToHere.target = this;
 	exitToHere.name = this.name; */
 
 	if ($player)
-		$player.$hear(["New exit '", $.notate(exitFromHere), "' was created."]);
+		$player.$hear(["New exit '", $.notate(exitFromHere), "' (#", exitFromHere.id, ") was created."]);
 	//	$player.$hear(["New exits '", $.notate(exitFromHere), "' and '", $.notate(exitToHere), "' were created."]);
 }

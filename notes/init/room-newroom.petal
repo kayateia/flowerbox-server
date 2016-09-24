@@ -5,5 +5,5 @@ function newroom() {
 	room.name = $parse.directWords;
 
 	if ($player)
-		$player.$hear(["A new room '", $.notate(room), "' was created next to this one."]);
+		$player.$hear(["A new room '", $.notate(room), "' (#", room.id, ") was created next to this one."]);
 }
