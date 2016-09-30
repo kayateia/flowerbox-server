@@ -29,6 +29,25 @@ describe("World API", function() {
 		});
 	});
 
+	describe("default security API", function() {
+		function defType(type: string, perms: string) {
+			it("allows querying for " + type, function(done) {
+				rest.get(baseUrl + "/world/default-perms/" + type, {
+				}).on("complete", function(result) {
+					expect(result).toEqual({
+						success: true,
+						perms: perms
+					});
+					done();
+				});
+			});
+		}
+
+		defType("property", "rw:r:r:");
+		defType("verb", "rwx:rx:rx:");
+		defType("wob", "rw:r:r:");
+	});
+
 	describe("property API", function() {
 		it("allows property querying", function(done) {
 			rest.get(baseUrl + "/world/wob/@world/property/name", {
