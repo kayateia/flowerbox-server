@@ -7,6 +7,7 @@
 import { WorldRouterBase } from "./WorldRouterBase";
 import { ModelBase } from "../../Model/ModelBase";
 import { WorldRouter } from "./World";
+import { WobCommon } from "../../WobCommon";
 import * as Wob from "../../Model/Wob";
 import * as World from "../../../World/All";
 import * as Petal from "../../../Petal/All";
@@ -121,12 +122,16 @@ export class PropertyRouter extends WorldRouterBase {
 		let permsEffective = perms;
 		if (!permsEffective)
 			permsEffective = World.Security.GetDefaultPropertyString();
+
+		let ownerEffective: number = await WobCommon.GetPropertyOwner(name, prop, this.world);
+
 		let metadata = new Wob.Property(
 			prop.wob,
 			name,
 			undefined,
 			perms,
-			permsEffective);
+			permsEffective,
+			ownerEffective);
 
 		this.getPropertySend(prop.value.value, metadata, req, res);
 	}
@@ -144,12 +149,16 @@ export class PropertyRouter extends WorldRouterBase {
 		let permsEffective = perms;
 		if (!permsEffective)
 			permsEffective = World.Security.GetDefaultVerbString();
+
+		let ownerEffective: number = await WobCommon.GetVerbOwner(verb, this.world);
+
 		let metadata = new Wob.Property(
 			verb.wob,
 			name,
 			undefined,
 			perms,
-			permsEffective);
+			permsEffective,
+			ownerEffective);
 		metadata.computed = true;
 
 		// Get the player wob.
@@ -304,7 +313,9 @@ export class PropertyRouter extends WorldRouterBase {
 		if (perms === undefined)
 			permsEffective = World.Security.GetDefaultPropertyString();
 
-		res.json(new Wob.PermsStatus(perms, permsEffective));
+		let ownerEffective: number = await WobCommon.GetPropertyOwner(info.name, info.prop, this.world);
+
+		res.json(new Wob.PermsStatus(perms, permsEffective, ownerEffective));
 	}
 
 	private async putPropertyPerms(req, res, next): Promise<any> {
@@ -331,13 +342,15 @@ export class PropertyRouter extends WorldRouterBase {
 		if (perms === undefined)
 			permsEffective = World.Security.GetDefaultPropertyString();
 
-		res.json(new Wob.PermsStatus(perms, permsEffective));
+		let ownerEffective: number = await WobCommon.GetPropertyOwner(info.name, info.prop, this.world);
+
+		res.json(new Wob.PermsStatus(perms, permsEffective, ownerEffective));
 	}
 
 	private async getPropertySub(req, res, next): Promise<any> {
-		let id = req.params.id;
-		let name = req.params.name;
-		let sub = req.params.sub;
+		let id: string = req.params.id;
+		let name: string = req.params.name;
+		let sub: string = req.params.sub;
 
 		let wob = await this.getWob(id, res);
 		if (!wob)
@@ -364,7 +377,8 @@ export class PropertyRouter extends WorldRouterBase {
 			let permsEffective = perms;
 			if (!permsEffective)
 				permsEffective = World.Security.GetDefaultPropertyString();
-			res.json(new Wob.Property(wob.id, name, prop.value.get(sub), perms, permsEffective, sub));
+
+			res.json(new Wob.Property(wob.id, name, prop.value.get(sub), perms, permsEffective, wob.owner, sub));
 		} else
 			res.status(404).json(new ModelBase(false, "Sub-property does not exist"));
 	}

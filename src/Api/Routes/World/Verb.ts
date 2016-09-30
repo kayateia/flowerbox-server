@@ -7,6 +7,7 @@
 import { WorldRouterBase } from "./WorldRouterBase";
 import { WorldRouter } from "./World";
 import { ModelBase } from "../../Model/ModelBase";
+import { WobCommon } from "../../WobCommon";
 import * as Wob from "../../Model/Wob";
 import * as Petal from "../../../Petal/All";
 import * as World from "../../../World/All";
@@ -92,13 +93,16 @@ export class VerbRouter extends WorldRouterBase {
 		if (!permsEffective)
 			permsEffective = World.Security.GetDefaultVerbString();
 
+		let ownerEffective: number = await WobCommon.GetVerbOwner(verb, this.world);
+
 		res.json(new Wob.Verb(
 			verb.wob,
 			name,
 			verb.value.signatureStrings,
 			verb.value.code,
 			perms,
-			permsEffective
+			permsEffective,
+			ownerEffective
 		));
 	}
 
@@ -195,7 +199,9 @@ export class VerbRouter extends WorldRouterBase {
 		if (perms === undefined)
 			permsEffective = World.Security.GetDefaultVerbString();
 
-		res.json(new Wob.PermsStatus(perms, permsEffective));
+		let ownerEffective: number = await WobCommon.GetVerbOwner(info.verb, this.world);
+
+		res.json(new Wob.PermsStatus(perms, permsEffective, ownerEffective));
 	}
 
 	private async putVerbPerms(req, res, next): Promise<any> {
@@ -222,6 +228,8 @@ export class VerbRouter extends WorldRouterBase {
 		if (perms === undefined)
 			permsEffective = World.Security.GetDefaultVerbString();
 
-		res.json(new Wob.PermsStatus(perms, permsEffective));
+		let ownerEffective: number = await WobCommon.GetVerbOwner(info.verb, this.world);
+
+		res.json(new Wob.PermsStatus(perms, permsEffective, ownerEffective));
 	}
 }

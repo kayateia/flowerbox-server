@@ -49,7 +49,9 @@ export class WobCommon {
 			if (perms === undefined)
 				permsEffective = World.Perms.unparse(World.Security.GetDefaultPropertyPerms());
 
-			propertyInfos.push(new Wob.AttachedProperty(wobid, key, perms, permsEffective, mimetype));
+			let ownerEffective: number = await WobCommon.GetPropertyOwner(key, p[1], world);
+
+			propertyInfos.push(new Wob.AttachedProperty(wobid, key, perms, permsEffective, ownerEffective, mimetype));
 		}
 
 		// Convert the verbs into verb metadata.
@@ -61,7 +63,9 @@ export class WobCommon {
 			if (perms === undefined)
 				permsEffective = World.Perms.unparse(World.Security.GetDefaultVerbPerms());
 
-			verbInfos.push(new Wob.AttachedVerb(v.wob, v.value.word, perms, permsEffective));
+			let ownerEffective: number = await WobCommon.GetVerbOwner(v, world);
+
+			verbInfos.push(new Wob.AttachedVerb(v.wob, v.value.word, perms, permsEffective, ownerEffective));
 		}
 
 		// Compute these, as they may be computed properties.
@@ -85,5 +89,25 @@ export class WobCommon {
 			propertyInfos,
 			verbInfos);
 		return rv;
+	}
+
+	// Given a property/wob combo, determine the actual owner of the property and return it.
+	public static async GetPropertyOwner(propName: string, prop: World.WobValue<World.Property>,
+			world: World.World): Promise<number> {
+		// Check to see if it's got a sticky ancestor. If so, we will set a different effective owner.
+		let propWob: World.Wob = await world.getWob(prop.wob);
+		let ownerEffective: number = propWob.owner;
+		let stickyOwner: World.Wob = await World.Actions.GetStickyParent(propWob, propName, world);
+		if (stickyOwner)
+			ownerEffective = stickyOwner.owner;
+
+		return ownerEffective;
+	}
+
+	public static async GetVerbOwner(verb: World.WobValue<World.Verb>, world: World.World): Promise<number> {
+		// For now, verbs are always owned by the owner of the wob they appear on.
+		let verbWob: World.Wob = await world.getWob(verb.wob);
+		let ownerEffective: number = verbWob.owner;
+		return ownerEffective;
 	}
 }

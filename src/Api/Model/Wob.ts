@@ -8,13 +8,15 @@ import { ModelBase } from "./ModelBase";
 
 // For returning one property on a wob.
 export class Property extends ModelBase {
-	constructor(id: number, name: string, value: any, perms: string, permsEffective: string, sub?: string) {
+	constructor(id: number, name: string, value: any, perms: string, permsEffective: string,
+			ownerEffective: number, sub?: string) {
 		super(true);
 		this.id = id;
 		this.name = name;
 		this.value = value;
 		this.perms = perms;
 		this.permseffective = permsEffective;
+		this.ownereffective = ownerEffective;
 		this.sub = sub;
 	}
 
@@ -23,13 +25,15 @@ export class Property extends ModelBase {
 	public value: any;
 	public perms: string;
 	public permseffective: string;
+	public ownereffective: number;
 	public sub: string;
 	public computed: boolean;
 }
 
 // For returning one verb on a wob.
 export class Verb extends ModelBase {
-	constructor(id: number, name: string, sigs: string[], code: string, perms: string, permsEffective: string) {
+	constructor(id: number, name: string, sigs: string[], code: string, perms: string, permsEffective: string,
+			ownerEffective: number) {
 		super(true);
 		this.id = id;
 		this.name = name;
@@ -37,6 +41,7 @@ export class Verb extends ModelBase {
 		this.code = code;
 		this.perms = perms;
 		this.permseffective = permsEffective;
+		this.ownereffective = ownerEffective;
 	}
 
 	public id: number;
@@ -45,6 +50,7 @@ export class Verb extends ModelBase {
 	public code: string;
 	public perms: string;
 	public permseffective: string;
+	public ownereffective: number;
 }
 
 // Expected object to be passed in per verb being set.
@@ -107,22 +113,24 @@ export class Info extends ModelBase {
 }
 
 export class AttachedItem {
-	constructor(sourceid: number, value: string, perms: string, permsEffective: string) {
+	constructor(sourceid: number, value: string, perms: string, permsEffective: string, ownerEffective: number) {
 		this.sourceid = sourceid;
 		this.value = value;
 		this.perms = perms;
 		this.permseffective = permsEffective;
+		this.ownereffective = ownerEffective;
 	}
 
 	public sourceid: number;
 	public value: string;
 	public perms: string;
 	public permseffective: string;
+	public ownereffective: number;
 }
 
 export class AttachedProperty extends AttachedItem {
-	constructor(sourceid: number, value: string, perms: string, permsEffective: string, blobmimetype: string) {
-		super(sourceid, value, perms, permsEffective);
+	constructor(sourceid: number, value: string, perms: string, permsEffective: string, ownerEffective: number, blobmimetype: string) {
+		super(sourceid, value, perms, permsEffective, ownerEffective);
 		this.blobmimetype = blobmimetype;
 	}
 
@@ -130,8 +138,8 @@ export class AttachedProperty extends AttachedItem {
 }
 
 export class AttachedVerb extends AttachedItem {
-	constructor(sourceid: number, value: string, perms: string, permsEffective: string) {
-		super(sourceid, value, perms, permsEffective);
+	constructor(sourceid: number, value: string, perms: string, permsEffective: string, ownerEffective: number) {
+		super(sourceid, value, perms, permsEffective, ownerEffective);
 	}
 }
 
@@ -186,12 +194,14 @@ export class PermsSet {
 
 // Returned by the permission getters and setters to describe permissions on an item.
 export class PermsStatus extends ModelBase {
-	constructor(perms: string, permsEffective: string) {
+	constructor(perms: string, permsEffective: string, ownerEffective: number) {
 		super(true);
 		this.perms = perms;
 		this.permseffective = permsEffective;
+		this.ownereffective = ownerEffective;
 	}
 
 	public perms: string;
 	public permseffective: string;
+	public ownereffective: number;
 }

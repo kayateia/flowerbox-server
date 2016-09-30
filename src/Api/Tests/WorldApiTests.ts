@@ -58,7 +58,8 @@ describe("World API", function() {
 					id: 1,
 					name: "name",
 					value: "Za Waarudo",
-					permseffective: "rw:r:r:"
+					permseffective: "rw:r:r:",
+					ownereffective: 1
 				});
 				done();
 			});
