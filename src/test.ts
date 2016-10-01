@@ -29,7 +29,7 @@ async function tester() {
 	(function nextLine() {
 		rl.question('> ', (answer) => {
 			let admin = false;
-			if (answer[0] === "!") {
+			if (answer[0] === "#") {
 				admin = true;
 				answer = answer.substr(1);
 			}
