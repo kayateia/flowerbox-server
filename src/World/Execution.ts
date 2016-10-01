@@ -12,7 +12,8 @@ import { DollarObject } from "./Execution/DollarObject";
 import { DollarParse } from "./Execution/DollarParse";
 import { WobWrapper, AccessorCargo, WobPropertyTag } from "./Execution/WobWrapper";
 import { RootScope } from "./Execution/RootScope";
-import { Perms } from "./Security";
+import { Perms, Security } from "./Security";
+import { Verb } from "./Verb";
 
 function handleFailure(parse: ParseResult, player: Wob): void {
 	switch (parse.failure) {
@@ -156,12 +157,18 @@ export async function executeFunction(parse: ParseResult, player: Wob, playerIsA
 }
 
 // Executes a verb in the context of a standard verb execution.
-async function executeVerbInner(funcName: string, func: Petal.Address, thisValue: any, env: EnvironmentSetup): Promise<Petal.ExecuteResult> {
+async function executeVerbInner(funcName: string, verb: Verb, verbObject: Wob, thisValue: any, env: EnvironmentSetup): Promise<Petal.ExecuteResult> {
+	let func = verb.address;
 	let addr = func.copy();
 	if (thisValue instanceof Wob)
 		thisValue = new WobWrapper(thisValue.id);
 	addr.thisValue = thisValue;
 	addr.injections = env.injections;
+
+	// Verbs invoked by the player that are sticky are run as the player.
+	if (Security.CheckVerbSticky(verbObject, verb.word)) {
+		addr.securityContext = env.playerObj.id;
+	}
 
 	let result: Petal.ExecuteResult;
 	try {
@@ -219,7 +226,7 @@ export async function executeResult(parse: ParseResult, player: Wob, playerIsAdm
 	let root = await world.getWob(1);
 	let parserVerb = root.getVerb("$command");
 	if (parserVerb) {
-		let result: Petal.ExecuteResult = await executeVerbInner("$command", parserVerb.address, new WobWrapper(1), env);
+		let result: Petal.ExecuteResult = await executeVerbInner("$command", parserVerb, root, new WobWrapper(1), env);
 		if (result) {
 			if (result.returnValue)
 				return;
@@ -240,7 +247,7 @@ export async function executeResult(parse: ParseResult, player: Wob, playerIsAdm
 
 	// We'll only continue here if we actually found a verb.
 	if (parse.verb) {
-		let result: Petal.ExecuteResult = await executeVerbInner(parse.verb.word, parse.verb.address,
+		let result: Petal.ExecuteResult = await executeVerbInner(parse.verb.word, parse.verb, parse.verbObject,
 			new WobWrapper(parse.verbObject.id), env);
 	} else {
 		handleFailure(parse, player);

@@ -33,12 +33,20 @@ import { Wob, WobProperties } from "./Wob";
 // Note that the static members of this class are lower case to match Petal conventions,
 // because these will be exported directly to Petal.
 export class Perms {
-	// Sticky / Super
-	// Properties: This property will retain ownership and permissions from the
-	//   object on which it originated. This bit is set on the "misc" part.
+	// Admin
 	// Verbs: This verb, when executed, will run with elevated (admin) privileges.
 	//   This permission is not transitive, so any code called from the admin verb
-	//   will not have elevated privileges (unless that verb is also +s).
+	//   will not have elevated privileges (unless that verb is also +a).
+	public static a = 0x10;
+
+	// Sticky
+	// Properties: This property will retain ownership and permissions from the
+	//   object on which it originated. This bit is set on the "misc" part.
+	// Verbs: This verb, when executed, will run with the privileges of the verb's
+	//   caller. This means that it has access to all of the caller's data and may
+	//   create new objects as the caller. This permission is not transitive, so any
+	//   code called from the sticky verb will revert to the standard model
+	//   (unless that verb is also +s).
 	public static s = 0x08;
 
 	// Read
@@ -112,6 +120,8 @@ export class Perms {
 					chunkOut |= Perms.x;
 				if (c === "s")
 					chunkOut |= Perms.s;
+				if (c === "a")
+					chunkOut |= Perms.a;
 			}
 			return chunkOut;
 		}
@@ -144,6 +154,8 @@ export class Perms {
 				chunkOut += "w";
 			if (maskPart & Perms.x)
 				chunkOut += "x";
+			if (maskPart & Perms.a)
+				chunkOut += "a";
 			if (maskPart & Perms.s)
 				chunkOut += "s";
 
@@ -328,8 +340,8 @@ export class Security {
 		return Security.CheckVerb(wob, verb, userId, Perms.x);
 	}
 
-	// Returns true if the specified verb is intended to be run with elevated privileges.
-	public static CheckVerbElevated(wob: Wob, verbWord: string): boolean {
+	// Returns true if the specified verb has the specified bit set on it.
+	public static CheckVerbBit(wob: Wob, verbWord: string, bit: number): boolean {
 		let verb = wob.getVerb(verbWord);
 		if (!verb)
 			return false;
@@ -338,7 +350,17 @@ export class Security {
 		if (!perms)
 			return false;
 		let misc = Perms.misc(perms);
-		return !!(misc & Perms.s);
+		return !!(misc & bit);
+	}
+
+	// Returns true if the specified verb is intended to be run with elevated privileges.
+	public static CheckVerbElevated(wob: Wob, verbWord: string): boolean {
+		return Security.CheckVerbBit(wob, verbWord, Perms.a);
+	}
+
+	// Returns true if the specified verb is intended to be run with caller privileges.
+	public static CheckVerbSticky(wob: Wob, verbWord: string): boolean {
+		return Security.CheckVerbBit(wob, verbWord, Perms.s);
 	}
 
 

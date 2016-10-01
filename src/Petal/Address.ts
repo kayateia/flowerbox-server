@@ -21,6 +21,7 @@ export class Address {
 		this.func = null;
 		this.thisValue = null;
 		this.injections = {};
+		this.securityContext = null;
 	}
 
 	// Call to make an Address that points to a native function.
@@ -35,6 +36,7 @@ export class Address {
 		addr.func = this.func;
 		addr.thisValue = this.thisValue;
 		addr.injections = this.injections;
+		addr.securityContext = this.securityContext;
 		return addr;
 	}
 
@@ -44,4 +46,5 @@ export class Address {
 	public func: any;
 	public thisValue: any;
 	public injections: any;
+	public securityContext: number;
 }

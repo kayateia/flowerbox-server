@@ -86,17 +86,19 @@
 			},
 			{
 				"fn": "room-carve.petal",
-				"name": "carve",
+				"name": "!carve",
 				"sigs": [
-					"carve * at any"
-				]
+					"!carve * at any"
+				],
+				"perms": "rwx:rx:rx:s"
 			},
 			{
 				"fn": "room-newroom.petal",
-				"name": "newroom",
+				"name": "!newroom",
 				"sigs": [
-					"newroom *"
-				]
+					"!newroom *"
+				],
+				"perms": "rwx:rx:rx:s"
 			}
 		]
 	},

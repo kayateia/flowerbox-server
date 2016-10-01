@@ -114,6 +114,14 @@ export class WobWrapper implements Petal.IObject {
 				throw new WobOperationException("Can't set the location of objects (use $.move)", []);
 			}, this);
 		}
+		if (index === "owner") {
+			return new Petal.LValue("Wob.owner", async () => {
+				let wob = await cargo.world.getWob(this._id);
+				return new WobWrapper(wob.owner);
+			}, () => {
+				throw new WobOperationException("Can't set the owner of objects (use $.chown)", []);
+			}, this);
+		}
 		if (index === "base") {
 			return new Petal.LValue("Wob.base", async () => {
 				let wob = await cargo.world.getWob(this._id);
@@ -234,6 +242,11 @@ export class WobWrapper implements Petal.IObject {
 					let addr = verb.value.address.copy();
 					addr.thisValue = this;
 					addr.injections = cargo.injections;
+
+					// If the verb is sticky, then we also have to fudge the security context to match the current one.
+					if (Security.CheckVerbSticky(verbSrc, member))
+						addr.securityContext = runtime.currentSecurityContext;
+
 					return addr;
 				}, (runtime: Petal.Runtime, value: any) => {
 					throw new WobOperationException("Can't set new verbs right now", []);

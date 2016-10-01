@@ -300,7 +300,9 @@ export class Runtime {
 
 	// Returns the security context the current code is running under, if any. Otherwise, returns 0.
 	public get currentSecurityContext(): number {
-		if (this.address.module)
+		if (this.address.securityContext)
+			return this.address.securityContext;
+		else if (this.address.module)
 			return this.address.module.securityContext;
 		else
 			return 0;

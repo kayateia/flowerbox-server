@@ -59,7 +59,14 @@ export class ImportExport {
 					console.log("loading", p, "->", vinfo.name);
 					let contents = (await FsPromises.readFile(p)).toString();
 					let sigs: string[] = vinfo.sigs;
+					let perms: string = vinfo.perms;
 					wob.setVerbCode(vinfo.name, sigs, contents);
+
+					if (perms) {
+						let verb = wob.getVerb(vinfo.name);
+						verb.perms = Perms.parse(perms);
+						wob.setVerb(vinfo.name, verb);
+					}
 
 					// There should only be one $onload per wob, if any, so it should be
 					// safe to do this inside the loop.
