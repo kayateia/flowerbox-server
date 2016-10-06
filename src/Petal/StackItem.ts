@@ -11,24 +11,24 @@ import { Runtime } from "./Runtime";
 export class Markers {
 	// Function marker. The address field should be filled for this with the address
 	// to jump to in order to skip the function.
-	public static Function: number = 0;
+	public static Function: number = 1;
 
 	// Per-statement marker.
-	public static Statement: number = 1;
+	public static Statement: number = 2;
 
 	// Used for cleanup of lexical scopes inside a block.
-	public static Block: number = 2;
+	public static Block: number = 3;
 
 	// Used for break in switch, for, etc. This StackItem should also have a value in
 	// the exitLoop member.
-	public static Break: number = 3;
+	public static Break: number = 4;
 
 	// Used for pre-function-calls, for the post cleanup.
-	public static Call: number = 4;
+	public static Call: number = 5;
 
 	// Used for for-in and for loops to mark the stack bottom before the next iteration.
 	// This StackItem should also have a value in the nextIteration member.
-	public static Continue: number = 5;
+	public static Continue: number = 6;
 }
 
 export class StackItem {
@@ -72,6 +72,10 @@ export class StackItem {
 		this.marker = undefined;
 		this.unwinder = undefined;
 		return this;
+	}
+
+	public isPureAddress(): boolean {
+		return this.address && !this.scope && !this.hasOperand && !this.marker;
 	}
 
 	public setAddress(address: Address): StackItem {

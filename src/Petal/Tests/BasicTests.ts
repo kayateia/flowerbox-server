@@ -290,6 +290,26 @@ describe("Basic test", function() {
 			"undefined\nnull\n");
 	});
 
+	it("should have work stack traces in exceptions", function() {
+		let test = new TestSetup("var undef;\n"
+			+ "function a() {\n"
+			+ "		log(undef.foo);\n"
+			+ "}\n"
+			+ "function b() {\n"
+			+ "		a();\n"
+			+ "}\n"
+			+ "function c() {\n"
+			+ "		b();\n"
+			+ "}\n"
+			+ "c();\n", true);
+		try {
+			test.runProgram();
+		} catch (err) {
+			test.runtime.printStack();
+			expect(JSON.stringify(err.petalStack)).toEqual('[{"module":"<test>","line":3,"column":6},{"module":"<test>","line":6,"column":2},{"module":"<test>","line":9,"column":2},{"module":"<test>","line":11,"column":0}]');
+		}
+	});
+
 	it("undefined and null should be constants", function() {
 		try {
 			basicTest("undefined = 5;", "");

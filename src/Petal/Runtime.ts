@@ -111,9 +111,13 @@ export class Runtime {
 				console.log("STEP AT PC", this.address.pc, ":", step.name, ",", (<any>step.node).what, ",", step.callback.toString());
 			}
 			let stepReturn = this.address.module.program[this.address.pc].execute(this);
-			if (!this._setPC)
+			if (!this._setPC) {
 				++this.address.pc;
-			else
+
+				// This is kludgy but it makes the top-level stack trace work.
+				if (this.address.pc < this.address.module.program.length)
+					this.address.node = this.address.module.program[this.address.pc].node;
+			} else
 				this._setPC = false;
 
 			if (stepReturn instanceof Promise) {
@@ -262,27 +266,33 @@ export class Runtime {
 
 	// Returns a stack trace from the current execution state.
 	public getStackTrace(): StackFrame[] {
-		/*let stack = [];
+		let stack = [];
 		if (this.address.node && this.address.node.loc)
 			stack.push(new StackFrame(this.address.module.name, this.address.node.loc.line, this.address.node.loc.column));
 		else
 			stack.push(new StackFrame(this.address.module.name, -1, -1));
 
-		let count = this._programStack.count;
+		let count = this._stack.count;
 		for (let i=0; i<count; ++i) {
-			let frame = this._programStack.get(i);
-			if (!frame.module) {
+			let frame = this._stack.get(i);
+
+			// Look for "pure" address stack pushes. Other things can have addresses, like markers,
+			// but we don't want those for the stack trace.
+			if (!frame.isPureAddress())
+				continue;
+
+			let addr = frame.address;
+			if (!addr.module) {
 				// These can come from synthetic function calls.
 				continue;
 			}
-			if (frame.node && frame.node.loc)
-				stack.push(new StackFrame(frame.module.name, frame.node.loc.line, frame.node.loc.column));
+			if (addr.node && addr.node.loc)
+				stack.push(new StackFrame(addr.module.name, addr.node.loc.line, addr.node.loc.column));
 			else
-				stack.push(new StackFrame(frame.module.name, -1, -1));
+				stack.push(new StackFrame(addr.module.name, -1, -1));
 		}
 
-		return stack; */
-		return [];
+		return stack;
 	}
 
 	// Returns the security context the current code is running under, if any. Otherwise, returns 0.

@@ -12,6 +12,9 @@ export class TestSetup {
 		this.output = "";
 		this.runtime.currentScope.set("log", Petal.Address.Function(this.getLogger()));
 		this.programParsed = Petal.parseFromSource(program);
+		this.verbose = verbose;
+		if (this.verbose)
+			console.log(JSON.stringify(this.programParsed, null, 4));
 	}
 
 	public getLogger() {
@@ -36,6 +39,12 @@ export class TestSetup {
 
 	public runProgram(address?: Petal.Address) {
 		this.compile();
+		if (this.verbose) {
+			let i = 0;
+			for (let m of this.module.program) {
+				console.log(i++, m.name, (<any>m.node).what, m.node.loc);
+			}
+		}
 
 		if (!address)
 			address = new Petal.Address(0, this.module, this.programParsed);
@@ -84,4 +93,5 @@ export class TestSetup {
 	public module: Petal.Module;
 	public output: string;
 	public programParsed: Petal.AstNode;
+	public verbose: boolean;
 }
