@@ -42,6 +42,7 @@ export * from "./Module";
 export * from "./Objects";
 export * from "./Parser";
 export * from "./Runtime";
+export * from "./StackItem";
 export * from "./Step";
 export * from "./Utils";
 export * from "./Value";

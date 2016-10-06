@@ -9,6 +9,7 @@ import { parse } from "./Parser";
 import { Runtime } from "./Runtime";
 import { StandardScope } from "./Scopes/StandardScope";
 import { Compiler } from "./Compiler";
+import { StackItem, Markers } from "./StackItem";
 
 export class AstStatements extends AstNode {
 	constructor(parseTree: any, blockStatement: boolean) {
@@ -28,29 +29,32 @@ export class AstStatements extends AstNode {
 	public compile(compiler: Compiler): void {
 		if (this.blockStatement) {
 			compiler.emit("Pre-block scope push", this, (runtime: Runtime) => {
-				// If we're in a block statement, also push on a new scope.
-				runtime.pushScope(new StandardScope(runtime.currentScope));
-			});
-			compiler.pushNode("Post-block scope cleanup", this, (runtime: Runtime) => {
-				runtime.popScope();
+				// If we're in a block statement, push on a block marker and a new scope.
+				runtime.push(new StackItem()
+					.setMarker(Markers.Block)
+					.setScope(new StandardScope(runtime.currentScope)));
 			});
 		}
 
 		this.body.forEach(n => {
-			compiler.emit("Pre-statement bp save", this, (runtime: Runtime) => {
-				runtime.pushBase();
-			});
-			compiler.pushNode("Post-statement bp restore", this, (runtime: Runtime) => {
-				runtime.popBase();
+			compiler.emit("Pre-statement stack save", this, (runtime: Runtime) => {
+				runtime.pushMarker(Markers.Statement);
 			});
 
 			n.compile(compiler);
 
-			compiler.popNode();
+			compiler.emit("Post-statement stack restore", this, (runtime: Runtime) => {
+				runtime.popWhile(i => i.marker !== Markers.Statement);
+				runtime.pop();
+			});
 		});
 
-		if (this.blockStatement)
-			compiler.popNode();
+		if (this.blockStatement) {
+			compiler.emit("Post-block scope pop", this, (runtime: Runtime) => {
+				runtime.popWhile(i => i.marker !== Markers.Block);
+				runtime.pop();
+			});
+		}
 	}
 
 	public what: string = "Statements";

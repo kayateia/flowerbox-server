@@ -16,6 +16,7 @@ import { ParameterScope } from "./Scopes/ParameterScope";
 import { Step } from "./Step";
 import { LValue } from "./LValue";
 import { Utils } from "./Utils";
+import { StackItem, Markers } from "./StackItem";
 
 export class AstFunction extends AstNode {
 	constructor(parseTree: any) {
@@ -62,25 +63,20 @@ export class AstFunction extends AstNode {
 		// Now we'll compile the function contents.
 		funcStart.pc = compiler.pc;
 
-		compiler.pushNode("Function return", this, (runtime: Runtime) => {
-			runtime.popScope();
-			runtime.popPC();
-		});
-
 		// Pull in the parameter values. Our stack will look like this:
-		// <number of args> <argN> <argN-1> <argN-2> ... <arg0> <callee>
+		// <call marker> <arg0> <arg1> <arg2> ... <argN-1> <number of args> <callee> <return PC>
 		// This is relevant because we want to build up the "arguments" parameter,
 		// as well as divining the "this" value.
 		compiler.emit("Function parameters and closure", this, (runtime: Runtime) => {
-			let callee: Address = runtime.getPC(0);
+			let callee: Address = runtime.get(1).operand;
 			let injections: string[] = Utils.GetPropertyNames(callee.injections);
 
-			let argCount = runtime.getOperand(0);
+			let argCount = runtime.get(2).operand;
 			let paramScope = new ParameterScope(closureScope,
 				[...this.params, "this", "arguments", "caller", ...injections]);
 			let args = [];
 			for (let i=0; i<argCount; ++i) {
-				let val = runtime.getOperand(1 + argCount - (1+i));
+				let val = runtime.get(3 + argCount - (1+i)).operand;
 				if (i < this.params.length)
 					paramScope.set(this.params[i], val);
 				args.push(val);
@@ -92,15 +88,18 @@ export class AstFunction extends AstNode {
 
 			paramScope.set("this", callee.thisValue);
 
-			if (runtime.countPC > 1) {
-				let calleeCaller: Address = runtime.getPC(1);
+			let calleeCaller: Address = runtime.get(0).address;
+			if (calleeCaller) {
 				paramScope.set("caller", calleeCaller.thisValue);
 			} else {
 				paramScope.set("caller", null);
 			}
 
 			let funcScope = new StandardScope(paramScope);
-			runtime.pushScope(funcScope);
+			runtime.push(new StackItem()
+				.setScope(funcScope)
+				.setMarker(Markers.Function)
+				.setAddress(this.endLabel));
 		});
 
 		// And the function body.
@@ -108,11 +107,17 @@ export class AstFunction extends AstNode {
 
 		// Compile a "just in case" default return.
 		compiler.emit("Function default return", this, (runtime: Runtime) => {
-			runtime.pushOperand(undefined);
+			runtime.returnValue = undefined;
 		});
 
 		this.endLabel = compiler.newLabel(this);
-		compiler.popNode();
+
+		// Pop off the function marker.
+		compiler.emit("Function cleanup", this, (runtime: Runtime) => {
+			runtime.popWhile(i => i.marker !== Markers.Function);
+			runtime.pop();
+			runtime.popPC();
+		});
 
 		// Now replace the instruction above to properly skip over the function.
 		afterLabel.pc = compiler.pc;

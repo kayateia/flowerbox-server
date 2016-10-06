@@ -266,6 +266,25 @@ describe("Basic test", function() {
 		expect(test.output).toEqual("test foo\ntesting this\ntesting caller\n");
 	});
 
+	it("should pass injected values into 'computed' function address calls", function() {
+		// Run once to get the functions defined.
+		let test = new TestSetup("function c() { log($); } function a() { $c(); }");
+		test.runProgram();
+
+		// Set up a function 'computer'.
+		let caddr = test.runtime.currentScope.get("c");
+		caddr.injections = {
+			$: "inner dollar"
+		};
+
+		// Run again to call the function. This simulates a function call from elsewhere.
+		let func = test.runtime.currentScope.get("a");
+		func.injections = { $c: caddr };
+		test.runtime.executeFunction(func, [], null);
+
+		expect(test.output).toEqual("inner dollar\n");
+	});
+
 	it("should have undefined and null", function() {
 		basicTest("log(undefined); log(null);",
 			"undefined\nnull\n");

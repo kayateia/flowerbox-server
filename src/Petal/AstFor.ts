@@ -11,6 +11,7 @@ import { StandardScope } from "./Scopes/StandardScope";
 import { Value } from "./Value";
 import { Compiler } from "./Compiler";
 import { Address } from "./Address";
+import { StackItem,Markers } from "./StackItem";
 
 export class AstFor extends AstNode {
 	constructor(parseTree: any) {
@@ -23,15 +24,23 @@ export class AstFor extends AstNode {
 
 	public compile(compiler: Compiler): void {
 		compiler.emit("For init scope", this, (runtime: Runtime) => {
+			// Push on a break marker for break.
+			runtime.push(new StackItem()
+				.setMarker(Markers.Break)
+				.setExitLoop(this.postLoopLabel));
+
 			// Push on a scope to handle what drops out of the init vars.
 			runtime.pushScope(new StandardScope(runtime.currentScope));
 		});
 
-		compiler.pushNode("Drop for scope", this, (runtime: Runtime) => {
-			runtime.popScope();
-		});
-
 		this.init.compile(compiler);
+
+		compiler.emit("For continue marker", this, (runtime: Runtime) => {
+			// Push on a break marker for break.
+			runtime.push(new StackItem()
+				.setMarker(Markers.Continue)
+				.setNextIteration(this.nextLabel));
+		});
 
 		let checkLabel = compiler.newLabel(this);
 
@@ -54,7 +63,10 @@ export class AstFor extends AstNode {
 		});
 
 		this.postLoopLabel.pc = compiler.pc;
-		compiler.popNode();
+		compiler.emit("For loop cleanup", this, (runtime: Runtime) => {
+			runtime.popWhile(i => i.marker !== Markers.Break);
+			runtime.pop();
+		});
 	}
 
 	public what: string = "For";

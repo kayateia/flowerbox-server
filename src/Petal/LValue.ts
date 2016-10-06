@@ -82,12 +82,6 @@ export class LValue {
 			return value;
 	}
 
-	// Pops a value off the operand stack and calls Deref on it.
-	public static PopAndDeref(runtime: Runtime): any {
-		let value = runtime.popOperand();
-		return LValue.Deref(runtime, value);
-	}
-
 	private _name: string;
 	private _reader: ILValueReader;
 	private _writer: ILValueWriter;

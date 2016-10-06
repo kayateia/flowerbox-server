@@ -23,7 +23,7 @@ export class AstUpdate extends AstNode {
 		this.argument.compile(compiler);
 
 		compiler.emit("Update l-value", this, (runtime: Runtime) => {
-			let lval: LValue = Value.GetLValue(runtime.popOperand());
+			let lval: LValue = Value.PopAndGetLValue(runtime);
 
 			let oldValue = LValue.Deref(runtime, lval);
 			let newValue;

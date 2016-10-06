@@ -9,7 +9,7 @@ import { AstFunction } from "./AstFunction";
 import { parse } from "./Parser";
 import { Runtime } from "./Runtime";
 import { Value } from "./Value";
-import { Compiler, NodeStackEntry } from "./Compiler";
+import { Compiler } from "./Compiler";
 
 export class AstTryStatement extends AstNode {
 	constructor(parseTree: any) {
@@ -34,7 +34,7 @@ export class AstThrowStatement extends AstNode {
 	}
 
 	public compile(compiler: Compiler): void {
-		if (this.argument)
+		/*if (this.argument)
 			this.argument.compile(compiler);
 
 		compiler.emit("Throw statement", this, (runtime: Runtime) => {
@@ -65,7 +65,7 @@ export class AstThrowStatement extends AstNode {
 		// Not correct yet.
 		compiler.emit("Throw goto", this, (runtime: Runtime) => {
 			runtime.gotoPC(endNode.endLabel);
-		});
+		}); */
 	}
 
 	public what: string = "Throw";

@@ -9,7 +9,8 @@ import { AstFor } from "./AstFor";
 import { AstForIn } from "./AstForIn";
 import { Runtime } from "./Runtime";
 import { Compiler } from "./Compiler";
-import { CompileException } from "./Exceptions";
+import { CompileException, RuntimeException } from "./Exceptions";
+import { Markers } from "./StackItem";
 
 export class AstContinue extends AstNode {
 	constructor(parseTree: any) {
@@ -17,20 +18,12 @@ export class AstContinue extends AstNode {
 	}
 
 	public compile(compiler: Compiler): void {
-		for (let i=0; ; ++i) {
-			let stackTop = compiler.getNode(i);
+		compiler.emit("Continue statement", this, (runtime: Runtime) => {
+			runtime.popWhile(i => i.marker !== Markers.Continue);
 
-			// AstFor and AstForIn have the same shape.
-			if (stackTop.node instanceof AstFor || stackTop.node instanceof AstForIn) {
-				compiler.emit("Continue statement", this, (runtime: Runtime) => {
-					runtime.gotoPC((<AstFor>stackTop.node).nextLabel);
-				});
-				break;
-			} /*else if (topLoop instanceof AstWhile) {
-			}*/ else {
-				compiler.emitNode(stackTop);
-			}
-		}
+			let nextIteration = runtime.get(0).nextIteration;
+			runtime.gotoPC(nextIteration);
+		});
 	}
 
 	public what: string = "Continue";

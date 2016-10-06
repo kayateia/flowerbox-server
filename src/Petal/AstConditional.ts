@@ -47,21 +47,6 @@ export class AstConditional extends AstNode {
 		skipToEnd.pc = compiler.pc;
 	}
 
-	/*public execute(runtime: Runtime): void {
-		runtime.pushAction(Step.Callback("Conditional", () => {
-			let result = Value.PopAndDeref(runtime);
-
-			if (this.statement)
-				runtime.pushAction(Step.ClearOperands(runtime));
-
-			if (result)
-				runtime.pushAction(new Step(this.consequent, "Conditional consequent"));
-			else if (this.alternate)
-				runtime.pushAction(new Step(this.alternate, "Conditional alternate"));
-		}));
-		runtime.pushAction(new Step(this.test, "Conditional test"));
-	} */
-
 	public what: string = "Test";
 	public test: AstNode;
 	public consequent: AstNode;

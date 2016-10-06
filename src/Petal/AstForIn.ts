@@ -15,6 +15,7 @@ import { RuntimeException } from "./Exceptions";
 import { Compiler } from "./Compiler";
 import { Address } from "./Address";
 import { ObjectWrapper, PetalObject, PetalArray } from "./Objects";
+import { StackItem,Markers } from "./StackItem";
 
 export class AstForIn extends AstNode {
 	constructor(parseTree: any) {
@@ -28,12 +29,12 @@ export class AstForIn extends AstNode {
 	}
 
 	public compile(compiler: Compiler): void {
-		compiler.pushNode("For-in post-body", this, (runtime: Runtime) => {
-			runtime.popOperand();
-			runtime.popScope();
-		});
-
 		compiler.emit("For-in init scope", this, (runtime: Runtime) => {
+			// Push on a break marker for break and continue.
+			runtime.push(new StackItem()
+				.setMarker(Markers.Break)
+				.setExitLoop(this.postLoopLabel));
+
 			// Push on a scope to handle what drops out of the init vars.
 			runtime.pushScope(new StandardScope(runtime.currentScope));
 		});
@@ -57,13 +58,16 @@ export class AstForIn extends AstNode {
 			}
 
 			// Put it back on the stack for our use as the loop goes on.
-			runtime.pushOperand(source);
+			runtime.push(new StackItem()
+				.setOperand(source)
+				.setMarker(Markers.Continue)
+				.setNextIteration(this.nextLabel));
 		});
 
 		// Compile the body.
 		this.nextLabel = compiler.newLabel(this);
 		compiler.emit("For-in pre-body", this, (runtime: Runtime) => {
-			let right = runtime.getOperand(0);
+			let right = runtime.get(0).operand;
 			if (right.length === 0) {
 				runtime.gotoPC(this.postLoopLabel);
 				return;
@@ -80,7 +84,10 @@ export class AstForIn extends AstNode {
 		});
 
 		this.postLoopLabel = compiler.newLabel(this);
-		compiler.popNode();
+		compiler.emit("For-in loop cleanup", this, (runtime: Runtime) => {
+			runtime.popWhile(i => i.marker !== Markers.Break);
+			runtime.pop();
+		});
 	}
 
 	public what: string = "ForIn";

@@ -17,6 +17,7 @@ import { LValue } from "./LValue";
 import { Utils } from "./Utils";
 import { Compiler } from "./Compiler";
 import { Address } from "./Address";
+import { StackItem, Markers } from "./StackItem";
 
 // This class has sort of grown beyond its original purpose and really ought to be
 // split into a couple of classes...
@@ -38,45 +39,50 @@ export class AstCallExpression extends AstNode {
 		let compiler = new Compiler("<trampoline>");
 		let newNode = new AstNode({});
 		compiler.emit("Synthetic call", newNode, (runtime: Runtime) => {
-			runtime.pushPC(new Address(0, null, null));
-			runtime.getPC(0).thisValue = caller;
+			runtime.pushMarker(Markers.Call);
 
-			runtime.pushBase();
-			runtime.pushOperand(address);
 			param.forEach(p => runtime.pushOperand(p));
 			runtime.pushOperand(param.length);
+			runtime.pushOperand(address);
+
+			let callerAddress: Address = compiler.newLabel(newNode);
+			callerAddress.thisValue = caller;
+			runtime.address = callerAddress;
 
 			runtime.callPC(address);
 		});
 		compiler.emit("Synthetic call cleanup", newNode, (runtime: Runtime) => {
-			runtime.popBase();
-			runtime.discardPC();
+			// This pops everything up to callerAddress, and then pops callerAddress itself.
+			runtime.popWhile(i => i.marker !== Markers.Call);
+			runtime.pop();
+			runtime.pushOperand(runtime.returnValue);
 		});
 
 		return new Address(0, compiler.module, newNode);
 	}
 
 	public compile(compiler: Compiler): void {
-		compiler.emit("Call prelude", this, (runtime: Runtime) => {
-			runtime.pushBase();
+		compiler.emit("Call marker", this, (runtime: Runtime) => {
+			runtime.pushMarker(Markers.Call);
 		});
 
-		(<AstNode>this.callee).compile(compiler);
 		this.arguments.forEach(a => a.compile(compiler));
+		(<AstNode>this.callee).compile(compiler);
 
 		compiler.emit("Call", this, (runtime: Runtime) => {
 			// Deref all of the arguments - no passing l-values past a function boundary.
 			for (let i=this.arguments.length-1; i>=0; --i) {
+				let item = runtime.get(1 + i);
 				if (runtime.verbose)
-					console.log("DEREF ARG", runtime.getOperand(i), Value.Deref(runtime, runtime.getOperand(i)));
-				runtime.setOperand(i, Value.Deref(runtime, runtime.getOperand(i)));
+					console.log("DEREF ARG", item.operand, Value.Deref(runtime, item.operand));
+				item.operand = Value.Deref(runtime, item.operand);
 			}
 
-			// The top item on the operand stack should be an address or a native function.
+			// The top item on the stack should be an address or a native function.
 			// If it's a native function, we just pop off the parameters and call it.
-			let address: Address = Value.Deref(runtime, runtime.getOperand(this.arguments.length));
+			let address: Address = Value.Deref(runtime, runtime.get(0).operand);
 			if (runtime.verbose) {
-				console.log("DEREF CALLEE", runtime.getOperand(this.arguments.length), address);
+				console.log("DEREF CALLEE", runtime.get(0).address, address);
 				console.log("CALLING", address);
 			}
 			if (!(address instanceof Address))
@@ -85,7 +91,7 @@ export class AstCallExpression extends AstNode {
 			if (address.func) {
 				let args = [];
 				for (let i=this.arguments.length-1; i>=0; --i)
-					args.push(runtime.getOperand(i));
+					args.push(runtime.get(1 + i).operand);
 
 				let result = address.func(...args);
 				if (result instanceof Promise) {
@@ -98,7 +104,7 @@ export class AstCallExpression extends AstNode {
 			} else {
 				// See if we got an l-value as the callee. If we did, look for a "this" value
 				// and include it with the address for the program stack.
-				let addressL: LValue = runtime.getOperand(this.arguments.length);
+				let addressL: LValue = runtime.get(0).operand;
 				let thisValue: any = null;
 				if (LValue.IsLValue(addressL))
 					thisValue = addressL.thisValue;
@@ -106,8 +112,11 @@ export class AstCallExpression extends AstNode {
 				address.thisValue = thisValue;
 
 				// Push our argument count on the stack so we know how many things are available
-				// on the other end.
+				// on the other end. We have to pop off the caller so we can put the count
+				// underneath that.
+				runtime.pop();
 				runtime.pushOperand(this.arguments.length);
+				runtime.pushOperand(address);
 
 				// Push our current location on the stack (the return address) and set the new location.
 				runtime.callPC(address);
@@ -115,7 +124,9 @@ export class AstCallExpression extends AstNode {
 		});
 		compiler.emit("Call cleanup", this, (runtime: Runtime) => {
 			let returnValue = runtime.returnValue;
-			runtime.popBase();
+			// This pops everything up to callerAddress, and then pops callerAddress itself.
+			runtime.popWhile(i => i.marker !== Markers.Call);
+			runtime.pop();
 			runtime.pushOperand(returnValue);
 		});
 	}
