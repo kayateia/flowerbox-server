@@ -13,6 +13,14 @@ import * as World from "../../../World/All";
 import * as Petal from "../../../Petal/All";
 import * as Multer from "../../Multer";
 
+// Strict definition for the return value of PropertyPermsCommon().
+interface PropertyPermsCommonInfo {
+	id: string;
+	name: string;
+	wob: World.Wob;
+	prop: World.Property;
+}
+
 export class PropertyRouter extends WorldRouterBase {
 	constructor(worldRouter: WorldRouter) {
 		super();
@@ -123,7 +131,7 @@ export class PropertyRouter extends WorldRouterBase {
 		if (!permsEffective)
 			permsEffective = World.Security.GetDefaultPropertyString();
 
-		let ownerEffective: number = await WobCommon.GetPropertyOwner(name, prop, this.world);
+		let ownerEffective: number = await WobCommon.GetPropertyOwner(name, prop.wob, prop.value, this.world);
 
 		let metadata = new Wob.Property(
 			prop.wob,
@@ -150,7 +158,7 @@ export class PropertyRouter extends WorldRouterBase {
 		if (!permsEffective)
 			permsEffective = World.Security.GetDefaultVerbString();
 
-		let ownerEffective: number = await WobCommon.GetVerbOwner(verb, this.world);
+		let ownerEffective: number = await WobCommon.GetVerbOwner(verb.wob, verb.value, this.world);
 
 		let metadata = new Wob.Property(
 			verb.wob,
@@ -275,7 +283,7 @@ export class PropertyRouter extends WorldRouterBase {
 		res.json(new ModelBase(true));
 	}
 
-	private async propertyPermsCommon(req, res, next) {
+	private async propertyPermsCommon(req, res, next): Promise<PropertyPermsCommonInfo> {
 		let id = req.params.id;
 		let name = req.params.name;
 
@@ -313,7 +321,7 @@ export class PropertyRouter extends WorldRouterBase {
 		if (perms === undefined)
 			permsEffective = World.Security.GetDefaultPropertyString();
 
-		let ownerEffective: number = await WobCommon.GetPropertyOwner(info.name, info.prop, this.world);
+		let ownerEffective: number = await WobCommon.GetPropertyOwner(info.name, info.wob.id, info.prop, this.world);
 
 		res.json(new Wob.PermsStatus(perms, permsEffective, ownerEffective));
 	}
@@ -342,7 +350,7 @@ export class PropertyRouter extends WorldRouterBase {
 		if (perms === undefined)
 			permsEffective = World.Security.GetDefaultPropertyString();
 
-		let ownerEffective: number = await WobCommon.GetPropertyOwner(info.name, info.prop, this.world);
+		let ownerEffective: number = await WobCommon.GetPropertyOwner(info.name, info.wob.id, info.prop, this.world);
 
 		res.json(new Wob.PermsStatus(perms, permsEffective, ownerEffective));
 	}
