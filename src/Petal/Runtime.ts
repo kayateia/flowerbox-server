@@ -330,7 +330,10 @@ export class Runtime {
 	}
 
 	public pop(): StackItem {
-		return this._stack.pop();
+		let item: StackItem = this._stack.pop();
+		if (item.unwinder)
+			item.unwinder(this);
+		return item;
 	}
 
 	public popMany(count: number): void {
