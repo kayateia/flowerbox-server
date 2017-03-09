@@ -60,7 +60,7 @@ export class AstMemberExpression extends AstNode {
 		});
 
 		compiler.emit("Member lookup part 2", this, (runtime: Runtime) => {
-			let value = runtime.popOperand();
+			let value = Value.PopOperand(runtime);
 
 			// Unwrap what's there on read, and if it's a Promise, do the read and make
 			// a new LValue that has the raw (succeeded) value as well as the old writer.

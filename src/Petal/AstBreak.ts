@@ -11,6 +11,7 @@ import { AstSwitch } from "./AstSwitch";
 import { Runtime } from "./Runtime";
 import { Compiler } from "./Compiler";
 import { CompileException } from "./Exceptions";
+import { Markers } from "./StackItem";
 
 export class AstBreak extends AstNode {
 	constructor(parseTree: any) {
@@ -18,25 +19,10 @@ export class AstBreak extends AstNode {
 	}
 
 	public compile(compiler: Compiler): void {
-		for (let i=0; ; ++i) {
-			let stackTop = compiler.getNode(i);
-
-			// AstFor and AstForIn have the same shape.
-			if (stackTop.node instanceof AstFor || stackTop.node instanceof AstForIn) {
-				compiler.emit("Break for statement", this, (runtime: Runtime) => {
-					runtime.gotoPC((<AstFor>stackTop.node).postLoopLabel);
-				});
-				break;
-			} else if (stackTop.node instanceof AstSwitch) {
-				compiler.emit("Break switch statement", this, (runtime: Runtime) => {
-					runtime.gotoPC((<AstSwitch>stackTop.node).switchEnd);
-				});
-				break;
-			} /*else if (stackTop instanceof AstWhile) {
-			}*/ else {
-				compiler.emitNode(stackTop);
-			}
-		}
+		compiler.emit("Break statement", this, (runtime: Runtime) => {
+			runtime.popWhile(i => i.marker !== Markers.Break);
+			runtime.gotoPC(runtime.get(0).exitLoop);
+		});
 	}
 
 	public what: string = "Break";

@@ -19,6 +19,7 @@ import { Address } from "./Address";
 import { FixedStack } from "./FixedStack";
 import { Compiler } from "./Compiler";
 import { IPetalWrapper } from "./Objects";
+import { StackItem } from "./StackItem";
 
 import * as LibFunctional from "./Lib/Functional";
 import * as LibMath from "./Lib/Math";
@@ -61,12 +62,7 @@ export class Runtime {
 	// the actions of your IObjects if needed.
 	public accessorCargo: any;
 
-	private _programStack: FixedStack<Address>;
-	private _scopeStack: FixedStack<IScope>;
-
-	private _operandStack: FixedStack<any>;
-
-	private _baseStack: FixedStack<number>;
+	private _stack: FixedStack<StackItem>;
 
 	private _setPC: boolean;
 
@@ -83,12 +79,8 @@ export class Runtime {
 			accessorCargo?: any) {
 		this._setPC = false;
 
-		this._operandStack = new FixedStack<any>();
+		this._stack = new FixedStack<StackItem>(StackItem);
 
-		this._baseStack = new FixedStack<number>();
-
-		this._programStack = new FixedStack<Address>();
-		this._scopeStack = new FixedStack<IScope>();
 		this._verbose = verbose;
 
 		this._scopeCatcher = scopeCatcher;
@@ -119,9 +111,13 @@ export class Runtime {
 				console.log("STEP AT PC", this.address.pc, ":", step.name, ",", (<any>step.node).what, ",", step.callback.toString());
 			}
 			let stepReturn = this.address.module.program[this.address.pc].execute(this);
-			if (!this._setPC)
+			if (!this._setPC) {
 				++this.address.pc;
-			else
+
+				// This is kludgy but it makes the top-level stack trace work.
+				if (this.address.pc < this.address.module.program.length)
+					this.address.node = this.address.module.program[this.address.pc].node;
+			} else
 				this._setPC = false;
 
 			if (stepReturn instanceof Promise) {
@@ -137,22 +133,16 @@ export class Runtime {
 		}
 
 		let returnValue = undefined;
-		if (!this._operandStack.empty)
-			returnValue = this.popOperand();
+		if (!this._stack.empty) {
+			let operand = this._stack.get(0).operand;
+			if (operand) {
+				this._stack.pop();
+				returnValue = operand;
+			}
+		}
 
-		while (!this._operandStack.empty)
-			console.log("LEFTOVER OP", this.popOperand());
-
-		for (let i=0; i<this._baseStack.count; ++i)
-			console.log("LEFTOVER BP", this._baseStack.get(i));
-
-		while (!this._programStack.empty)
-			console.log("LEFTOVER PG", this._programStack.pop());
-
-		// Disable this one by default -- we have some well known and accepted places
-		// where scopes may be left over at the end of an execution run.
-		/*while (!this._scopeStack.empty)
-			console.log("LEFTOVER SC", this._scopeStack.pop()); */
+		while (!this._stack.empty)
+			console.log("LEFTOVER STACK", this.pop());
 
 		return new ExecuteResult(false, stepsUsed, returnValue);
 	}
@@ -180,7 +170,7 @@ export class Runtime {
 				let promiseRv = await er.returnValue;
 
 				// Push it value on the operand stack and continue.
-				this.pushOperand(promiseRv);
+				this.push(new StackItem().setOperand(promiseRv));
 
 				continue;
 			}
@@ -196,8 +186,8 @@ export class Runtime {
 
 	private executeCodeCommon(moduleName: string, code: AstNode, injections: any, securityContext: number): void {
 		if (injections) {
-			this.pushScope(ConstScope.FromObject(this.currentScope, injections));
-			this.pushScope(new StandardScope(this.currentScope));
+			this.push(new StackItem().setScope(ConstScope.FromObject(this.currentScope, injections)));
+			this.push(new StackItem().setScope(new StandardScope(this.currentScope)));
 		}
 		var compiler = new Compiler(moduleName);
 		compiler.compile(code);
@@ -282,17 +272,24 @@ export class Runtime {
 		else
 			stack.push(new StackFrame(this.address.module.name, -1, -1));
 
-		let count = this._programStack.count;
+		let count = this._stack.count;
 		for (let i=0; i<count; ++i) {
-			let frame = this._programStack.get(i);
-			if (!frame.module) {
+			let frame = this._stack.get(i);
+
+			// Look for "pure" address stack pushes. Other things can have addresses, like markers,
+			// but we don't want those for the stack trace.
+			if (!frame.isPureAddress())
+				continue;
+
+			let addr = frame.address;
+			if (!addr.module) {
 				// These can come from synthetic function calls.
 				continue;
 			}
-			if (frame.node && frame.node.loc)
-				stack.push(new StackFrame(frame.module.name, frame.node.loc.line, frame.node.loc.column));
+			if (addr.node && addr.node.loc)
+				stack.push(new StackFrame(addr.module.name, addr.node.loc.line, addr.node.loc.column));
 			else
-				stack.push(new StackFrame(frame.module.name, -1, -1));
+				stack.push(new StackFrame(addr.module.name, -1, -1));
 		}
 
 		return stack;
@@ -308,22 +305,85 @@ export class Runtime {
 			return 0;
 	}
 
-	public pushPC(address?: Address): void {
-		if (this.verbose)
-			console.log("PUSHPC", address);
-		if (!address)
-			address = this.address;
-		this._programStack.push(address.copy());
+	public push(item: StackItem): void {
+		this._stack.push(item);
+	}
+
+	// Convenience method for pushing an operand on the stack.
+	public pushOperand(value: any): void {
+		this._stack.push(new StackItem().setOperand(value));
+	}
+
+	// Convenience method for pushing a scope on the stack.
+	public pushScope(scope: IScope): void {
+		this._stack.push(new StackItem().setScope(scope));
+	}
+
+	// Convenience method for pushing a marker on the stack.
+	public pushMarker(type: number): void {
+		this._stack.push(new StackItem().setMarker(type));
+	}
+
+	// Convenience method for pushing an Address on the stack.
+	public pushAddress(address: Address): void {
+		this._stack.push(new StackItem().setAddress(address));
+	}
+
+	public pop(): StackItem {
+		let item: StackItem = this._stack.pop();
+		if (item.unwinder)
+			item.unwinder(this);
+		return item;
+	}
+
+	public popMany(count: number): void {
+		// We have to actually pop them off one by one here to check for callbacks.
+		for (let i=0; i<count; ++i) {
+			let item: StackItem = this._stack.pop();
+			if (item.unwinder)
+				item.unwinder(this);
+		}
+	}
+
+	public popWhile(checker: (item: StackItem) => boolean) {
+		while (!this._stack.empty && checker(this._stack.get(0))) {
+			let item: StackItem = this._stack.pop();
+			if (item.unwinder)
+				item.unwinder(this);
+		}
+	}
+
+	public get(index: number): StackItem {
+		return this._stack.get(index);
+	}
+
+	public get count(): number {
+		return this._stack.count;
+	}
+
+	public get empty(): boolean {
+		return this._stack.empty;
+	}
+
+	public printStack(): void {
+		console.log("STACK LISTING START");
+		let count = this._stack.count;
+		for (let i=0; i<count; ++i)
+			console.log("STACK ITEM", this._stack.get(i));
+		console.log("STACK LISTING FINISH");
 	}
 
 	public popPC(): void {
 		// We have to create a new Address here to avoid mucking up the source Address.
-		let address = this._programStack.pop();
-		this.address = address.copy();
+		let addressItem = this._stack.pop();
+		if (!addressItem.address)
+			throw new RuntimeException("Can't return to something besides a program address", this, addressItem);
+
+		this.address = addressItem.address.copy();
 		this._setPC = true;
 
 		if (this.verbose)
-			console.log("POPPC", address);
+			console.log("POPPC", addressItem.address);
 	}
 
 	// Sets a new program counter; if allowPCAdvance is true, then the PC will
@@ -351,95 +411,21 @@ export class Runtime {
 	public callPC(address: Address): void {
 		let newAddr = this.address.copy();
 		newAddr.pc++;
-		this.pushPC(newAddr);
+		this.pushAddress(newAddr);
 		this.gotoPC(address);
 	}
 
-	// Returns the Nth stack frame from the program stack. Note that the 0th frame
-	// is actually the currently executing function.
-	public getPC(index: number): Address {
-		if (index === 0)
-			return this.address;
-		return this._programStack.get(index - 1);
-	}
-
-	// Returns the number of stack frames on the program stack.
-	public get countPC(): number {
-		return this._programStack.count + 1;
-	}
-
-	// Pops the top value off the program stack and discards it.
-	public discardPC(): void {
-		let val = this._programStack.pop();
-		if (this.verbose)
-			console.log("DISCARD PC", val);
-	}
-
-	public pushScope(scope: IScope): void {
-		if (this.verbose)
-			console.log("PUSHSCOPE", scope);
-		this._scopeStack.push(scope);
-	}
-
-	public popScope(): IScope {
-		let value = this._scopeStack.pop();
-		if (this.verbose)
-			console.log("POPSCOPE", value);
-		return value;
-	}
-
 	public get currentScope(): IScope {
-		if (!this._scopeStack.empty)
-			return this._scopeStack.get(0);
-		return this._rootScope;
-	}
-
-	public pushOperand(val: any): void {
-		if (this._verbose)
-			console.log("PUSHOP:", val);
-
-		this._operandStack.push(val);
-		/*if (this._verbose)
-			console.log("OPSTACK IS", this._operandStack);*/
-	}
-
-	public popOperand(): any {
-		let val = this._operandStack.pop();
-		if (this._verbose) {
-			console.log("POPOP:", val);
-			// console.log("OPSTACK IS", this._operandStack);
+		// Dig the top scope out of the stack if we have one.
+		let count = this._stack.count;
+		for (let i=0; i<count; ++i) {
+			let item = this._stack.get(i);
+			if (item.scope)
+				return item.scope;
 		}
-		return val;
-	}
 
-	public getOperand(index: number): any {
-		return this._operandStack.get(index);
-	}
-
-	public setOperand(index: number, value: any): void {
-		this._operandStack.set(index, value);
-	}
-
-	public discardOperands(count: number): void {
-		this._operandStack.popMany(count);
-	}
-
-	public pushBase(): void {
-		if (this.verbose)
-			console.log("PUSHBP", this._operandStack.count);
-
-		this._baseStack.push(this._operandStack.count);
-	}
-
-	public popBase(): void {
-		let opptr = this._baseStack.pop();
-		if (opptr > this._operandStack.count)
-			throw new RuntimeException("Base pointer is higher than the operand stack's top", this);
-
-		if (this.verbose)
-			console.log("POPBP down", opptr);
-
-		this._operandStack.popMany(this._operandStack.count - opptr);
+		// If we get here, there's no scope in the stack. Just return the root.
+		return this._rootScope;
 	}
 
 	public get verbose(): boolean {

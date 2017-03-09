@@ -10,6 +10,7 @@ import { Runtime } from "./Runtime";
 import { Value } from "./Value";
 import { Compiler } from "./Compiler";
 import { Address } from "./Address";
+import { StackItem, Markers } from "./StackItem";
 
 class SwitchCase {
 	constructor(test: AstNode, body: AstNode[]) {
@@ -36,17 +37,18 @@ export class AstSwitch extends AstNode {
 		if (!this.cases.length)
 			return;
 
-		compiler.pushNode("Switch end", this, (runtime: Runtime) => {
-			// Pop off the test value.
-			runtime.popOperand();
-		});
-
 		// First thing, calculate the test value. This pushes a value on the operand stack.
 		this.discriminant.compile(compiler);
 
 		// Deref the value.
 		compiler.emit("Switch test deref", this, (runtime: Runtime) => {
 			let value = Value.PopAndDeref(runtime);
+
+			// Put a break marker so the break statement can find our addresses.
+			runtime.push(new StackItem()
+				.setMarker(Markers.Break)
+				.setExitLoop(this.switchEnd));
+
 			runtime.pushOperand(value);
 		});
 
@@ -56,7 +58,7 @@ export class AstSwitch extends AstNode {
 			c.test.compile(compiler);
 			compiler.emit("Switch case test", this, (runtime: Runtime) => {
 				let result = Value.PopAndDeref(runtime);
-				if (result === runtime.getOperand(0)) {
+				if (result === runtime.get(0).operand) {
 					// Whee, we found it. Jump to the appropriate case label.
 					runtime.gotoPC(caseLabels[idx]);
 				}
@@ -75,7 +77,11 @@ export class AstSwitch extends AstNode {
 		});
 
 		this.switchEnd.pc = compiler.pc;
-		compiler.popNode();
+
+		compiler.emit("Switch cleanup", this, (runtime: Runtime) => {
+			runtime.popWhile(i => i.marker !== Markers.Break);
+			runtime.pop();
+		});
 	}
 
 	public what: string = "Switch";

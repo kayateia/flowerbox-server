@@ -25,6 +25,7 @@ import { AstReturn } from "./AstReturn";
 import { AstStatement } from "./AstStatement";
 import { AstStatements } from "./AstStatements";
 import { AstSwitch } from "./AstSwitch";
+import { AstTryStatement, AstCatchClause, AstThrowStatement } from "./AstTryCatch";
 import { AstUnaryExpression } from "./AstUnaryExpression";
 import { AstUpdate } from "./AstUpdate";
 import { AstVarStatement } from "./AstVarStatement";
@@ -110,6 +111,15 @@ export function parse(parseTree: any): AstNode {
 			break;
 		case "SwitchStatement":
 			result = new AstSwitch(parseTree);
+			break;
+		case "TryStatement":
+			result = new AstTryStatement(parseTree);
+			break;
+		case "CatchClause":
+			result = new AstCatchClause(parseTree);
+			break;
+		case "ThrowStatement":
+			result = new AstThrowStatement(parseTree);
 			break;
 		default:
 			throw new ParseException("Unknown parse() token '"+ parseTree.type + "'", parseTree);

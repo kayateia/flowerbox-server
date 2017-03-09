@@ -9,6 +9,7 @@ import { parse } from "./Parser";
 import { Runtime } from "./Runtime";
 import { Compiler } from "./Compiler";
 import { Value } from "./Value";
+import { StackItem, Markers } from "./StackItem";
 
 export class AstStatement extends AstNode {
 	constructor(parseTree: any) {
@@ -18,17 +19,16 @@ export class AstStatement extends AstNode {
 	}
 
 	public compile(compiler: Compiler): void {
-		compiler.emit("Pre-statement bp save", this, (runtime: Runtime) => {
-			runtime.pushBase();
-		});
-		compiler.pushNode("Post-statement bp restore", this, (runtime: Runtime) => {
-			runtime.lastStatementValue = Value.Deref(runtime, runtime.popOperand());
-			runtime.popBase();
+		compiler.emit("Pre-statement stack save", this, (runtime: Runtime) => {
+			runtime.pushMarker(Markers.Statement);
 		});
 
 		this.statement.compile(compiler);
 
-		compiler.popNode();
+		compiler.emit("Post-statement stack restore", this, (runtime: Runtime) => {
+			runtime.popWhile(i => i.marker !== Markers.Statement);
+			runtime.pop();
+		});
 	}
 
 	public what: string = "Statement";

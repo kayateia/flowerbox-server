@@ -7,9 +7,13 @@
 import { RuntimeException } from "./Exceptions";
 
 export class FixedStack<T> {
-	constructor() {
+	// The "type" parameter is optional. If included, the type will be available
+	// for pushRef() to create new instances. Why you can't simply new T() in
+	// TypeScript is beyond me, but them's the breaks.
+	constructor(type?: any) {
 		this._stack = [];
 		this._sp = 0;
+		this._type = type;
 	}
 
 	public push(value: T): void {
@@ -18,6 +22,20 @@ export class FixedStack<T> {
 		}
 
 		this._stack[this._sp++] = value;
+	}
+
+	// This is a specialized version of push() that returns the existing value
+	// that's there already instead of taking a new one from the user. This lets
+	// you store structures that can be reused on the stack. (Since, presumably,
+	// if you're using a FixedStack to begin with, performance matters.)
+	public pushRef(): T {
+		if (this._stack.length <= this._sp) {
+			this._stack[this._stack.length + 10000] = null;
+		}
+
+		if (this._stack[this._sp] === undefined)
+			this._stack[this._sp] = new this._type();
+		return this._stack[this._sp++];
 	}
 
 	public pop(): T {
@@ -62,4 +80,5 @@ export class FixedStack<T> {
 
 	private _stack: T[];
 	private _sp: number;
+	private _type: any;
 }

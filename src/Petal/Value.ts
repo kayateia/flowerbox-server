@@ -7,6 +7,7 @@
 import { LValue } from "./LValue";
 import { Runtime } from "./Runtime";
 import { RuntimeException } from "./Exceptions";
+import { StackItem } from "./StackItem";
 
 export class Value {
 	// Handles derefing LValue if needed.
@@ -14,9 +15,17 @@ export class Value {
 		return LValue.Deref(runtime, value);
 	}
 
-	// Pops from the operand stack and returns the deref'd value.
+	public static PopOperand(runtime: Runtime): any {
+		let item = runtime.get(0);
+		if (!item.hasOperand)
+			throw new RuntimeException("Popped value is not an operand", runtime, item);
+		runtime.pop();
+		return item.operand;
+	}
+
+	// Pops an operand from the stack and returns the deref'd value.
 	public static PopAndDeref(runtime: Runtime): any {
-		return Value.Deref(runtime, runtime.popOperand());
+		return Value.Deref(runtime, Value.PopOperand(runtime));
 	}
 
 	public static GetLValue(value: any): LValue {
@@ -24,5 +33,10 @@ export class Value {
 			return value;
 		else
 			throw new RuntimeException("Can't convert value to LValue", null, value);
+	}
+
+	public static PopAndGetLValue(runtime: Runtime): any {
+		let value = Value.PopOperand(runtime);
+		return Value.GetLValue(value);
 	}
 }

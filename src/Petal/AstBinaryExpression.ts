@@ -46,7 +46,7 @@ export class AstBinaryExpression extends AstNode {
 
 		compiler.emit("Check BE right", this, (runtime: Runtime) => {
 			let rightValue = Value.PopAndDeref(runtime);
-			let leftValue = runtime.popOperand();
+			let leftValue = Value.PopAndDeref(runtime);
 			let result: any;
 			switch (this.operator) {
 				case "-":

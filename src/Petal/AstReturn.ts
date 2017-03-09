@@ -9,7 +9,8 @@ import { AstFunction } from "./AstFunction";
 import { parse } from "./Parser";
 import { Runtime } from "./Runtime";
 import { Value } from "./Value";
-import { Compiler, NodeStackEntry } from "./Compiler";
+import { Compiler } from "./Compiler";
+import { StackItem, Markers } from "./StackItem";
 
 export class AstReturn extends AstNode {
 	constructor(parseTree: any) {
@@ -23,28 +24,17 @@ export class AstReturn extends AstNode {
 			this.argument.compile(compiler);
 
 		compiler.emit("Return statement", this, (runtime: Runtime) => {
+			// Handle the return value, if we have one.
 			let value;
 			if (this.argument)
 				value = Value.PopAndDeref(runtime);
 			else
 				value = undefined;
 			runtime.returnValue = value;
-		});
 
-		// We have to unwind the node stack and emit cleanups as well.
-		let endNode;
-		for (let i=0; ; ++i) {
-			let stackTop = compiler.getNode(i);
-			if (stackTop.node instanceof AstFunction) {
-				let node = <AstFunction>stackTop.node;
-				endNode = node;
-				break;
-			} else
-				compiler.emitNode(stackTop);
-		}
-
-		compiler.emit("Return goto", this, (runtime: Runtime) => {
-			runtime.gotoPC(endNode.endLabel);
+			// Unwind the stack until we find the function marker.
+			runtime.popWhile(i => i.marker !== Markers.Function);
+			runtime.gotoPC(runtime.get(0).address);
 		});
 	}
 

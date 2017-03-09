@@ -26,7 +26,7 @@ export class AstAssignment extends AstNode {
 
 		compiler.emit("Assignment '" + this.operator + "'", this, (runtime: Runtime) => {
 			let rhs = Value.PopAndDeref(runtime);
-			let lhs = Value.GetLValue(runtime.popOperand());
+			let lhs = Value.PopAndGetLValue(runtime);
 
 			let newlhs;
 			switch (this.operator) {
