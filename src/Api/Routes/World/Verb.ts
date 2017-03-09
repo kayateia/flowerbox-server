@@ -12,6 +12,14 @@ import * as Wob from "../../Model/Wob";
 import * as Petal from "../../../Petal/All";
 import * as World from "../../../World/All";
 
+// Strict definition for the return value of VerbPermsCommon().
+interface VerbPermsCommonInfo {
+	id: string;
+	name: string;
+	wob: World.Wob;
+	verb: World.Verb;
+}
+
 export class VerbRouter extends WorldRouterBase {
 	constructor(worldRouter: WorldRouter) {
 		super();
@@ -93,7 +101,7 @@ export class VerbRouter extends WorldRouterBase {
 		if (!permsEffective)
 			permsEffective = World.Security.GetDefaultVerbString();
 
-		let ownerEffective: number = await WobCommon.GetVerbOwner(verb, this.world);
+		let ownerEffective: number = await WobCommon.GetVerbOwner(verb.wob, verb.value, this.world);
 
 		res.json(new Wob.Verb(
 			verb.wob,
@@ -160,7 +168,7 @@ export class VerbRouter extends WorldRouterBase {
 		res.json(new Wob.VerbSetErrors(errors));
 	}
 
-	private async verbPermsCommon(req, res, next) {
+	private async verbPermsCommon(req, res, next): Promise<VerbPermsCommonInfo> {
 		let id = req.params.id;
 		let name = req.params.name;
 
@@ -199,7 +207,7 @@ export class VerbRouter extends WorldRouterBase {
 		if (perms === undefined)
 			permsEffective = World.Security.GetDefaultVerbString();
 
-		let ownerEffective: number = await WobCommon.GetVerbOwner(info.verb, this.world);
+		let ownerEffective: number = await WobCommon.GetVerbOwner(info.wob.id, info.verb, this.world);
 
 		res.json(new Wob.PermsStatus(perms, permsEffective, ownerEffective));
 	}
@@ -228,7 +236,7 @@ export class VerbRouter extends WorldRouterBase {
 		if (perms === undefined)
 			permsEffective = World.Security.GetDefaultVerbString();
 
-		let ownerEffective: number = await WobCommon.GetVerbOwner(info.verb, this.world);
+		let ownerEffective: number = await WobCommon.GetVerbOwner(info.wob.id, info.verb, this.world);
 
 		res.json(new Wob.PermsStatus(perms, permsEffective, ownerEffective));
 	}

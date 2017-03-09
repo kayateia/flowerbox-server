@@ -49,7 +49,7 @@ export class WobCommon {
 			if (perms === undefined)
 				permsEffective = World.Perms.unparse(World.Security.GetDefaultPropertyPerms());
 
-			let ownerEffective: number = await WobCommon.GetPropertyOwner(key, p[1], world);
+			let ownerEffective: number = await WobCommon.GetPropertyOwner(key, wobid, value, world);
 
 			propertyInfos.push(new Wob.AttachedProperty(wobid, key, perms, permsEffective, ownerEffective, mimetype));
 		}
@@ -63,7 +63,7 @@ export class WobCommon {
 			if (perms === undefined)
 				permsEffective = World.Perms.unparse(World.Security.GetDefaultVerbPerms());
 
-			let ownerEffective: number = await WobCommon.GetVerbOwner(v, world);
+			let ownerEffective: number = await WobCommon.GetVerbOwner(v.wob, v.value, world);
 
 			verbInfos.push(new Wob.AttachedVerb(v.wob, v.value.word, perms, permsEffective, ownerEffective));
 		}
@@ -92,10 +92,10 @@ export class WobCommon {
 	}
 
 	// Given a property/wob combo, determine the actual owner of the property and return it.
-	public static async GetPropertyOwner(propName: string, prop: World.WobValue<World.Property>,
+	public static async GetPropertyOwner(propName: string, propWobId: number, prop: World.Property,
 			world: World.World): Promise<number> {
 		// Check to see if it's got a sticky ancestor. If so, we will set a different effective owner.
-		let propWob: World.Wob = await world.getWob(prop.wob);
+		let propWob: World.Wob = await world.getWob(propWobId);
 		let ownerEffective: number = propWob.owner;
 		let stickyOwner: World.Wob = await World.Actions.GetStickyParent(propWob, propName, world);
 		if (stickyOwner)
@@ -104,9 +104,9 @@ export class WobCommon {
 		return ownerEffective;
 	}
 
-	public static async GetVerbOwner(verb: World.WobValue<World.Verb>, world: World.World): Promise<number> {
+	public static async GetVerbOwner(verbWobId: number, verb: World.Verb, world: World.World): Promise<number> {
 		// For now, verbs are always owned by the owner of the wob they appear on.
-		let verbWob: World.Wob = await world.getWob(verb.wob);
+		let verbWob: World.Wob = await world.getWob(verbWobId);
 		let ownerEffective: number = verbWob.owner;
 		return ownerEffective;
 	}
