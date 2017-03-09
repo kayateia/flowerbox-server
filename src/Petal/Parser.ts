@@ -25,7 +25,7 @@ import { AstReturn } from "./AstReturn";
 import { AstStatement } from "./AstStatement";
 import { AstStatements } from "./AstStatements";
 import { AstSwitch } from "./AstSwitch";
-import { AstTryStatement, AstThrowStatement } from "./AstTryCatch";
+import { AstTryStatement, AstCatchClause, AstThrowStatement } from "./AstTryCatch";
 import { AstUnaryExpression } from "./AstUnaryExpression";
 import { AstUpdate } from "./AstUpdate";
 import { AstVarStatement } from "./AstVarStatement";
@@ -114,6 +114,9 @@ export function parse(parseTree: any): AstNode {
 			break;
 		case "TryStatement":
 			result = new AstTryStatement(parseTree);
+			break;
+		case "CatchClause":
+			result = new AstCatchClause(parseTree);
 			break;
 		case "ThrowStatement":
 			result = new AstThrowStatement(parseTree);

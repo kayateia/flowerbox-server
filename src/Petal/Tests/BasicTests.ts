@@ -301,13 +301,39 @@ describe("Basic test", function() {
 			+ "function c() {\n"
 			+ "		b();\n"
 			+ "}\n"
-			+ "c();\n", true);
+			+ "c();\n");
 		try {
 			test.runProgram();
 		} catch (err) {
 			test.runtime.printStack();
 			expect(JSON.stringify(err.petalStack)).toEqual('[{"module":"<test>","line":3,"column":6},{"module":"<test>","line":6,"column":2},{"module":"<test>","line":9,"column":2},{"module":"<test>","line":11,"column":0}]');
 		}
+	});
+
+	it("should have working try/catch/finally blocks", function() {
+		let test = new TestSetup(
+			"function a() {\n" +
+			"	throw 'test';\n" +
+			"}\n" +
+			"function b() {\n" +
+			"	try {\n" +
+			"		a();\n" +
+			"	} finally {\n" +
+			"		log('b finally');\n" +
+			"	}\n" +
+			"}\n" +
+			"try {\n" +
+			"	log('first!');\n" +
+			"	b();\n" +
+			"	log('went too far!');\n" +
+			"} catch (err) {\n" +
+			"	log(err);\n" +
+			"} finally {\n" +
+			"	log('finally!');\n" +
+			"} log('after try/catch');"
+		);
+		test.runProgram();
+		expect(test.output).toEqual("first!\nb finally\ntest\nfinally!\nafter try/catch\n");
 	});
 
 	it("undefined and null should be constants", function() {

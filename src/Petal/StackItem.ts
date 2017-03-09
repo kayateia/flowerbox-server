@@ -29,6 +29,17 @@ export class Markers {
 	// Used for for-in and for loops to mark the stack bottom before the next iteration.
 	// This StackItem should also have a value in the nextIteration member.
 	public static Continue: number = 6;
+
+	// Placed before each try block to mark where to back out to when something fails.
+	// The catch and/or finally address fields should be filled out and point to those
+	// respective code blocks.
+	public static Try: number = 7;
+
+	// This is used to mark the scope delinating a catch block being executed.
+	public static CatchBlock: number = 8;
+
+	// This is used to hold the callback for a finally block.
+	public static FinallyBlock: number = 9;
 }
 
 export class StackItem {
@@ -42,6 +53,10 @@ export class StackItem {
 	// These two addresses are used for loops and switch statements.
 	nextIteration: Address;
 	exitLoop: Address;
+
+	// These two addresses are used for try/catch/finally blocks.
+	catchAddress: Address;
+	finallyAddress: Address;
 
 	// A variable scope.
 	scope: IScope;
@@ -66,6 +81,8 @@ export class StackItem {
 		this.address = undefined;
 		this.nextIteration = undefined;
 		this.exitLoop = undefined;
+		this.catchAddress = undefined;
+		this.finallyAddress = undefined;
 		this.scope = undefined;
 		this.operand = undefined;
 		this.hasOperand = false;
@@ -90,6 +107,16 @@ export class StackItem {
 
 	public setExitLoop(exitLoop: Address): StackItem {
 		this.exitLoop = exitLoop;
+		return this;
+	}
+
+	public setCatch(catchAddress: Address): StackItem {
+		this.catchAddress = catchAddress;
+		return this;
+	}
+
+	public setFinally(finallyAddress: Address): StackItem {
+		this.finallyAddress = finallyAddress;
 		return this;
 	}
 
