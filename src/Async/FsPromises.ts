@@ -17,13 +17,13 @@ export function readFile(path: string): Promise<Buffer> {
 	});
 }
 
-export function writeFile(path: string, contents: string | Buffer): Promise<any> {
-	return new Promise((a, r) => {
-		fs.writeFile(path, contents, (err, result) => {
+export function writeFile(path: string, contents: string | Buffer): Promise<void> {
+	return new Promise<void>((a, r) => {
+		fs.writeFile(path, contents, (err) => {
 			if (err)
 				r(err);
 			else
-				a(result);
+				a();
 		});
 	});
 }

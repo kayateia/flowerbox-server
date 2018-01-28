@@ -4,8 +4,6 @@
 	For license info, please see notes/gpl-3.0.txt under the project root.
 */
 
-///<reference path="../../../typings/globals/restler/index.d.ts" />
-
 import * as rest from "restler";
 
 // The service must be running for these tests to pass. Note that running them a second

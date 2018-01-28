@@ -4,8 +4,6 @@
 	For license info, please see notes/gpl-3.0.txt under the project root.
 */
 
-///<reference path="../../../typings/globals/express/index.d.ts" />
-
 import * as express from "express";
 import * as World from "../../World/All";
 import { ModelBase } from "../Model/ModelBase";

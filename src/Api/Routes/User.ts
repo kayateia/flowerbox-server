@@ -4,8 +4,6 @@
 	For license info, please see notes/gpl-3.0.txt under the project root.
 */
 
-///<reference path="../../../typings/globals/express/index.d.ts" />
-
 import { RouterBase } from "./RouterBase";
 import { ModelBase } from "../Model/ModelBase";
 import { Token } from "../Model/Token";

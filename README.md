@@ -1,5 +1,5 @@
 # Flowerbox
-## Copyright (C) 2016 Kayateia
+## Copyright (C) 2016-2018 Kayateia
 
 ### What is Flowerbox?
 
@@ -20,19 +20,18 @@ should talk about that.
 
 ### How to get started?
 
+I haven't had much luck with Node 9.x yet, but 8.x still seems to
+be working fine.
+
 There isn't much here for end users or admins yet, but you can start 
 playing with the code if you want. You need to do the following:
 
      npm install -g typescript
-     npm install -g typings
      npm install
-     typings install
-     grunt
      tsc
 
-That should build the project. For future hacking on the code, you only 
-need to run grunt if you want to update the pegjs grammar. Use tsc or 
-use a proper auto-compiling editor like Atom.
+That should build the project. For future hacking on the code, run tsc
+or use a proper auto-compiling editor like Atom.
 
 What's accessible to run right now is runnable like this:
 

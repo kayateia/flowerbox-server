@@ -4,8 +4,6 @@
 	For license info, please see notes/gpl-3.0.txt under the project root.
 */
 
-///<reference path="../../typings/globals/multer/index.d.ts" />
-
 import * as multer from "multer";
 
 let storage = multer.memoryStorage();

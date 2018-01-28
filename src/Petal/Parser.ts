@@ -4,8 +4,6 @@
 	For license info, please see notes/gpl-3.0.txt under the project root.
 */
 
-///<reference path="../../typings/globals/node/index.d.ts" />
-
 import { AstArray } from "./AstArray";
 import { AstAssignment } from "./AstAssignment";
 import { AstBinaryExpression } from "./AstBinaryExpression";

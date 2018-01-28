@@ -4,8 +4,6 @@
 	For license info, please see notes/gpl-3.0.txt under the project root.
 */
 
-///<reference path="../../../typings/globals/jasmine/index.d.ts" />
-
 import * as Petal from "../All";
 import { TestSetup } from "./TestSetup";
 
